@@ -1,0 +1,92 @@
+# Default values for plone backend
+backend:
+  image:
+    repository: plone/plone-backend
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8080
+  resources: 
+    requests:
+      cpu: 100m
+      memory: 280Mi 
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  podAnnotations: {}
+  podSecurityContext: {}
+  #  fsGroup: 2000
+  securityContext: {}
+  #  capabilities:
+  #    drop:
+  #    - ALL
+  #    readOnlyRootFilesystem: true
+  #   runAsNonRoot: true
+  #   runAsUser: 999
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Default values for plone frontend
+frontend:
+  image:
+    repository: plone/plone-frontend
+    pullPolicy: IfNotPresent
+    tag: "16.21.2"
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 3000
+  resources: 
+    requests:
+      cpu: 50m
+      memory: 192Mi  
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  podAnnotations: {}
+  podSecurityContext: {}
+  #  fsGroup: 2000
+  securityContext: {}
+  #  capabilities:
+  #    drop:
+  #    - ALL
+  #    readOnlyRootFilesystem: true
+  #   runAsNonRoot: true
+  #   runAsUser: 999
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+ingress:
+  enabled: true
+  className: ""
+  annotations: 
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+apiIngress:
+  enabled: true
+  annotations: 
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+# Default settings for zeoserver
+zeoserver:
+  enabled: true
+  persistence:
+    enabled: true

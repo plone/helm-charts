@@ -1,0 +1,16 @@
+apiVersion: v2
+name: plone
+description: A Helm chart for Plone 6
+
+type: application
+
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.1.0
+
+appVersion: "6.0.5"
+
+dependencies:
+- name: zeoserver
+  version: "0.1.0"
+  repository: "file://../zeoserver"
+  condition: zeoserver.enabled
