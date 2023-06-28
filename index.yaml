@@ -1,0 +1,30 @@
+apiVersion: v1
+entries:
+  plone:
+  - apiVersion: v2
+    appVersion: 6.0.5
+    created: "2023-06-28T15:23:24.09288806Z"
+    dependencies:
+    - condition: zeoserver.enabled
+      name: zeoserver
+      repository: file://../zeoserver
+      version: 0.1.0
+    description: A Helm chart for Plone 6
+    digest: e5c7888684b9a591b4b0d05a258388e477da8df9aa25e4b025e115bc270059c5
+    name: plone
+    type: application
+    urls:
+    - https://github.com/plone/charts/releases/download/plone-0.1.0/plone-0.1.0.tgz
+    version: 0.1.0
+  zeoserver:
+  - apiVersion: v2
+    appVersion: 5.3.0
+    created: "2023-06-28T15:23:24.245332049Z"
+    description: ZEO Server for Plone
+    digest: fdd2fc7886d53253c21ff761e46238e5ebe5fb7f436e56c429e0e2663833408f
+    name: zeoserver
+    type: application
+    urls:
+    - https://github.com/plone/charts/releases/download/zeoserver-0.1.0/zeoserver-0.1.0.tgz
+    version: 0.1.0
+generated: "2023-06-28T15:23:24.245336049Z"
