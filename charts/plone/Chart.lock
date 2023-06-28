@@ -1,6 +1,6 @@
 dependencies:
 - name: zeoserver
-  repository: file://../zeoserver
+  repository: https://plone.github.io/charts
   version: 0.1.0
-digest: sha256:9883b71f213199a305f7f3f28dedf71c67fec6a4db0b3cab3832b2b1afd82d9e
-generated: "2023-06-28T11:44:02.266259512-03:00"
+digest: sha256:c1a8ca7ab787bdcacd53709d12ca6257cdb33c70607eecc0d446878473591358
+generated: "2023-06-28T12:29:25.318616621-03:00"

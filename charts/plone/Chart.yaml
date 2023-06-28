@@ -12,5 +12,5 @@ appVersion: "6.0.5"
 dependencies:
 - name: zeoserver
   version: "0.1.0"
-  repository: "file://../zeoserver"
+  repository: "https://plone.github.io/charts"
   condition: zeoserver.enabled
