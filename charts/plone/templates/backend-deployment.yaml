@@ -34,7 +34,7 @@ spec:
             - name: SITE
               value: Plone
             - name: ZEO_ADDRESS
-              value: {{ include "plone.fullname" . }}-zeoserver:8100
+              value: {{ .Release.Name }}-zeoserver:8100
           ports:
             - name: backend
               containerPort: {{ .Values.backend.service.port }}
