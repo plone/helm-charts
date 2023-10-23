@@ -1,5 +1,7 @@
 # Plone Helm Charts
 
+![test](https://github.com/plone/helm-charts/actions/workflows/test.yml/badge.svg)
+
 Helm Charts for Plone 6. 
 
 ## Usage
