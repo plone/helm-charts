@@ -57,14 +57,3 @@ app.kubernetes.io/name: {{ include "plone.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/component: backend
 {{- end }}
-
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "plone.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "plone.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}

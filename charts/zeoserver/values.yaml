@@ -11,15 +11,6 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: false
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
-
 podAnnotations: {}
 
 podSecurityContext: {}
@@ -37,13 +28,20 @@ service:
   type: ClusterIP
   port: 8100
 
-resources:
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
+resources: 
   requests:
      cpu: 50m
      memory: 48Mi
+# limits:
+#   cpu: 50m
+#   memory: 48Mi
+
+# if you are using the official plone docker images, all environment
+# variables documented in the following URL are supported
+# https://6.docs.plone.org/install/containers/images/zeo.html
+# env:
+#   - name: FOOBAR
+#     value: "123"
 
 persistence:
   enabled: true
