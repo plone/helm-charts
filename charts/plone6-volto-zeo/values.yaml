@@ -9,10 +9,10 @@ backend:
   service:
     type: ClusterIP
     port: 8080
-  resources: 
+  resources:
     requests:
       cpu: 100m
-      memory: 280Mi 
+      memory: 280Mi
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
@@ -48,10 +48,10 @@ frontend:
   service:
     type: ClusterIP
     port: 3000
-  resources: 
+  resources:
     requests:
       cpu: 50m
-      memory: 192Mi  
+      memory: 192Mi
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
@@ -84,7 +84,7 @@ fullnameOverride: ""
 ingress:
   enabled: false
   className: ""
-  annotations: 
+  annotations:
     # cert-manager.io/cluster-issuer: "letsencrypt-prod"
   hosts:
     - host: chart-example.local
@@ -98,7 +98,7 @@ ingress:
 
 apiIngress:
   enabled: false
-  annotations: 
+  annotations:
     # cert-manager.io/cluster-issuer: "letsencrypt-prod"
 
 # Default settings for zeoserver

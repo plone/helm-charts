@@ -28,7 +28,7 @@ service:
   type: ClusterIP
   port: 8100
 
-resources: 
+resources:
   requests:
      cpu: 50m
      memory: 48Mi

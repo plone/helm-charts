@@ -7,7 +7,7 @@ backend:
 
 frontend:
   replicaCount: 1
- 
+
 # IngressRoute for Traefik Ingress Controller
 ingressroute:
   enabled: true
