@@ -1,0 +1,15 @@
+apiVersion: v2
+name: plone6-classic-pg
+description: Helmchart to deploy Plone 6 Classic with PosgreSQL
+type: application
+version: 0.1.0
+appVersion: "6.0.10"
+
+dependencies:
+  - name: "postgresql"
+    version: "0.1.0"
+    repository: "file://../postgresql"
+
+  - name: "backend"
+    version: "0.1.0"
+    repository: "file://../backend"

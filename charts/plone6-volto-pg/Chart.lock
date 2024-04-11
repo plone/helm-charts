@@ -1,0 +1,12 @@
+dependencies:
+- name: postgresql
+  repository: file://../postgresql
+  version: 0.1.0
+- name: backend
+  repository: file://../backend
+  version: 0.1.0
+- name: frontend
+  repository: file://../frontend
+  version: 0.1.0
+digest: sha256:adbab63529ea6d2218fe6a4082641772135490c4b084046d76bb435fafb0c278
+generated: "2024-03-18T11:44:30.206892524+01:00"

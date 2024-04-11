@@ -1,0 +1,15 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "backend.fullname" . }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+data:
+  zope.conf:
+    {{- .Values.zopeconf | toYaml | indent 2 }}
+  wsgi.ini:
+    {{- .Values.wsgiini | toYaml | indent 2 }}
+  site.zcml:
+    {{- .Values.sitezcml | toYaml | indent 2 }}
+  zodbpack.conf:
+    {{- .Values.pack.zodbpackconf | toYaml | indent 2 }}

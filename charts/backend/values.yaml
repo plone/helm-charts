@@ -1,0 +1,153 @@
+replicaCount: 2
+image:
+  repository: "docker.io/plone/plone-backend"
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+podAnnotations: {}
+instancehome: /app
+command: "[\"/app/bin/runwsgi\", \"/app/etc/wsgi.ini\"]"
+cachesize: 50000
+formmemorylimit: 5MB
+zopeconfig:
+
+# create a PVC named "blobcache" and set blobcache.persistent to true
+# to use a persistent Blobcache
+blobcache:
+  persistent: false
+  size: "1gb"
+wsgiini: |-
+  [server:main]
+  # use = egg:pyruvate#main
+  use = egg:waitress#main
+  # socket = 0.0.0.0:8080
+  host = 0.0.0.0
+  port = 8080
+  threads = 2
+  #workers = 2
+
+  [app:zope]
+  use = egg:Zope#main
+  zope_conf = %(here)s/zope.conf
+
+  [pipeline:main]
+  pipeline =
+      egg:Zope#httpexceptions
+      zope
+
+  [loggers]
+  keys = root
+
+  [handlers]
+  keys = eventlog
+
+  [formatters]
+  keys = generic
+
+  [logger_root]
+  level = INFO
+  handlers = eventlog
+
+  [handler_eventlog]
+  class = FileHandler
+  args = (r'/dev/stderr', 'a')
+  kwargs = {}
+  level = NOTSET
+  formatter = generic
+
+  [formatter_generic]
+  format = %(asctime)s %(levelname)s-7.7s [%(name)s:%(lineno)s][%(threadName)s] %(message)s
+zopeconf: |-
+  %define INSTANCE $(INSTANCE)
+  instancehome $INSTANCE
+  
+  %define CLIENTHOME $(INSTANCE)/var
+  clienthome $CLIENTHOME
+  
+  debug-mode false
+  security-policy-implementation C
+  verbose-security off
+  default-zpublisher-encoding utf-8
+  
+  <environment>
+    CHAMELEON_CACHE $INSTANCE/var/cache
+  </environment>
+  
+  <dos_protection>
+    form-memory-limit $(ZOPE_FORM_MEMORY_LIMIT)
+  </dos_protection>
+  
+  <zodb_db main>
+      # Main database
+      cache-size $(ZODB_CACHE_SIZE)
+      %import relstorage
+      <relstorage>
+          blob-dir $INSTANCE/var/blobstorage
+          shared-blob-dir false
+          blob-cache-size  $(BLOB_CACHE_SIZE)
+          <postgresql>
+              dsn dbname='$(DBNAME)' user='$(DBUSER)' host='$(DBHOST)' port=$(DBPORT) password='$(DBPASSWORD)'
+          </postgresql>
+      </relstorage>
+      mount-point /
+  </zodb_db>
+sitezcml: |-
+  <configure
+      xmlns="http://namespaces.zope.org/zope"
+      xmlns:meta="http://namespaces.zope.org/meta"
+      xmlns:five="http://namespaces.zope.org/five">
+  
+    <include package="Zope2.App" />
+  
+    <!-- Load the meta -->
+    <five:loadProducts file="meta.zcml"/>
+  
+    <!-- Load the configuration -->
+    <five:loadProducts />
+  
+    <!-- Load the configuration overrides-->
+    <five:loadProductsOverrides />
+  
+  </configure>
+pack:
+  command: "[\"/app/bin/zodbpack\", \"/app/etc/zodbpack.conf\"]"
+  schedule: "45 9 * * *"
+  zodbpackconf: |-
+    <relstorage>
+      pack-gc true
+      <postgresql>
+        dsn dbname='$(DBNAME)' user='$(DBUSER)' host='$(DBHOST)' port='$(DBPORT)' password='$(DBPASSWORD)'
+      </postgresql>
+    </relstorage>
+
+service:
+  type: "ClusterIP"
+  port: 8080
+
+ingress:
+  enabled: false
+  
+livenessProbe:
+  failureThreshold: 3
+  httpGet:
+    path: /
+    port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 15
+readinessProbe:
+  failureThreshold: 3
+  httpGet:
+    path: /
+    port: http
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 15
+  
+resources: {}

@@ -1,0 +1,67 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "nginx.fullname" . }}
+  labels:
+    {{ include "nginx.labels" . | nindent 4 }}
+data:
+  {{- if .Values.ploneconf }}
+  plone.conf:
+    {{- .Values.ploneconf | toYaml | indent 2 }}
+  {{- else }}
+  plone.conf: |-
+    server_names_hash_bucket_size 128;
+
+    upstream backend {
+      {{- if .Values.varnish }}
+      server {{ .Release.Name }}-varnish:{{ .Values.varnish.port }};
+      {{- else }}
+      server {{ .Release.Name }}-backend:8080;
+      {{- end }}
+    }
+    upstream frontend {
+      server {{ .Release.Name }}-frontend:3000;
+    }
+
+    server {
+      listen {{ .Values.service.port }};
+      listen [::]:{{ .Values.service.port }};
+      server_name {{ include "nginx.server_name" . }};
+      server_name_in_redirect on;
+
+      root /opt/app-root/src;
+
+      location ~ /\+\+api\+\+($|/.*) {
+        {{- if .Values.ingress.tls }}
+        rewrite ^/(\+\+api\+\+/?)+($|/.*) /VirtualHostBase/https/$server_name:443/Plone/++api++/VirtualHostRoot/$2 break;
+        {{- else }}
+        rewrite ^/(\+\+api\+\+/?)+($|/.*) /VirtualHostBase/http/$server_name:$server_port/Plone/++api++/VirtualHostRoot/$2 break;
+        {{- end }}
+        proxy_pass http://backend;
+      }
+
+      location ~ / {
+        location ~* \.(js|jsx|css|less|swf|eot|ttf|otf|woff|woff2)$ {
+          add_header Cache-Control "public";
+          expires +1y;
+          proxy_pass http://frontend;
+        }
+        location ~* static.*\.(ico|jpg|jpeg|png|gif|svg)$ {
+          add_header Cache-Control "public";
+          expires +1y;
+          proxy_pass http://frontend;
+        }
+
+        proxy_set_header Host $host:$server_port;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        {{- if .Values.ingress.tls }}
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_redirect http:// https://;
+        {{- else }}
+        proxy_set_header X-Forwarded-Proto http;
+        {{- end }}
+        proxy_pass http://frontend;
+      }
+    }
+  {{- end }}

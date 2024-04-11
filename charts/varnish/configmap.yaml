@@ -1,0 +1,14 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "varnish.fullname" . }}
+  labels:
+    {{- include "varnish.labels" . | nindent 4 }}
+data:
+  default.vcl: |-
+    vcl 4.1;
+
+    backend default {
+        .host = "{{ .Release.Name }}-backend";
+        .port = "{{ .Values.service.port }}";
+    }
