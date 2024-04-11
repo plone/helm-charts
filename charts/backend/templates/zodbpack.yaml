@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: zodbpack
+  name: {{ include "backend.fullname" . }}-zodbpack
   labels:
     {{ include "backend.labels" . | nindent 4 }}
 spec:
