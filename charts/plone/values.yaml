@@ -16,6 +16,14 @@ backend:
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
+
+  # if you are using the official plone docker images, all environment
+  # variables documented in the following URL are supported
+  # https://6.docs.plone.org/install/containers/images/backend.html
+  # env:
+  #   - name: FOOBAR
+  #     value: abc
+
   podAnnotations: {}
   podSecurityContext: {}
   #  fsGroup: 2000
@@ -47,6 +55,14 @@ frontend:
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
+
+  # if you are using the official plone docker images, all environment
+  # variables documented in the following URL are supported
+  # https://6.docs.plone.org/install/containers/images/frontend.html
+  # env:
+  #   - name: FOOBAR
+  #     value: xyz
+
   podAnnotations: {}
   podSecurityContext: {}
   #  fsGroup: 2000
@@ -66,7 +82,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 ingress:
-  enabled: true
+  enabled: false
   className: ""
   annotations: 
     # cert-manager.io/cluster-issuer: "letsencrypt-prod"
@@ -81,7 +97,7 @@ ingress:
   #      - chart-example.local
 
 apiIngress:
-  enabled: true
+  enabled: false
   annotations: 
     # cert-manager.io/cluster-issuer: "letsencrypt-prod"
 

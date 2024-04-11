@@ -15,9 +15,6 @@ The following table lists the configurable parameters of the Plone ZEO chart and
 | `imagePullSecrets`      | ZEO image pull secrets                 | `[]`              |
 | `nameOverride`          | Override the chart name                | `""`              |
 | `fullnameOverride`      | Override the fully qualified app name  | `""`              |
-| `serviceAccount.create` | Specifies whether to create a service account | `false`  |
-| `serviceAccount.annotations` | Annotations to add to the service account | `{}`         |
-| `serviceAccount.name`   | Name of the service account to use      | `""`              |
 | `podAnnotations`        | Annotations to add to the pods         | `{}`              |
 | `podSecurityContext`    | Security context for the pods          | `{}`              |
 | `securityContext`       | Security context for the containers    | `{}`              |

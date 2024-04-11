@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "plone.fullname" . }}-frontend
   labels:
@@ -33,6 +33,9 @@ spec:
           env:
             - name: RAZZLE_INTERNAL_API_PATH
               value: http://{{ include "plone.fullname" . }}-backend:8080/Plone
+            {{- range .Values.frontend.env }}
+            - name: "{{ .name }}"
+              value: "{{ .value }}"{{ end }}
           ports:
             - name: frontend
               containerPort: {{ .Values.frontend.service.port }}

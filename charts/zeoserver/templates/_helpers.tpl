@@ -49,14 +49,3 @@ Selector labels
 app.kubernetes.io/name: {{ include "zeo.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
-
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "zeo.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "zeo.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}

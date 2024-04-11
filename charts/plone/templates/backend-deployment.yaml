@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "plone.fullname" . }}-backend
   labels:
@@ -35,6 +35,9 @@ spec:
               value: Plone
             - name: ZEO_ADDRESS
               value: {{ .Release.Name }}-zeoserver:8100
+            {{- range .Values.backend.env }}
+            - name: "{{ .name }}"
+              value: "{{ .value }}"{{ end }}
           ports:
             - name: backend
               containerPort: {{ .Values.backend.service.port }}
