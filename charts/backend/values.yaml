@@ -64,23 +64,23 @@ wsgiini: |-
 zopeconf: |-
   %define INSTANCE $(INSTANCE)
   instancehome $INSTANCE
-  
+
   %define CLIENTHOME $(INSTANCE)/var
   clienthome $CLIENTHOME
-  
+
   debug-mode false
   security-policy-implementation C
   verbose-security off
   default-zpublisher-encoding utf-8
-  
+
   <environment>
     CHAMELEON_CACHE $INSTANCE/var/cache
   </environment>
-  
+
   <dos_protection>
     form-memory-limit $(ZOPE_FORM_MEMORY_LIMIT)
   </dos_protection>
-  
+
   <zodb_db main>
       # Main database
       cache-size $(ZODB_CACHE_SIZE)
@@ -100,18 +100,18 @@ sitezcml: |-
       xmlns="http://namespaces.zope.org/zope"
       xmlns:meta="http://namespaces.zope.org/meta"
       xmlns:five="http://namespaces.zope.org/five">
-  
+
     <include package="Zope2.App" />
-  
+
     <!-- Load the meta -->
     <five:loadProducts file="meta.zcml"/>
-  
+
     <!-- Load the configuration -->
     <five:loadProducts />
-  
+
     <!-- Load the configuration overrides-->
     <five:loadProductsOverrides />
-  
+
   </configure>
 pack:
   command: "[\"/app/bin/zodbpack\", \"/app/etc/zodbpack.conf\"]"
@@ -130,7 +130,7 @@ service:
 
 ingress:
   enabled: false
-  
+
 livenessProbe:
   failureThreshold: 3
   httpGet:
@@ -149,5 +149,5 @@ readinessProbe:
     periodSeconds: 10
     successThreshold: 1
     timeoutSeconds: 15
-  
+
 resources: {}
