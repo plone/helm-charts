@@ -19,6 +19,4 @@ postgresql:
 
 ### Backend
 
-### Volto
-
 ### Ingress

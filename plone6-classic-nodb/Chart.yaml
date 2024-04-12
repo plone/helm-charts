@@ -1,0 +1,11 @@
+apiVersion: v2
+name: plone6-classic-nodb
+description: Helmchart to deploy Plone 6 Classic for use with an external database.
+type: application
+version: 0.1.0
+appVersion: "6.0.10"
+
+dependencies:
+  - name: "backend"
+    version: "0.1.0"
+    repository: "file://../backend"

@@ -9,6 +9,8 @@ There are different ways to use this repository:
 * Add a helm repo and use the published charts - see the next section on how to do this
 * Clone/fork the repository to adapt the charts to your needs or create new charts
 
+Even if you do not want to use Helm for your setup, `helm install --dry-run` might give you some ideas on how to deploy Plone on Kubernetes.
+
 ## Usage
 
 [Helm](https://helm.sh) must be installed to use the charts.  Please refer to

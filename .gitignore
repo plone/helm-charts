@@ -1,2 +1,4 @@
 *.tgz
 diagrams
+charts/
+*.swp
