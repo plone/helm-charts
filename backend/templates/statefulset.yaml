@@ -79,3 +79,23 @@ spec:
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+{{ if and (gt .Values.replicaCount 1.0) (.Values.podDisruptionBudget.enabled) }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "backend.fullname" . }}-pdb
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+spec:
+{{- if .Values.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+{{- end }}
+{{- if .Values.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+{{- end }}
+  selector:
+    matchLabels:
+      app: {{ include "backend.fullname" . }}
+      {{- include "backend.selectorLabels" . | nindent 6 }}
+{{- end }}

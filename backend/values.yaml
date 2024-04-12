@@ -1,4 +1,9 @@
 replicaCount: 2
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 50%
+  # maxUnavailable:
+
 image:
   repository: "docker.io/plone/plone-backend"
   pullPolicy: IfNotPresent
