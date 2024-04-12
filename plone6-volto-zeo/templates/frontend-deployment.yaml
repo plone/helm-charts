@@ -62,3 +62,22 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{ if and (gt .Values.frontend.replicaCount 1.0) (.Values.frontend.podDisruptionBudget.enabled) }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "plone.fullname" . }}-backend-pdb
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+spec:
+{{- if .Values.frontend.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.frontend.podDisruptionBudget.minAvailable }}
+{{- end }}
+{{- if .Values.frontend.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.frontend.podDisruptionBudget.maxUnavailable }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include "plone.backend.selectorLabels" . | nindent 6 }}
+{{- end }}

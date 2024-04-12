@@ -6,6 +6,10 @@ backend:
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
   replicaCount: 1
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 50%
+    # maxUnavailable:
   service:
     type: ClusterIP
     port: 8080
@@ -45,6 +49,10 @@ frontend:
     pullPolicy: IfNotPresent
     tag: "16.21.2"
   replicaCount: 1
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 50%
+    # maxUnavailable:
   service:
     type: ClusterIP
     port: 3000

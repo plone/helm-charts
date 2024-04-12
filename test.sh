@@ -19,6 +19,7 @@ kubectl create namespace plone-helm
 
 for helm_name in plone6-volto-zeo plone6-classic-pg plone6-volto-pg plone6-volto-pg-nginx-varnish; {
     echo Testing $helm_name
+    helm lint ./$helm_name
     helm dependency update ./$helm_name
     helm dependency list ./$helm_name
     helm install -n plone-helm dummy ./$helm_name && sleep 10 && \
