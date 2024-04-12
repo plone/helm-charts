@@ -1,4 +1,7 @@
 # Deployment Scenarious with Kubernetes
+
+DRAFT/WIP
+
 We identified different scenarios for deploying the Plone with Kubernetes.
 This is not meant to be complete, but should work for 80% of the use cases.
 Other use-cases can build on top of these scenarios.
