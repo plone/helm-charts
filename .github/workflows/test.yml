@@ -30,7 +30,8 @@ jobs:
         id: list-changed
         run: |
           # List the changed charts on the target branch and set the 'changed' output to 'true' if there are any changes.
-          CHARTDIRS=$(for chartdir in $foo; do echo -n "--chart-dirs ./${chartdir} "; done)
+          CHARTDIRS=$(for chartdir in $CHARTS_TO_CHECK; do echo -n "--chart-dirs ./${chartdir} "; done)
+          echo $CHARTDIRS
           changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }} $CHARTDIRS )
           if [[ -n "$changed" ]]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
