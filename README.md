@@ -2,7 +2,12 @@
 
 ![test](https://github.com/plone/helm-charts/actions/workflows/test.yml/badge.svg)
 
-Helm Charts for Plone 6. 
+A collection of Helm Charts for Plone 6.
+If you want to run Plone 6 on Kubernetes this is probably a good starting point.
+There are different ways to use this repository:
+
+* Add a helm repo and use the published charts - see the next section on how to do this
+* Clone/fork the repository to adapt the charts to your needs or create new charts
 
 ## Usage
 
