@@ -3,6 +3,9 @@ name: Lint and Test Charts
 
 on: [pull_request, push]
 
+env:
+  CHARTS_TO_CHECK: backend frontend nginx postgres varnish zeoserver plone6-classic-nodb plone6-classic-pg plone6-volto-pg plone6-volto-pg-nginx-varnish plone6-volto-zeo
+
 jobs:
   lint-test:
     runs-on: ubuntu-latest
@@ -27,14 +30,15 @@ jobs:
         id: list-changed
         run: |
           # List the changed charts on the target branch and set the 'changed' output to 'true' if there are any changes.
-          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }} --chart-dirs . --charts .)
+          CHARTDIRS=$(for chartdir in $foo; do echo -n "--chart-dirs ${chartdir} "; done)
+          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }} $CHARTDIRS )
           if [[ -n "$changed" ]]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run chart-testing (lint)
         if: steps.list-changed.outputs.changed == 'true'
-        run: ct lint --target-branch ${{ github.event.repository.default_branch }} --chart-dirs . --charts .
+        run: ct lint --target-branch ${{ github.event.repository.default_branch }} $CHARTDIRS
 
       - name: Create kind cluster
         if: steps.list-changed.outputs.changed == 'true'
@@ -42,4 +46,4 @@ jobs:
 
       - name: Run chart-testing (install)
         if: steps.list-changed.outputs.changed == 'true'
-        run: ct install --target-branch ${{ github.event.repository.default_branch }} --chart-dirs . --charts .
+        run: ct install --target-branch ${{ github.event.repository.default_branch }} $CHARTDIRS
