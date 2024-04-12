@@ -1,4 +1,8 @@
 replicaCount: 2
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 50%
+  # maxUnavailable:
 
 image:
   repository: "nginx"
