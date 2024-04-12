@@ -67,7 +67,7 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: {{ include "plone.fullname" . }}-backend-pdb
+  name: {{ include "plone.fullname" . }}-frontend-pdb
   labels:
     {{- include "plone.labels" . | nindent 4 }}
 spec:
@@ -79,5 +79,5 @@ spec:
 {{- end }}
   selector:
     matchLabels:
-      {{- include "plone.backend.selectorLabels" . | nindent 6 }}
+      {{- include "plone.frontend.selectorLabels" . | nindent 6 }}
 {{- end }}

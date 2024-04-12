@@ -16,7 +16,7 @@ for cmd in kubectl helm; {
 # the relationship between them.
 # https://github.com/trois-six/k8s-diagrams/releases/tag/v0.0.6
 
-generate_k8s_images=true
+generate_k8s_images="${K8S_IMAGES:-false}"
 if ! command -v k8s-diagrams -h &> /dev/null
 then
     generate_k8s_images=false
