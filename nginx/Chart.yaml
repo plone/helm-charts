@@ -4,8 +4,12 @@ description: Helmchart to deploy Nginx for Plone 6 with Volto
 type: application
 version: 0.1.0
 appVersion: "1-120"
+
+home: https://plone.org
 maintainers:
 - name: xiru
 - name: jensens
 - name: fabiorauber
 - name: tschorr
+sources:
+- https://github.com/plone/helm-charts/
