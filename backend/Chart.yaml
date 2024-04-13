@@ -13,8 +13,10 @@ keywords:
 - restapi
 - headless
 home: https://plone.org
-maintainers:
-- name: Plone Foundation and contributors
-  url: https://github.com/plone/helm-charts
 sources:
 - https://github.com/plone/helm-charts/
+maintainers:
+- name: xiru
+- name: jensens
+- name: fabiorauber
+- name: tschorr

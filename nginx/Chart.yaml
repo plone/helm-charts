@@ -5,5 +5,7 @@ type: application
 version: 0.1.0
 appVersion: "1-120"
 maintainers:
-- name: Plone Foundation
-  url: https://plone.org
+- name: xiru
+- name: jensens
+- name: fabiorauber
+- name: tschorr

@@ -1,5 +1,5 @@
 apiVersion: v2
-name: plone
+name: plone6-volto-zeo
 description: A Helm chart for Plone 6
 
 type: application
@@ -17,6 +17,9 @@ dependencies:
 
 home: https://plone.org
 maintainers:
-- name: Plone Foundation and contributors
+- name: xiru
+- name: jensens
+- name: fabiorauber
+- name: tschorr
 sources:
 - https://github.com/plone/helm-charts/

@@ -2,3 +2,6 @@
 diagrams
 charts/
 *.swp
+ct
+chart_schema.yaml
+lintconf.yaml

@@ -30,8 +30,8 @@ service:
 
 resources:
   requests:
-     cpu: 50m
-     memory: 48Mi
+    cpu: 50m
+    memory: 48Mi
 # limits:
 #   cpu: 50m
 #   memory: 48Mi
@@ -45,7 +45,7 @@ resources:
 
 persistence:
   enabled: true
-  #storageClass: ""
+  # storageClass: ""
   accessMode: ReadWriteOnce
   size: 5Gi
 
