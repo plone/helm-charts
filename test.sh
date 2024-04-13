@@ -2,6 +2,18 @@
 
 set -e
 
+# This is a simplified "end to end" test script that installs all Plone helm charts
+# in a local K8S cluster. Please make sure this script runs without errors before
+# doing merging changes (this validation may be done automatically using the Github
+# Actions).
+#
+# Using helm to install Plone assumes you have a running K8S cluster and a properly
+# configures kubectl client. If you want to install a simplificed K8S cluster for
+# development purposes, we suggest the usage of K3D (a thin wrapper around K3S project).
+# Instalation instructions are available on https://k3d.io
+# On Linux systems, you can use the following command:
+# curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+
 for cmd in kubectl helm; {
     if ! command -v $cmd &> /dev/null
     then
