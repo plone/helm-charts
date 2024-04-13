@@ -26,3 +26,5 @@ appVersion: "1.16.0"
 maintainers:
 - name: Plone Foundation
   url: https://plone.org
+sources:
+- https://github.com/plone/helm-charts/
