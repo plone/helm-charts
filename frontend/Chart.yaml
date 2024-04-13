@@ -14,6 +14,5 @@ keywords:
 home: https://plone.org
 maintainers:
 - name: Plone Foundation and contributors
-  url: https://github.com/plone/helm-charts
 sources:
 - https://github.com/plone/helm-charts/
