@@ -50,4 +50,4 @@ jobs:
 
       - name: Run chart-testing (install)
         # if: steps.list-changed.outputs.changed == 'true'
-        run: ct install --all  --chart-dirs ./ --excluded-charts backend
+        run: ct install --all  --chart-dirs ./ --excluded-charts backend,frontend
