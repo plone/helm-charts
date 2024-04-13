@@ -1,11 +1,12 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "backend.fullname" . }}
   labels:
     {{- include "backend.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  serviceName: {{ include "backend.fullname" . }}-director
   selector:
     matchLabels:
       app: {{ include "backend.fullname" . }}
