@@ -26,25 +26,28 @@ jobs:
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2
 
-      - name: Run chart-testing (list-changed)
-        id: list-changed
-        run: |
-          # List the changed charts on the target branch and set the 'changed' output to 'true' if there are any changes.
-          CHARTDIRS=$(for chartdir in $CHARTS_TO_CHECK; do echo -n "--chart-dirs ./${chartdir} "; done)
-          echo $CHARTDIRS
-          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }} $CHARTDIRS )
-          if [[ -n "$changed" ]]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
+      # we can not check against the main branch, because it has a different structure as we are in a refactoring branch
+      # skip this
+      # - name: Run chart-testing (list-changed)
+      #   id: list-changed
+      #   run: |
+      #     # List the changed charts on the target branch and set the 'changed' output to 'true' if there are any changes.
+      #     CHART_DIRS=$(for chartdir in $CHARTS_TO_CHECK; do echo -n ",./${chartdir} "; done)
+      #     echo $CHART_DIRS
+      #     changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }} --chart-dirs $CHART_DIRS )
+      #     if [[ -n "$changed" ]]; then
+      #       echo "changed=true" >> "$GITHUB_OUTPUT"
+      #     fi
 
       - name: Run chart-testing (lint)
-        if: steps.list-changed.outputs.changed == 'true'
-        run: ct lint --target-branch ${{ github.event.repository.default_branch }} $CHARTDIRS
+        # if: steps.list-changed.outputs.changed == 'true'
+        # run: ct lint --target-branch ${{ github.event.repository.default_branch }}  --chart-dirs $CHART_DIRS
+        run: ct lint --all  --chart-dirs $CHART_DIRS ./
 
       - name: Create kind cluster
-        if: steps.list-changed.outputs.changed == 'true'
+        # if: steps.list-changed.outputs.changed == 'true'
         uses: helm/kind-action@v1
 
       - name: Run chart-testing (install)
-        if: steps.list-changed.outputs.changed == 'true'
-        run: ct install --target-branch ${{ github.event.repository.default_branch }} $CHARTDIRS
+        # if: steps.list-changed.outputs.changed == 'true'
+        run: ct install --all  --chart-dirs ./
