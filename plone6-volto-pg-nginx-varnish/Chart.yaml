@@ -1,5 +1,5 @@
 apiVersion: v2
-name: plone6-volto-nginx-pg-varnish
+name: plone6-volto-pg-nginx-varnish
 description: Helmchart to deploy Plone 6 with Volto, PosgreSQL, Varnish and Nginx
 type: application
 version: 0.1.0
