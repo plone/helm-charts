@@ -62,7 +62,7 @@ for helm_name in $(cat all-charts.txt | xargs); {
 
     if [ "$generate_k8s_images" = true ]; then
         dotdir="$(pwd)/$helm_name/diagrams"
-        svgdir="$(pwd)/img/$helm_name"
+        svgdir="$(pwd)/img"
 
         # wait more time, k8s deployment time may vary
         sleep 300
@@ -73,9 +73,9 @@ for helm_name in $(cat all-charts.txt | xargs); {
                      --label "helm $helm_name"
         mkdir -p $svgdir
         cd $dotdir
-        dot -Tsvg k8s.dot > k8s.png
-        dot -Tsvg k8s.dot > k8s.svg
-        cp -prf k8s.png k8s.svg assets $svgdir
+        dot -Tpng k8s.dot > $helm_name.png
+        dot -Tsvg k8s.dot > $helm_name.svg
+        cp -prf $helm_name.png $helm_name.svg assets $svgdir
         cd -
     fi
 
