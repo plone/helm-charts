@@ -13,3 +13,7 @@ dependencies:
   - name: "backend"
     version: "0.1.0"
     repository: "file://../backend"
+
+maintainers:
+- name: Plone Foundation
+  url: https://plone.org

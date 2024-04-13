@@ -28,3 +28,7 @@ dependencies:
   - name: "nginx"
     version: "0.1.0"
     repository: "file://../nginx"
+
+maintainers:
+- name: Plone Foundation
+  url: https://plone.org

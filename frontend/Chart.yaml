@@ -5,3 +5,12 @@ description: Helmchart for a Plone 6 Volto Frontend
 type: application
 version: 0.1.0
 appVersion: "16.24.0"
+
+keywords:
+- plone
+- volto
+- react
+- cms
+maintainers:
+- name: Plone Foundation
+  url: https://plone.org

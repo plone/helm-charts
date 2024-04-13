@@ -17,3 +17,7 @@ dependencies:
   - name: "frontend"
     version: "0.1.0"
     repository: "file://../frontend"
+
+maintainers:
+- name: Plone Foundation
+  url: https://plone.org

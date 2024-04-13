@@ -14,3 +14,7 @@ dependencies:
   version: "0.1.0"
   repository: "file://../zeoserver"
   condition: zeoserver.enabled
+
+maintainers:
+- name: Plone Foundation
+  url: https://plone.org
