@@ -1,10 +1,11 @@
 # This GitHub Actions workflow lints and tests Helm charts on pull requests and pushes to the repository.
 name: Lint and Test Charts
 
-on: [pull_request, push]
-
-env:
-  CHARTS_TO_CHECK: backend frontend nginx postgres varnish zeoserver plone6-classic-nodb plone6-classic-pg plone6-volto-pg plone6-volto-pg-nginx-varnish plone6-volto-zeo
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
   lint-test:
@@ -41,8 +42,8 @@ jobs:
 
       - name: Run chart-testing (lint)
         # if: steps.list-changed.outputs.changed == 'true'
-        # run: ct lint --target-branch ${{ github.event.repository.default_branch }}  --chart-dirs $CHART_DIRS
-        run: ct lint --all  --chart-dirs $CHART_DIRS ./
+        # run: ct lint --target-branch ${{ github.event.repository.default_branch }}
+        run: ct lint --all  --chart-dirs ./
 
       - name: Create kind cluster
         # if: steps.list-changed.outputs.changed == 'true'
