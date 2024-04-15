@@ -16,7 +16,7 @@ postgresql:
 The optional IngressRoute will only work with Traefik Ingress Controller.
 Let's Encrypt is used as ACME provider when TLS is enabled and needs to be properly configured in your cluster.
 
-## Options and Defaults
+## Options and defaults
 
 ### PostgreSQL
 
