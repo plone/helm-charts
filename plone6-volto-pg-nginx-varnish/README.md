@@ -1,6 +1,6 @@
 # Install Plone 6 with RelStorage/PostgreSQL, Volto and optional Traefik IngressRoute
 
-This Helm chart combines the postgresql, backend, frontend, varnish and nginx subcharts to install Plone 6 with RelStorage/PostgreSQL as the database backend, Volto frontend, Varnish as a cache server and Nginx as a reverse proxy server.
+This Helm chart combines the PostgreSQL, backend, frontend, Varnish, and nginx subcharts to install Plone 6 with RelStorage/PostgreSQL as the database backend, Volto frontend, Varnish as a cache server, and nginx as a reverse proxy server.
 
 ## Prerequisites
 
