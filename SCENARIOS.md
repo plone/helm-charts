@@ -31,7 +31,7 @@ This scenario is the minimal default setup for a modern Plone 6 in Kubernetes wi
 It uses a PostgreSQL database and stores the blobs in the database.
 It provides the Plone Backend API server, which is run by the `plone-backend` image.
 The Volto frontend is provided by the `plone-frontend` image.
-Both images are used as-is, without any additional addons.
+Both images are used as-is, without any additional add-ons.
 
 ### Infrastructure
 Additional to scenario 1, this scenario needs a `plone-frontend` pod.
