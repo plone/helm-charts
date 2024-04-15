@@ -38,7 +38,7 @@ Additional to scenario 1, this scenario needs a `plone-frontend` pod.
 `plone-frontend` will be provided as a Deployment with at least two replicas.
 A LoadBalancer service bundles the `plone-frontend` pods.
 
-Also, it needs an ingress with HTTP routing capabilities, e.g. a Traefik ingress controller.
+Also, it needs an ingress with HTTP routing capabilities, such as a Traefik ingress controller.
 Kubernetes environments without such an ingress controller are covered by scenario 3.
 The ingress controller will be configured to route the requests to the `plone-frontend` and `plone-backend` pods, dependent on the requests path.
 
