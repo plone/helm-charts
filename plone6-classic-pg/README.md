@@ -1,6 +1,6 @@
 # Plone 6 Classic (no Volto) with PostgreSQL
 
-This Helm chart combines the postgresql and backend to install Plone 6 with RelStorage/PostgreSQL as the database backend, a Plone backend to use as Plone 6 Classic and optional Ingress.
+This Helm chart combines the PostgreSQL and backend subcharts to install Plone 6 with RelStorage/PostgreSQL as the database backend, Classic UI as the frontend, and an optional Ingress.
 
 ## Prerequisites
 
