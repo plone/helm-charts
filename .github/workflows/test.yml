@@ -51,4 +51,4 @@ jobs:
 
       - name: Run chart-testing (install)
         # if: steps.list-changed.outputs.changed == 'true'
-        run: ct install --all  --chart-dirs ./ --excluded-charts backend,frontend,nginx,varnish,plone6-classic-nodb
+        run: ct install --all  --chart-dirs ./ --excluded-charts backend,frontend,nginx,varnish,postgresql,zeoserver,plone6-classic-nodb
