@@ -48,7 +48,7 @@ Plone with Volto using PostgreSQL and Non-Routing capable Ingress is the same as
 
 ### Infrastructure
 Additional to scenario 2 this scenario needs a `nginx` pod.
-The nginx will be configured to route the requests to the `plone-frontend` and `plone-backend` pods, dependent on the requests path.
+The `nginx` pod will be configured to route the requests to the `plone-frontend` and `plone-backend` pods, depending on the requests path.
 `nginx` will be provided as a Deployment with at least two replicas.
 A LoadBalancer service bundles the `nginx` pods.
 
