@@ -13,7 +13,7 @@ postgresql:
     claimName: <your-pvc>
 ```
 
-## Options and Defaults
+## Options and defaults
 
 ### PostgreSQL
 
