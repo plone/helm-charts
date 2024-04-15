@@ -6,7 +6,7 @@ A collection of Helm Charts for Plone 6.
 If you want to run Plone 6 on Kubernetes, this repository is a good starting point.
 There are different ways to use this repository:
 
-* Add a helm repo and use the published charts - see the next section on how to do this
+* Add a Helm repository, and use the published charts. See the next section on how to do that.
 * As a library of subcharts that you can use to create your own composite charts
 
 Even if you do not want to use Helm for your setup, `helm install --dry-run` might give you some ideas on how to deploy Plone on Kubernetes.
