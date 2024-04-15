@@ -27,7 +27,7 @@ The plone-backend pods are connecting to the PostgreSQL.
 ### Description
 Plone with Volto using PostgreSQL is the next step.
 Volto is the default Plone 6 Frontend.
-This scenario is the minimal default setup for a modern Plone 6 in Kubernetes with a routing-capable ingress controller.
+This scenario is the minimal default setup for a modern Plone 6 site in Kubernetes with a routing-capable ingress controller.
 It uses a PostgreSQL database and stores the blobs in the database.
 It provides the Plone Backend API server, which is run by the `plone-backend` image.
 The Volto frontend is provided by the `plone-frontend` image.
