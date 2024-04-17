@@ -1,4 +1,4 @@
-# Deployment Scenarious with Kubernetes
+# Deployment scenarios with Kubernetes
 
 DRAFT/WIP
 
