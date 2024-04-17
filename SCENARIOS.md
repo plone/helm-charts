@@ -9,7 +9,6 @@ Other use cases can build on top of these scenarios.
 The scenarious are written from simple to complex and build on top of each other.
 
 ## Scenario 1: Plone Classic UI using PostgreSQL
-### Description
 Plone Classic UI with PostgreSQL is the simplest scenario.
 It uses a database, stores the blobs in the database, and uses Classic UI, which is provided by the `plone-backend` container.
 The image is used as-is, without any additional add-ons.
@@ -24,7 +23,6 @@ It needs a PersistentVolumeClaim to store the data.
 The `plone-backend` pods connect to the PostgreSQL pod.
 
 ## Scenario 2: Plone with Volto using PostgreSQL and Routing capable Ingress
-### Description
 Plone with Volto using PostgreSQL is the next step.
 Volto is the default Plone 6 frontend.
 This scenario is the minimal default setup for a modern Plone 6 site in Kubernetes with a routing-capable ingress controller.
@@ -43,11 +41,10 @@ Kubernetes environments without such an ingress controller are covered by scenar
 The ingress controller will be configured to route the requests to the `plone-frontend` and `plone-backend` pods, dependent on the requests path.
 
 ## Scenario 2: Plone with Volto using PostgreSQL and Non-Routing capable Ingress
-### Description
 Plone with Volto using PostgreSQL and Non-Routing capable Ingress is the same as scenario 2, but without the need for a routing-capable ingress controller.
 
 ### Infrastructure
-Additional to scenario 2 this scenario needs a `nginx` pod.
+Additional to scenario 2 this scenario needs an `nginx` pod.
 The `nginx` pod will be configured to route the requests to the `plone-frontend` and `plone-backend` pods, depending on the requests path.
 `nginx` will be provided as a Deployment with at least two replicas.
 A LoadBalancer service bundles the `nginx` pods.
