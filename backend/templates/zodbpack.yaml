@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-zodbpack
+  labels:
+    {{ include "backend.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.pack.schedule }}
+  concurrencyPolicy: "Forbid"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          volumes:
+            - name: backend-config
+              configMap:
+                name: {{ include "backend.fullname" . }}
+          containers:
+            - env:
+              - name: INSTANCE
+                value: {{ .Values.instancehome }}
+              - name: DBHOST
+                value: {{ .Values.databasehost | default (printf "%s-postgresql" ( .Release.Name )) }}
+              - name: DBPORT
+                value: "{{ .Values.databaseport | default 5432 }}"
+              - name: DBNAME
+                value: {{ .Values.databasename | default "plone" }}
+              - name: DBUSER
+                value: {{ .Values.databaseuser | default "plone" }}
+              - name: DBPASSWORD
+                value: {{ .Values.databasepassword | default "plone" }}
+              name: zodbpack
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: {{ .Values.pack.command }}
+              volumeMounts:
+                - mountPath: {{ .Values.instancehome }}/etc
+                  name: backend-config
+                  readOnly: true
+              resources:
+                {{- toYaml .Values.resources | nindent 15 }}
+          restartPolicy: Never

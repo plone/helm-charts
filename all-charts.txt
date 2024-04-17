@@ -1,0 +1,5 @@
+plone6-classic-nodb
+plone6-classic-pg
+plone6-volto-pg
+plone6-volto-pg-nginx-varnish
+plone6-volto-zeo

@@ -1,7 +1,11 @@
 # This GitHub Actions workflow lints and tests Helm charts on pull requests and pushes to the repository.
 name: Lint and Test Charts
 
-on: [pull_request, push]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
   lint-test:
@@ -13,35 +17,38 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Helm
-        uses: azure/setup-helm@v3
-        with:
-          version: v3.11.2
+        uses: azure/setup-helm@v4
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.12'
           check-latest: true
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.4.0
+        uses: helm/chart-testing-action@v2
 
-      - name: Run chart-testing (list-changed)
-        id: list-changed
-        run: |
-          # List the changed charts on the target branch and set the 'changed' output to 'true' if there are any changes.
-          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
-          if [[ -n "$changed" ]]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
+      # we can not check against the main branch, because it has a different structure as we are in a refactoring branch
+      # skip this
+      # - name: Run chart-testing (list-changed)
+      #   id: list-changed
+      #   run: |
+      #     # List the changed charts on the target branch and set the 'changed' output to 'true' if there are any changes.
+      #     CHART_DIRS=$(for chartdir in $CHARTS_TO_CHECK; do echo -n ",./${chartdir} "; done)
+      #     echo $CHART_DIRS
+      #     changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }} --chart-dirs $CHART_DIRS )
+      #     if [[ -n "$changed" ]]; then
+      #       echo "changed=true" >> "$GITHUB_OUTPUT"
+      #     fi
 
       - name: Run chart-testing (lint)
-        if: steps.list-changed.outputs.changed == 'true'
-        run: ct lint --target-branch ${{ github.event.repository.default_branch }}
+        # if: steps.list-changed.outputs.changed == 'true'
+        # run: ct lint --target-branch ${{ github.event.repository.default_branch }}
+        run: ct lint --all  --chart-dirs ./
 
       - name: Create kind cluster
-        if: steps.list-changed.outputs.changed == 'true'
-        uses: helm/kind-action@v1.8.0
+        # if: steps.list-changed.outputs.changed == 'true'
+        uses: helm/kind-action@v1
 
       - name: Run chart-testing (install)
-        if: steps.list-changed.outputs.changed == 'true'
-        run: ct install --target-branch ${{ github.event.repository.default_branch }}
+        # if: steps.list-changed.outputs.changed == 'true'
+        run: ct install --all  --chart-dirs ./ --excluded-charts backend,frontend,nginx,varnish,postgresql,zeoserver,plone6-classic-nodb

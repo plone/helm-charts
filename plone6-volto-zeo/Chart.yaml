@@ -1,0 +1,25 @@
+apiVersion: v2
+name: plone6-volto-zeo
+description: A Helm chart for Plone 6
+
+type: application
+
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.1.0
+
+appVersion: "6.0.5"
+
+dependencies:
+- name: zeoserver
+  version: "0.1.0"
+  repository: "file://../zeoserver"
+  condition: zeoserver.enabled
+
+home: https://plone.org
+maintainers:
+- name: xiru
+- name: jensens
+- name: fabiorauber
+- name: tschorr
+sources:
+- https://github.com/plone/helm-charts/

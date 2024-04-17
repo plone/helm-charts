@@ -1,0 +1,39 @@
+apiVersion: v2
+name: plone6-volto-pg-nginx-varnish
+description: Helmchart to deploy Plone 6 with Volto, PosgreSQL, Varnish and Nginx
+type: application
+version: 0.1.0
+appVersion: "6.0.10"
+
+dependencies:
+  - name: "postgresql"
+    version: "0.1.0"
+    repository: "file://../postgresql"
+
+  - name: "varnish"
+    version: "0.1.0"
+    repository: "file://../varnish"
+    import-values:
+      - child: service
+        parent: nginx.varnish
+
+  - name: "backend"
+    version: "0.1.0"
+    repository: "file://../backend"
+
+  - name: "frontend"
+    version: "0.1.0"
+    repository: "file://../frontend"
+
+  - name: "nginx"
+    version: "0.1.0"
+    repository: "file://../nginx"
+
+home: https://plone.org
+maintainers:
+- name: xiru
+- name: jensens
+- name: fabiorauber
+- name: tschorr
+sources:
+- https://github.com/plone/helm-charts/
