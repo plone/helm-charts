@@ -1,0 +1,18 @@
+dependencies:
+- name: postgresql
+  repository: file://../postgresql
+  version: 0.1.0
+- name: varnish
+  repository: file://../varnish
+  version: 0.1.0
+- name: backend
+  repository: file://../backend
+  version: 0.1.0
+- name: frontend
+  repository: file://../frontend
+  version: 0.1.0
+- name: nginx
+  repository: file://../nginx
+  version: 0.1.0
+digest: sha256:c0c61882724bf4e164fb5ece43c0b68cc3c174f1c3d14316a8e3b8ed46a7d283
+generated: "2024-02-28T16:19:17.310697758+01:00"

@@ -1,0 +1,21 @@
+apiVersion: v2
+name: frontend
+description: Helmchart for a Plone 6 Volto Frontend
+
+type: application
+version: 0.1.0
+appVersion: "16.24.0"
+
+keywords:
+- plone
+- volto
+- react
+- cms
+home: https://plone.org
+maintainers:
+- name: xiru
+- name: jensens
+- name: fabiorauber
+- name: tschorr
+sources:
+- https://github.com/plone/helm-charts/

@@ -1,0 +1,18 @@
+apiVersion: v2
+name: zeoserver
+description: ZEO Server for Plone
+
+type: application
+
+version: 0.1.0
+
+appVersion: "5.3.0"
+
+home: https://plone.org
+maintainers:
+- name: xiru
+- name: jensens
+- name: fabiorauber
+- name: tschorr
+sources:
+- https://github.com/plone/helm-charts/

@@ -1,0 +1,92 @@
+{{- if .Values.ingressroute.enabled -}}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-backend-vhm-api
+spec:
+  replacePathRegex:
+    regex: "^/\\+\\+api\\+\\+($$|/.*)"
+    {{- if .Values.ingressroute.tls }}
+    replacement: "/VirtualHostBase/https/{{ .Values.ingressroute.host }}:443/Plone/++api++/VirtualHostRoot$1"
+    {{- else }}
+    replacement: "/VirtualHostBase/http/{{ .Values.ingressroute.host }}:{{ .Values.ingressroute.port }}/Plone/++api++/VirtualHostRoot$1"
+    {{- end }}
+{{- if .Values.ingressroute.tls }}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: tlsoptions
+spec:
+  minVersion: VersionTLS12
+  cipherSuites:
+      - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+      - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+      - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+      - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+      - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+      - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+      - TLS_AES_256_GCM_SHA384
+      - TLS_AES_128_GCM_SHA256
+      - TLS_CHACHA20_POLY1305_SHA256
+      - TLS_FALLBACK_SCSV
+  curvePreferences:
+    - CurveP521
+    - CurveP384
+  sniStrict: false
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: security
+spec:
+  headers:
+    frameDeny: true
+    sslRedirect: true
+    browserXssFilter: true
+    contentTypeNosniff: true
+    stsIncludeSubdomains: true
+    stsPreload: true
+    stsSeconds: 31536000
+{{- end }}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  entryPoints:
+    {{- if .Values.ingressroute.tls }}
+    - websecure
+    {{- else }}
+    - web
+    {{- end }}
+  routes:
+    - match: "Host(`{{ .Values.ingressroute.host }}`) && PathPrefix(`/++api++`)"
+      kind: Rule
+      services:
+      - name: {{ .Release.Name }}-backend
+        port: 8080
+      middlewares:
+      - name: {{ .Release.Name }}-backend-vhm-api
+      {{- if .Values.ingressroute.tls }}
+      - name: security
+      {{- end }}
+    - match: "Host(`{{ .Values.ingressroute.host }}`)"
+      kind: Rule
+      services:
+      - name: {{ .Release.Name }}-frontend
+        port: 3000
+      {{- if .Values.ingressroute.tls }}
+      middlewares:
+      - name: security
+      {{- end }}
+  {{- if .Values.ingressroute.tls }}
+  tls:
+    certResolver: le
+    options:
+      name: tlsoptions
+  {{- end }}
+{{- end }}

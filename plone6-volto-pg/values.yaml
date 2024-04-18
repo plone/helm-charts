@@ -1,0 +1,16 @@
+# Default values for plone6-volto-pg.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+backend:
+  replicaCount: 1
+
+frontend:
+  replicaCount: 1
+
+# IngressRoute for Traefik Ingress Controller
+ingressroute:
+  enabled: true
+  host: localhost
+  port: 80
+  tls: false

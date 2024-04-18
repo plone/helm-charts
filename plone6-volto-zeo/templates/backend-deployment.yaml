@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "plone.fullname" . }}-backend
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "plone.backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.backend.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "plone.backend.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.backend.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}-backend
+          securityContext:
+            {{- toYaml .Values.backend.securityContext | nindent 12 }}
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          env:
+            - name: SITE
+              value: Plone
+            - name: ZEO_ADDRESS
+              value: {{ .Release.Name }}-zeoserver:8100
+            {{- range .Values.backend.env }}
+            - name: "{{ .name }}"
+              value: "{{ .value }}"{{ end }}
+          ports:
+            - name: backend
+              containerPort: {{ .Values.backend.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: backend
+          readinessProbe:
+            httpGet:
+              path: /
+              port: backend
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+      {{- with .Values.backend.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.backend.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.backend.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{ if and (gt .Values.backend.replicaCount 1.0) (.Values.backend.podDisruptionBudget.enabled) }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "plone.fullname" . }}-backend-pdb
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+spec:
+{{- if .Values.backend.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.backend.podDisruptionBudget.minAvailable }}
+{{- end }}
+{{- if .Values.backend.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.backend.podDisruptionBudget.maxUnavailable }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include "plone.backend.selectorLabels" . | nindent 6 }}
+{{- end }}

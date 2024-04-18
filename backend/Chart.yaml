@@ -1,0 +1,22 @@
+apiVersion: v2
+name: backend
+description: Plone Backend Subchart
+
+type: application
+version: 0.1.0
+appVersion: "6.0.10"
+
+keywords:
+- plone
+- zope
+- cms
+- restapi
+- headless
+home: https://plone.org
+sources:
+- https://github.com/plone/helm-charts/
+maintainers:
+- name: xiru
+- name: jensens
+- name: fabiorauber
+- name: tschorr

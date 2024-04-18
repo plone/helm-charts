@@ -1,0 +1,28 @@
+apiVersion: v2
+name: plone6-volto-pg
+description: Helmchart to deploy Plone 6 with Volto, PosgreSQL and optional Traefik IngressRoute
+type: application
+version: 0.1.0
+appVersion: "6.0.10"
+
+dependencies:
+  - name: "postgresql"
+    version: "0.1.0"
+    repository: "file://../postgresql"
+
+  - name: "backend"
+    version: "0.1.0"
+    repository: "file://../backend"
+
+  - name: "frontend"
+    version: "0.1.0"
+    repository: "file://../frontend"
+
+home: https://plone.org
+maintainers:
+- name: xiru
+- name: jensens
+- name: fabiorauber
+- name: tschorr
+sources:
+- https://github.com/plone/helm-charts/

@@ -1,0 +1,33 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "varnish.fullname" . }}
+  labels:
+    {{- include "varnish.labels" . | nindent 4 }}
+data:
+  default.vcl: |-
+    # https://www.varnish-software.com/developers/tutorials/multiple-backends/#loadbalancing-requests-between-multiple-backends
+
+    vcl 4.1;
+
+    import directors;
+
+    {{- $name := .Release.Name -}}
+    {{- $replicas := .Values.replicaCount | int -}}
+    {{- range until $replicas }}
+    backend backend{{ . }} {
+        .host = "{{ $name }}-backend-{{ . }}.{{ $name }}-backend-director";
+        .port = "8080";
+    }
+    {{- end }}
+
+    sub vcl_init {
+        new vdir = directors.round_robin();
+        {{- range until $replicas }}
+        vdir.add_backend(backend{{ . }});
+        {{- end }}
+    }
+
+    sub vcl_recv {
+        set req.backend_hint = vdir.backend();
+    }

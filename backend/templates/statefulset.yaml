@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "backend.fullname" . }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  serviceName: {{ include "backend.fullname" . }}-director
+  selector:
+    matchLabels:
+      app: {{ include "backend.fullname" . }}
+      {{- include "backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        app: {{ include "backend.fullname" . }}
+        {{- include "backend.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+        - name: backend-config
+          configMap:
+            name: {{ include "backend.fullname" . }}
+        {{- if .Values.blobcache.persistent }}
+        - name: blobcache
+          persistentVolumeClaim:
+            claimName: blobcache
+        {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          env:
+            - name: INSTANCE
+              value: {{ .Values.instancehome }}
+            - name: DBHOST
+              value: {{ .Values.databasehost | default (printf "%s-postgresql" ( .Release.Name )) }}
+            - name: DBPORT
+              value: "{{ .Values.databaseport | default 5432 }}"
+            - name: DBNAME
+              value: {{ .Values.databasename | default "plone" }}
+            - name: DBUSER
+              value: {{ .Values.databaseuser | default "plone" }}
+            - name: DBPASSWORD
+              value: {{ .Values.databasepassword | default "plone" }}
+            - name: BLOB_CACHE_SIZE
+              value: {{ .Values.blobcache.size }}
+            - name: ZODB_CACHE_SIZE
+              value: "{{ .Values.cachesize }}"
+            - name: ZOPE_FORM_MEMORY_LIMIT
+              value: {{ .Values.formmemorylimit }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command: {{ .Values.command }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          volumeMounts:
+            - mountPath: {{ .Values.instancehome }}/etc
+              name: backend-config
+              readOnly: true
+            {{- if .Values.blobcache.persistent }}
+            - mountPath: {{ .Values.instancehome }}/var/blobstorage
+              name: blobcache
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+{{ if and (gt .Values.replicaCount 1.0) (.Values.podDisruptionBudget.enabled) }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "backend.fullname" . }}-pdb
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+spec:
+{{- if .Values.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+{{- end }}
+{{- if .Values.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+{{- end }}
+  selector:
+    matchLabels:
+      app: {{ include "backend.fullname" . }}
+      {{- include "backend.selectorLabels" . | nindent 6 }}
+{{- end }}
