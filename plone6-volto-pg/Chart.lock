@@ -8,5 +8,5 @@ dependencies:
 - name: frontend
   repository: file://../frontend
   version: 0.1.0
-digest: sha256:adbab63529ea6d2218fe6a4082641772135490c4b084046d76bb435fafb0c278
-generated: "2024-03-18T11:44:30.206892524+01:00"
+digest: sha256:39d2391bb09ce45b2f4d74a3a7e81daeb03116dbe7e7283313371a74c2eb694a
+generated: "2024-04-25T15:34:06.495598179+02:00"
