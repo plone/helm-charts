@@ -5,5 +5,5 @@ dependencies:
 - name: backend
   repository: file://../backend
   version: 0.1.0
-digest: sha256:0124dc4272c82a6e45a0dcd283a9db30e0ea89560a34f09f2db70647773869aa
-generated: "2024-02-29T09:45:43.136454372+01:00"
+digest: sha256:2f0e17bb66b4eb2c0aaf0f982b64239c01a2dd05bba2216e4e6125c268e5ee94
+generated: "2024-04-25T14:55:45.570229902+02:00"

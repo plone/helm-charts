@@ -32,11 +32,20 @@ spec:
         - name: {{ .Chart.Name }}
           env:
             - name: POSTGRES_DB
-              value: {{ .Values.dbname }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.dbsecret.name }}
+                  key: database-name
             - name: POSTGRES_PASSWORD
-              value: {{ .Values.dbpassword }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.dbsecret.name }}
+                  key: database-password
             - name: POSTGRES_USER
-              value: {{ .Values.dbuser }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.dbsecret.name }}
+                  key: database-user
             - name: PGDATA
               value: /var/lib/postgresql/data/userdata
           securityContext:

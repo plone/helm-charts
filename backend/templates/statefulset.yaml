@@ -48,11 +48,20 @@ spec:
             - name: DBPORT
               value: "{{ .Values.databaseport | default 5432 }}"
             - name: DBNAME
-              value: {{ .Values.databasename | default "plone" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.dbsecret.name }}
+                  key: database-name
             - name: DBUSER
-              value: {{ .Values.databaseuser | default "plone" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.dbsecret.name }}
+                  key: database-user
             - name: DBPASSWORD
-              value: {{ .Values.databasepassword | default "plone" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.dbsecret.name }}
+                  key: database-password
             - name: BLOB_CACHE_SIZE
               value: {{ .Values.blobcache.size }}
             - name: ZODB_CACHE_SIZE
