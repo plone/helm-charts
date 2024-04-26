@@ -9,7 +9,7 @@ RelStorage/PostgreSQL is the expected database backend.
 An external database is needed for this setup to work.
 The external database can be located inside or outside of your Kubernetes cluster, or the namespace you use to install this chart, as long as it is accessible.
 
-Database credentials (database name, user name, password) are expected in a secret.
+Database credentials (database name, user name, and password) are expected in a secret.
 The secret name defaults to `plonedb`.
 
 [Create the secret](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl/#create-a-secret) e.g. using `kubectl`:
