@@ -22,7 +22,7 @@ postgresql:
 Database credentials (database name, user name, password) are expected in a secret.
 The secret name defaults to `plonedb`.
 
-[Create the secret](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl/#create-a-secret) e.g. using `kubectl`:
+Using the `kubectl` command, you can create a secret.
 
 ```shell
 kubectl create secret generic plonedb \
