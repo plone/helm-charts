@@ -8,7 +8,8 @@ RelStorage/PostgreSQL is the expected database backend.
 
 An external PostgreSQL database cluster is needed for this setup to work.
 The external database can be located inside or outside of your Kubernetes cluster, or the namespace you use to install this chart, as long as it is accessible.
-You will need to access to the PostgreSQL database cluster for Plone, see the next section.
+You will need to configure access to the PostgreSQL database cluster for Plone.
+See the next section.
 
 Database credentials (database name, user name, and password) are expected in a secret.
 The secret name defaults to `plonedb`.
