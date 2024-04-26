@@ -43,7 +43,8 @@ backend:
   databasehost: your.db.host
 ```
 The PostgreSQL database cluster host.
-There is no sensible default for this option, you will have to modify it.
+There is no sensible default for this option.
+You will have to modify it.
 
 ```yaml
 backend:
