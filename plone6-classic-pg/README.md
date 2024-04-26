@@ -39,6 +39,8 @@ postgresql:
     name: <your-secret>
 ```
 
+See also the Kubernetes documentation [Create a Secret](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl/#create-a-secret).
+
 ## Options and defaults
 
 ### PostgreSQL
