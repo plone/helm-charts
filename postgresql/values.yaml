@@ -12,9 +12,11 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-dbname: plone
-dbuser: plone
-dbpassword: plone
+# XXX We want to import this key in other charts, but import-values currently doesn't work with
+# single values, see https://github.com/helm/helm/issues/2746. There is a chance we can simplify this
+# once https://github.com/helm/helm/pull/9818 is merged.
+dbsecret:
+  name: plonedb
 
 podAnnotations: {}
 podLabels: {}

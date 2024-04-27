@@ -13,6 +13,8 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+dbsecret: {}
+
 podAnnotations: {}
 instancehome: /app
 command: "[\"/app/bin/runwsgi\", \"/app/etc/wsgi.ini\"]"

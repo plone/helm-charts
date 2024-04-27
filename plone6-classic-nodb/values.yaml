@@ -5,8 +5,8 @@
 backend:
   databasehost: your.db.host
   databaseport: 5432
-  databaseuser: plone
-  databasepassword: plone
+  dbsecret:
+    name: plonedb
   ingress:
     enabled: true
     className: ""

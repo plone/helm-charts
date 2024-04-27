@@ -32,11 +32,20 @@ spec:
               - name: DBPORT
                 value: "{{ .Values.databaseport | default 5432 }}"
               - name: DBNAME
-                value: {{ .Values.databasename | default "plone" }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.dbsecret.name }}
+                    key: database-name
               - name: DBUSER
-                value: {{ .Values.databaseuser | default "plone" }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.dbsecret.name }}
+                    key: database-user
               - name: DBPASSWORD
-                value: {{ .Values.databasepassword | default "plone" }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.dbsecret.name }}
+                    key: database-password
               name: zodbpack
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
               imagePullPolicy: {{ .Values.image.pullPolicy }}

@@ -9,6 +9,9 @@ dependencies:
   - name: "postgresql"
     version: "0.1.0"
     repository: "file://../postgresql"
+    import-values:
+      - child: dbsecret
+        parent: backend.dbsecret
 
   - name: "backend"
     version: "0.1.0"

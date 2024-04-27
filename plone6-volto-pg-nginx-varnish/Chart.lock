@@ -14,5 +14,5 @@ dependencies:
 - name: nginx
   repository: file://../nginx
   version: 0.1.0
-digest: sha256:c0c61882724bf4e164fb5ece43c0b68cc3c174f1c3d14316a8e3b8ed46a7d283
-generated: "2024-02-28T16:19:17.310697758+01:00"
+digest: sha256:e91bba4e6bb943d5ff9a851baaf72c3316ba35b91cb8c2a4e70ee9d891213567
+generated: "2024-04-25T15:34:56.512707063+02:00"
