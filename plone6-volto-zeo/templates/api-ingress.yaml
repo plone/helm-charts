@@ -19,9 +19,8 @@ metadata:
   name: {{ $fullName }}-api
   labels:
     {{- include "plone.labels" . | nindent 4 }}
-  {{- with .Values.apiIngress.annotations }}
   annotations:
-    {{- if contains "nginx" .Values.ingress.class }}
+    {{- if contains "nginx" .Values.ingress.className }}
     nginx.ingress.kubernetes.io/use-regex: "true"
       {{- if .Values.ingress.tls }}
     nginx.ingress.kubernetes.io/rewrite-target: "/VirtualHostBase/https/{{ $hostName }}:443/Plone/++api++/VirtualHostRoot/$2"
@@ -30,8 +29,9 @@ metadata:
       {{- end }}
     nginx.ingress.kubernetes.io/service-upstream: "true"
     {{- end }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- with .Values.apiIngress.annotations }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   {{- if and .Values.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
   ingressClassName: {{ .Values.ingress.className }}
