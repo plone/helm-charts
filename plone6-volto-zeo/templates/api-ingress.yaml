@@ -50,7 +50,7 @@ spec:
     - host: {{ $hostName }}
       http:
         paths:
-          - path: /\+\+api\+\+($|/.*)
+          - path: /\+\+api\+\+($|/)(.*)
             {{- if semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion }}
             pathType: ImplementationSpecific
             {{- end }}
