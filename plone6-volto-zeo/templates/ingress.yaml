@@ -18,13 +18,13 @@ metadata:
   name: {{ $fullName }}
   labels:
     {{- include "plone.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
   annotations:
-    {{- if contains "nginx" .Values.ingress.class }}
+    {{- if contains "nginx" .Values.ingress.className }}
     nginx.ingress.kubernetes.io/service-upstream: "true"
     {{- end }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- with .Values.ingress.annotations }}
+       {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   {{- if and .Values.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
   ingressClassName: {{ .Values.ingress.className }}
