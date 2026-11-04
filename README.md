@@ -119,6 +119,9 @@ The [`charts/plone/ci`](charts/plone/ci) directory has the values of the scenari
 With `routing.type: gateway`, the chart only creates an HTTPRoute, attached to an existing Gateway with `routing.gateway.parentRefs`, see [Routing](docs/components/routing.md#gateway-api-routing).
 Installing the Gateway API CRDs, an implementation, and the Gateway is outside the scope of this chart: see the [Gateway API guides](https://gateway-api.sigs.k8s.io/guides/) and the documentation of your implementation.
 Many implementations install the Gateway API CRDs themselves.
+To try the chart on [Rancher Desktop or k3s with Traefik](docs/prerequisites/rancher-desktop.md), enable the Gateway API provider of Traefik first.
+
+Unlike Ingress, which has a default IngressClass, Gateway API has no default Gateway in its standard channel: each HTTPRoute names the Gateways it attaches to, so set `routing.gateway.parentRefs` to the Gateway of your cluster.
 
 The HTTPRoute only uses features of the Gateway API standard channel (`URLRewrite` with `ReplacePrefixMatch`), so it works with any conformant implementation, such as [Envoy Gateway](https://gateway.envoyproxy.io), [Traefik](https://doc.traefik.io/traefik/routing/providers/kubernetes-gateway/), [Istio](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/), [Cilium](https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/), or [NGINX Gateway Fabric](https://docs.nginx.com/nginx-gateway-fabric/).
 See the [list of implementations](https://gateway-api.sigs.k8s.io/implementations/).
