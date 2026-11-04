@@ -28,26 +28,51 @@ backend:
       user: username
       password: password
 
-nginx:
-  service:
-    port: 8081
-  servernameOverride: "localhost"
-  ingress:
+# Routing of the requests:
+# - /++api++ goes to the backend through Varnish, rewritten to the Zope virtual
+#   host path /VirtualHostBase/<scheme>/<hostname>:<port>/<siteId>/++api++/VirtualHostRoot
+# - everything else goes to the Volto frontend
+routing:
+  # gateway: a Gateway API HTTPRoute attached to an existing Gateway
+  # ingress-nginx: Ingress resources with ingress-nginx annotations
+  # none: no routing resources, bring your own
+  type: gateway
+  # Public hostname of the site.
+  hostname: localhost
+  # Whether clients reach the site over HTTPS, and on which port (defaults to
+  # 443 with HTTPS, 80 without). Used to build the virtual host URLs; TLS
+  # itself is terminated by the Gateway or the ingress controller.
+  https: false
+  port: ""
+  # Id of the Plone site object in Zope.
+  siteId: Plone
+  # Let browsers cache the static assets of the frontend (/static).
+  staticCache:
     enabled: true
-    className: ""
-    annotations:
-      {}
-      # kubernetes.io/ingress.class: nginx
-      # kubernetes.io/tls-acme: "true"
-    hosts:
-      - host: localhost
-        paths:
-          - path: /
-            pathType: ImplementationSpecific
+    cacheControl: "public, max-age=31536000"
+
+  gateway:
+    # Gateways the HTTPRoute attaches to. They must exist already, usually
+    # managed by the cluster administrator.
+    parentRefs:
+      - name: plone
+        # namespace: gateway-system
+        # sectionName: http
+    annotations: {}
+
+  # The ingress-nginx project is retired since March 2026 and gets no more
+  # security fixes. Prefer the gateway type for new installations.
+  ingressNginx:
+    className: nginx
+    annotations: {}
+      # cert-manager.io/cluster-issuer: "letsencrypt-prod"
     tls: []
-    #  - secretName: chart-example-tls
+    #  - secretName: plone-tls
     #    hosts:
-    #      - chart-example.local
+    #      - plone.example.com
+    # Static asset caching needs the configuration-snippet annotation, which
+    # ingress-nginx only accepts with allow-snippet-annotations enabled.
+    allowSnippets: false
 
 # Values for the Varnish Cache community chart (varnish-cache).
 # See https://github.com/varnish/helm-varnish-cache for all options.

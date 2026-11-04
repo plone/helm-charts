@@ -1,0 +1,96 @@
+{{- if eq .Values.routing.type "ingress-nginx" }}
+{{- $r := .Values.routing }}
+{{- $n := $r.ingressNginx }}
+# API requests go to the backend through Varnish, rewritten to the Zope virtual host path.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-api
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: {{ printf "%s$1" (include "plone.routing.apiPath" .) | quote }}
+    {{- with $n.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ $n.className }}
+  {{- with $n.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    - host: {{ $r.hostname | quote }}
+      http:
+        paths:
+          - path: /\+\+api\+\+($|/.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "plone.routing.apiService" . }}
+                port:
+                  number: {{ include "plone.routing.apiPort" . }}
+{{- if and $r.staticCache.enabled $n.allowSnippets }}
+---
+# Static assets of the frontend can be cached by browsers.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-static
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "Cache-Control: {{ $r.staticCache.cacheControl }}";
+    {{- with $n.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ $n.className }}
+  {{- with $n.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    - host: {{ $r.hostname | quote }}
+      http:
+        paths:
+          - path: /static
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "plone.routing.frontendService" . }}
+                port:
+                  number: {{ include "plone.routing.frontendPort" . }}
+{{- end }}
+---
+# Everything else goes to the frontend.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+  {{- with $n.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ $n.className }}
+  {{- with $n.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    - host: {{ $r.hostname | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "plone.routing.frontendService" . }}
+                port:
+                  number: {{ include "plone.routing.frontendPort" . }}
+{{- end }}

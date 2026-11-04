@@ -26,7 +26,7 @@ plone` to see the charts.
 
 ## PostgreSQL with CloudNativePG
 
-The charts that use PostgreSQL (`plone6-classic-pg`, `plone6-volto-pg`, and `plone6-volto-pg-nginx-varnish`) don't ship their own database chart.
+The charts that use PostgreSQL (`plone6-classic-pg`, `plone6-volto-pg`, and `plone6-volto-pg-varnish`) don't ship their own database chart.
 They create a PostgreSQL cluster with the [`cluster` chart](https://github.com/cloudnative-pg/charts/tree/main/charts/cluster) of [CloudNativePG](https://cloudnative-pg.io), a CNCF project.
 The cluster is run by the CloudNativePG operator, which takes care of the database pods, volumes, credentials, failover, and backups.
 

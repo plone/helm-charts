@@ -49,6 +49,13 @@ then
     exit 1
 fi
 
+# plone6-volto-pg-varnish creates a Gateway API HTTPRoute by default.
+if ! kubectl get crd httproutes.gateway.networking.k8s.io &> /dev/null
+then
+    echo "Gateway API CRDs not found, see plone6-volto-pg-varnish/README.md on how to install them"
+    exit 1
+fi
+
 helm repo add cnpg https://cloudnative-pg.github.io/charts
 
 function finish {

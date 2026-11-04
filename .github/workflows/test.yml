@@ -55,6 +55,10 @@ jobs:
           helm repo add cnpg https://cloudnative-pg.github.io/charts
           helm upgrade --install cnpg cnpg/cloudnative-pg --namespace cnpg-system --create-namespace --wait
 
+      # plone6-volto-pg-varnish creates an HTTPRoute by default.
+      - name: Install Gateway API CRDs
+        run: kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.7.0/standard-install.yaml
+
       - name: Run chart-testing (install)
         # if: steps.list-changed.outputs.changed == 'true'
-        run: ct install --all  --chart-dirs ./ --chart-repos cnpg=https://cloudnative-pg.github.io/charts --excluded-charts backend,frontend,nginx,zeoserver,plone6-classic-nodb
+        run: ct install --all  --chart-dirs ./ --chart-repos cnpg=https://cloudnative-pg.github.io/charts --excluded-charts backend,frontend,zeoserver,plone6-classic-nodb

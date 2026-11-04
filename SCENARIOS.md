@@ -40,12 +40,14 @@ Also, it needs an ingress with HTTP routing capabilities, such as a Traefik ingr
 Kubernetes environments without such an ingress controller are covered by scenario 3.
 The ingress controller will be configured to route the requests to the `plone-frontend` and `plone-backend` pods, dependent on the requests path.
 
-## Scenario 2: Plone with Volto using PostgreSQL and Non-Routing capable Ingress
-Plone with Volto using PostgreSQL and Non-Routing capable Ingress is the same as scenario 2, but without the need for a routing-capable ingress controller.
+## Scenario 3: Plone with Volto using PostgreSQL, Varnish, and Gateway API
+Plone with Volto using PostgreSQL, Varnish, and Gateway API is the same as scenario 2, with a Varnish cache in front of the `plone-backend` pods, and routing done with Gateway API.
 
 ### Infrastructure
-Additional to scenario 2 this scenario needs an `nginx` pod.
-The `nginx` pod will be configured to route the requests to the `plone-frontend` and `plone-backend` pods, depending on the requests path.
-`nginx` will be provided as a Deployment with at least two replicas.
-A LoadBalancer service bundles the `nginx` pods.
+Additional to scenario 2 this scenario needs `varnish` pods.
+`varnish` will be provided as a StatefulSet with at least two replicas, balancing the requests between the `plone-backend` pods.
+
+Instead of a reverse proxy pod, the routing is done by a Gateway API HTTPRoute, which any conformant Gateway API implementation supports.
+It routes the `/++api++` requests to the `varnish` pods, rewriting their path for the Zope virtual host monster, and all other requests to the `plone-frontend` pods.
+Clusters that still run the retired ingress-nginx controller can use Ingress resources with ingress-nginx annotations instead.
 
