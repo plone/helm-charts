@@ -9,7 +9,7 @@ It works with any of the other scenarios.
 
 ## Prerequisites
 
-* The [ingress-nginx controller](../README.md#ingress-nginx)
+* The [ingress-nginx controller](../../README.md#ingress-nginx)
 * The prerequisites of the scenario it's combined with, except Gateway API
 
 ## Values
@@ -44,6 +44,6 @@ With Volto, the chart creates two Ingress resources:
 
 With the Classic UI, it creates a single `<release>` Ingress, sending everything to the backend (or Varnish), rewritten to the Zope virtual host path.
 
-See [ingress-nginx routing](../README.md#ingress-nginx-routing) for the details.
+See [ingress-nginx routing](../components/routing.md#ingress-nginx-routing) for the details.
 
-Combined with Varnish, this scenario is tested by [`ci/varnish-ingress-nginx-values.yaml`](../charts/plone/ci/varnish-ingress-nginx-values.yaml).
+Combined with Varnish, this scenario is tested by [`ci/varnish-ingress-nginx-values.yaml`](../../charts/plone/ci/varnish-ingress-nginx-values.yaml).

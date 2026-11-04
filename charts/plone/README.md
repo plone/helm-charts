@@ -35,14 +35,14 @@ Then open http://localhost:3000.
 
 ## Scenarios
 
-* [Volto with PostgreSQL](https://github.com/plone/helm-charts/blob/main/scenarios/volto-postgresql.md) (default)
-* [Volto with PostgreSQL and Varnish](https://github.com/plone/helm-charts/blob/main/scenarios/volto-postgresql-varnish.md)
-* [Volto with ZEO](https://github.com/plone/helm-charts/blob/main/scenarios/volto-zeo.md)
-* [Classic UI with PostgreSQL](https://github.com/plone/helm-charts/blob/main/scenarios/classic-postgresql.md)
-* [Classic UI with ZEO](https://github.com/plone/helm-charts/blob/main/scenarios/classic-zeo.md)
-* [External PostgreSQL](https://github.com/plone/helm-charts/blob/main/scenarios/external-postgresql.md)
-* [External ZEO server](https://github.com/plone/helm-charts/blob/main/scenarios/external-zeo.md)
-* [ingress-nginx routing](https://github.com/plone/helm-charts/blob/main/scenarios/ingress-nginx.md)
-* [No routing](https://github.com/plone/helm-charts/blob/main/scenarios/no-routing.md)
+* [Volto with PostgreSQL](https://github.com/plone/helm-charts/blob/main/docs/scenarios/volto-postgresql.md) (default)
+* [Volto with PostgreSQL and Varnish](https://github.com/plone/helm-charts/blob/main/docs/scenarios/volto-postgresql-varnish.md)
+* [Volto with ZEO](https://github.com/plone/helm-charts/blob/main/docs/scenarios/volto-zeo.md)
+* [Classic UI with PostgreSQL](https://github.com/plone/helm-charts/blob/main/docs/scenarios/classic-postgresql.md)
+* [Classic UI with ZEO](https://github.com/plone/helm-charts/blob/main/docs/scenarios/classic-zeo.md)
+* [External PostgreSQL](https://github.com/plone/helm-charts/blob/main/docs/scenarios/external-postgresql.md)
+* [External ZEO server](https://github.com/plone/helm-charts/blob/main/docs/scenarios/external-zeo.md)
+* [ingress-nginx routing](https://github.com/plone/helm-charts/blob/main/docs/scenarios/ingress-nginx.md)
+* [No routing](https://github.com/plone/helm-charts/blob/main/docs/scenarios/no-routing.md)
 
 All values are documented in [`values.yaml`](values.yaml).

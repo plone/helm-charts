@@ -5,7 +5,7 @@ Use it if you prefer the ZODB file storage over PostgreSQL, or to move an existi
 
 ## Prerequisites
 
-* [Gateway API](../README.md#gateway-api): the CRDs, an implementation, and a Gateway
+* [Gateway API](../../README.md#gateway-api): the CRDs, an implementation, and a Gateway
 
 It doesn't need the CloudNativePG operator.
 
@@ -40,8 +40,8 @@ Requests flow as follows:
 
 ZEO is a single server: the backend pods can scale, but the ZEO server can't.
 Its data is stored in a 5Gi persistent volume, which is kept when you uninstall the chart.
-See [ZEO](../README.md#zeo) for its options.
+See [ZEO](../components/storage.md#zeo) for its options.
 
 `postgresql.enabled` must be `false`, so that the chart doesn't create a PostgreSQL cluster that Plone wouldn't use.
 
-This scenario is tested by [`ci/zeo-values.yaml`](../charts/plone/ci/zeo-values.yaml).
+This scenario is tested by [`ci/zeo-values.yaml`](../../charts/plone/ci/zeo-values.yaml).

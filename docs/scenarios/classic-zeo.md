@@ -4,7 +4,7 @@ Plone with the Classic UI, rendered by the backend, without the Volto frontend, 
 
 ## Prerequisites
 
-* [Gateway API](../README.md#gateway-api): the CRDs, an implementation, and a Gateway
+* [Gateway API](../../README.md#gateway-api): the CRDs, an implementation, and a Gateway
 
 It doesn't need the CloudNativePG operator.
 

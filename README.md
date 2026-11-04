@@ -27,23 +27,17 @@ Even if you do not want to use Helm for your setup, `helm template` might give y
 
 ## Components
 
-Depending on the values, the chart creates:
+Depending on the values, the chart installs:
 
-| Component | Resources | Created when |
+| Component | Installed when | Documentation |
 |---|---|---|
-| Backend | StatefulSet `<release>-backend`, services `<release>-backend` and `<release>-backend-director` | always |
-| Frontend | Deployment and service `<release>-frontend` | `frontend.enabled` (default) |
-| PostgreSQL | CloudNativePG cluster `<release>-postgresql` | `postgresql.enabled` (default) |
-| ZEO server | StatefulSet and service `<release>-zeo` | `storage.type: zeo`, without `storage.zeo.address` |
-| Varnish | Deployment and service `<release>-varnish` | `varnish.enabled` |
-| Pack job | CronJob `<release>-pack` | `pack.enabled` (default) |
-| Routing | HTTPRoute, or Ingress resources | `routing.type` other than `none` |
-
-The PostgreSQL cluster and Varnish are installed with community charts:
-the [`cluster` chart](https://github.com/cloudnative-pg/charts/tree/main/charts/cluster) of CloudNativePG, and the [`varnish-cache` chart](https://github.com/varnish/helm-varnish-cache) of Varnish Software.
-
-The backend runs the [`plone-backend` image](https://6.docs.plone.org/install/containers/images/backend.html), configured with its environment variables.
-On its first start, it creates the Plone site: a Volto site with the frontend, a Classic UI site without it.
+| Plone backend | always | [Backend](docs/components/backend.md), [Site](docs/components/site.md) |
+| Volto frontend | `frontend.enabled` (default) | [Frontend](docs/components/frontend.md) |
+| PostgreSQL cluster (CloudNativePG) | `postgresql.enabled` (default) | [Storage](docs/components/storage.md#relstorage-and-postgresql) |
+| ZEO server | `storage.type: zeo` | [Storage](docs/components/storage.md#zeo) |
+| Varnish | `varnish.enabled` | [Varnish](docs/components/varnish.md) |
+| Pack job | `pack.enabled` (default) | [Storage](docs/components/storage.md#packing) |
+| Routing | `routing.type` other than `none` | [Routing](docs/components/routing.md) |
 
 ## Quick start
 
@@ -89,26 +83,26 @@ Please refer to Helm's [documentation](https://helm.sh/docs) to get started.
 The backend creates the Plone site on its first start, which takes a few minutes.
 Follow it with `kubectl logs --namespace plone plone-backend-0 --follow`.
 
-Then [change the password of the `admin` user](#admin-user).
+Then [change the password of the `admin` user](docs/components/site.md#admin-user).
 
 ## Scenarios
 
-Each scenario is a set of values, described in its own page in the [`scenarios`](scenarios) directory.
+Each scenario is a set of values, described in its own page in the [`docs/scenarios`](docs/scenarios) directory.
 Put the values in a file, and install the chart with `--values <file>`.
 The scenarios can be combined: for example, add `varnish.enabled: true` to any of them, or replace the Gateway API routing with ingress-nginx.
 The chart fails with an explanation when the values don't make sense together.
 
 | Scenario | UI | Storage | Database or server | Routing |
 |---|---|---|---|---|
-| [Volto with PostgreSQL](scenarios/volto-postgresql.md) (default) | Volto | RelStorage | CloudNativePG | Gateway API |
-| [Volto with PostgreSQL and Varnish](scenarios/volto-postgresql-varnish.md) | Volto | RelStorage | CloudNativePG | Gateway API |
-| [Volto with ZEO](scenarios/volto-zeo.md) | Volto | ZEO | ZEO server of the chart | Gateway API |
-| [Classic UI with PostgreSQL](scenarios/classic-postgresql.md) | Classic | RelStorage | CloudNativePG | Gateway API |
-| [Classic UI with ZEO](scenarios/classic-zeo.md) | Classic | ZEO | ZEO server of the chart | Gateway API |
-| [External PostgreSQL](scenarios/external-postgresql.md) | any | RelStorage | your PostgreSQL server | any |
-| [External ZEO server](scenarios/external-zeo.md) | any | ZEO | your ZEO server | any |
-| [ingress-nginx routing](scenarios/ingress-nginx.md) | any | any | any | ingress-nginx |
-| [No routing](scenarios/no-routing.md) | any | any | any | your own |
+| [Volto with PostgreSQL](docs/scenarios/volto-postgresql.md) (default) | Volto | RelStorage | CloudNativePG | Gateway API |
+| [Volto with PostgreSQL and Varnish](docs/scenarios/volto-postgresql-varnish.md) | Volto | RelStorage | CloudNativePG | Gateway API |
+| [Volto with ZEO](docs/scenarios/volto-zeo.md) | Volto | ZEO | ZEO server of the chart | Gateway API |
+| [Classic UI with PostgreSQL](docs/scenarios/classic-postgresql.md) | Classic | RelStorage | CloudNativePG | Gateway API |
+| [Classic UI with ZEO](docs/scenarios/classic-zeo.md) | Classic | ZEO | ZEO server of the chart | Gateway API |
+| [External PostgreSQL](docs/scenarios/external-postgresql.md) | any | RelStorage | your PostgreSQL server | any |
+| [External ZEO server](docs/scenarios/external-zeo.md) | any | ZEO | your ZEO server | any |
+| [ingress-nginx routing](docs/scenarios/ingress-nginx.md) | any | any | any | ingress-nginx |
+| [No routing](docs/scenarios/no-routing.md) | any | any | any | your own |
 
 The [`charts/plone/ci`](charts/plone/ci) directory has the values of the scenarios tested on every change of the chart.
 
@@ -239,285 +233,15 @@ The NGINX Ingress Controller by F5 is a different product with different annotat
 ## Configuration
 
 All values are documented in [`charts/plone/values.yaml`](charts/plone/values.yaml).
-This section explains the main ones.
-
-### Replicas and high availability
-
-By default, each component runs a single pod: one backend, one frontend, one PostgreSQL instance, and one Varnish pod when enabled.
-For high availability, run more pods of each:
-
-```yaml
-backend:
-  replicas: 2
-frontend:
-  replicas: 2
-postgresql:
-  cluster:
-    instances: 3
-    enablePDB: true
-varnish:
-  server:
-    replicas: 2
-    pdb:
-      enabled: true
-```
-
-With more than one replica, the chart creates a PodDisruptionBudget for the backend and the frontend, keeping at least half of their pods running during voluntary disruptions, such as node drains.
-The PodDisruptionBudgets of PostgreSQL and Varnish come from their charts, so enable them as above when you run more instances.
-They are disabled by default, because with a single pod they would block node drains.
-
-The ZEO server is a single pod, and can't be replicated.
-
-### Site
-
-```yaml
-site:
-  id: Plone
-  create: true
-  profiles: ""
-  defaultLanguage: ""
-```
-
-With `site.create`, the backend creates a Plone site with the id `site.id` on its start, if it doesn't exist yet.
-The type of the site follows `frontend.enabled`: a Volto site with the frontend, a Classic UI site without it.
-`site.profiles` lists add-on profiles to apply when creating the site, comma separated, and `site.defaultLanguage` sets its language, such as `en` or `pt-br`.
-These values only apply when the site is created, and changing them later has no effect on an existing site.
-
-To create the site yourself, set `site.create` to `false`, and use `kubectl port-forward` to the backend to open the Zope root.
-
-The site id is also used in the virtual host paths of the routing, and in the API URL of the frontend.
-
-#### Admin user
-
-The `plone-backend` image comes with a Zope `admin` user with the password `admin`.
-Change it before exposing the site:
-
-1. Forward a local port to the backend:
-
-   ```shell
-   kubectl port-forward --namespace <namespace> service/<release>-backend 8080:8080
-   ```
-
-2. Open http://localhost:8080/acl_users/manage_main, log in as `admin`, select the `admin` user, and change its password.
-
-### Storage
-
-`storage.type` selects how Plone stores its database:
-
-* `relstorage` (default): RelStorage on PostgreSQL. Objects and blobs are stored in the database, and each backend pod only keeps a cache.
-* `zeo`: a ZEO server. The backend pods are its clients.
-
-#### RelStorage and PostgreSQL
-
-With `postgresql.enabled` (default), the chart creates a PostgreSQL cluster with the CloudNativePG `cluster` chart, named `<release>-postgresql`, with:
-
-* one instance, with an 8Gi volume created by the operator
-* a `plone` database, owned by the `plone` user
-* a `<release>-postgresql-app` secret with the generated credentials of the `plone` user
-* a `<release>-postgresql-rw` service that always points to the primary instance
-
-The backend connects to `<release>-postgresql-rw` with the credentials from `<release>-postgresql-app`.
-You don't need to create a PersistentVolumeClaim or a credentials secret.
-
-All options of the `cluster` chart can be set under the `postgresql` key.
-For example, to run three instances with automatic failover:
-
-```yaml
-postgresql:
-  cluster:
-    instances: 3
-    enablePDB: true
-```
-
-See the [`cluster` chart documentation](https://github.com/cloudnative-pg/charts/tree/main/charts/cluster) for backups, monitoring, connection pooling, and recovery.
-To connect through a connection pooler, set `storage.relstorage.host` to the service of the pooler.
-
-Other RelStorage options:
-
-```yaml
-storage:
-  relstorage:
-    # Keep the history of the objects, needed for undo.
-    keepHistory: true
-    # Size of the blob cache of each backend pod.
-    blobCacheSize: 100mb
-```
-
-To use an external PostgreSQL server, see [External PostgreSQL](scenarios/external-postgresql.md).
-
-#### ZEO
-
-With `storage.type: zeo` and no `storage.zeo.address`, the chart deploys a ZEO server with the [`plone-zeo` image](https://6.docs.plone.org/install/containers/images/zeo.html), storing its data in a 5Gi persistent volume:
-
-```yaml
-storage:
-  type: zeo
-  zeo:
-    clientCacheSize: 128MB
-    server:
-      persistence:
-        enabled: true
-        storageClass: ""
-        size: 5Gi
-postgresql:
-  enabled: false
-```
-
-Set `postgresql.enabled` to `false` with ZEO, so that the chart doesn't create a PostgreSQL cluster that Plone wouldn't use.
-The volume is created from a volume claim template of the ZEO StatefulSet, so it's kept when you uninstall the chart.
-
-To use an external ZEO server, see [External ZEO server](scenarios/external-zeo.md).
-
-### Packing
-
-The `<release>-pack` CronJob packs the database regularly, removing old object revisions and unused objects, with `zodbpack` for RelStorage and `zeopack` for ZEO:
-
-```yaml
-pack:
-  enabled: true
-  schedule: "45 9 * * *"
-  # Keep the history of the last days. 0 packs everything.
-  days: 0
-```
-
-### Backend
-
-```yaml
-backend:
-  replicas: 1
-  zodbCacheSize: 50000
-  env: []
-  resources:
-    requests:
-      cpu: 100m
-      memory: 300Mi
-```
-
-`backend.env` adds environment variables to the backend, see the [`plone-backend` image documentation](https://6.docs.plone.org/install/containers/images/backend.html) for the supported ones.
-The image tag defaults to the chart `appVersion`.
-To run your own image with add-ons, set `backend.image.repository` and `backend.image.tag`.
-
-The backend is a StatefulSet, with the headless `<release>-backend-director` service that StatefulSets require, so that each pod has a stable name.
-Its startup probe allows 10 minutes for the first start, during which the site is created.
-
-### Frontend
-
-```yaml
-frontend:
-  enabled: true
-  image:
-    repository: docker.io/plone/plone-frontend
-    tag: "19.6.1"
-  replicas: 1
-  env: []
-```
-
-Set `frontend.enabled` to `false` for the Classic UI.
-To run your own Volto project, set `frontend.image.repository` and `frontend.image.tag`.
-The frontend calls the backend directly for server-side rendering, through `RAZZLE_INTERNAL_API_PATH`, and the browsers call it through the `/++api++` route.
-
-### Varnish
-
-With `varnish.enabled`, the chart installs Varnish with the `varnish-cache` chart, and routes the backend requests through it.
-The default configuration runs one Varnish replica, as a Deployment, behind a `ClusterIP` service on port 6081.
-See [Replicas and high availability](#replicas-and-high-availability) to run more.
-
-The VCL is set in `varnish.server.vclConfig`.
-The default VCL has a single backend, the `<release>-backend` Service:
-
-```yaml
-varnish:
-  enabled: true
-  server:
-    replicas: 1
-    vclConfig: |
-      vcl 4.1;
-
-      backend default {
-          .host = "{{ .Release.Name }}-backend";
-          .port = "8080";
-      }
-```
-
-The Service balances the connections of Varnish between the backend pods, and only sends them to the pods that are ready, so the VCL doesn't depend on the number of backend pods.
-Kubernetes balances per connection, not per request, but Varnish keeps a pool of connections to the backend, which spreads the load between the pods.
-
-To customize the caching, replace `varnish.server.vclConfig` with your own VCL, keeping the backend.
-It's rendered as a template by the `varnish-cache` chart, with its own values, so it can use `.Release.Name`, but not the values of this chart.
-If you set `fullnameOverride`, set the backend host to `<fullnameOverride>-backend`.
-The `varnish-cache` chart restarts the Varnish pods when the VCL changes.
-
-All the options of the `varnish-cache` chart can be set under `varnish`, see its [documentation](https://github.com/varnish/helm-varnish-cache).
-
-### Routing
-
-The routing sends the requests to the frontend and the backend:
-
-* With Volto:
-  * `/++api++` goes to the backend (through Varnish if enabled), rewritten for the Zope virtual host monster, for example `/++api++/news` becomes `/VirtualHostBase/https/plone.example.com:443/Plone/++api++/VirtualHostRoot/news`, so that the backend generates URLs with the public hostname.
-  * Everything else goes to the frontend. The frontend itself sends the caching headers of its static assets, with a one year `max-age` for `/static`.
-* With the Classic UI, everything goes to the backend (through Varnish if enabled), rewritten to `/VirtualHostBase/https/plone.example.com:443/Plone/VirtualHostRoot/...`.
-
-The options shared by both routing types are:
-
-```yaml
-routing:
-  # gateway, ingress-nginx, or none
-  type: gateway
-  # Public hostname of the site.
-  hostname: plone.example.com
-  # Whether clients use HTTPS, and on which port. The port defaults to 443
-  # with HTTPS and 80 without.
-  https: true
-  port: ""
-```
-
-TLS itself is terminated by the Gateway or the ingress controller, not by Plone.
-`routing.https` and `routing.port` only tell Plone which scheme and port the clients use, for the URLs it generates.
-
-#### Gateway API routing
-
-```yaml
-routing:
-  type: gateway
-  gateway:
-    parentRefs:
-      - name: plone
-        namespace: gateway-system
-        sectionName: https
-    annotations: {}
-```
-
-`routing.gateway.parentRefs` lists the Gateways, and optionally their listeners, that the HTTPRoute attaches to.
-Check that the Gateway accepted the route with:
-
-```shell
-kubectl describe httproute --namespace <namespace> <release>
-```
-
-#### ingress-nginx routing
-
-```yaml
-routing:
-  type: ingress-nginx
-  ingressNginx:
-    className: nginx
-    annotations: {}
-    tls: []
-```
-
-With Volto, the chart creates:
-
-* `<release>-api`: the `/++api++` route, with the `use-regex` and `rewrite-target` annotations for the virtual host path
-* `<release>`: the route to the frontend
-
-With the Classic UI, it creates a single `<release>` Ingress to the backend, with the `use-regex` and `rewrite-target` annotations.
-
-The annotations in `routing.ingressNginx.annotations` are added to all the Ingress resources, for example for cert-manager.
-The chart doesn't use snippet annotations, which recent ingress-nginx versions reject by default.
-
-When an Ingress with the `use-regex` annotation exists for a host, ingress-nginx treats the paths of all the Ingress resources of that host as regular expressions.
-The paths created by this chart work either way.
+The [`docs/components`](docs/components) directory explains the main ones, per component:
+
+* [Site](docs/components/site.md): the Plone site created on the first start, and the `admin` user
+* [Storage](docs/components/storage.md): RelStorage on PostgreSQL with CloudNativePG, ZEO, and packing
+* [Backend](docs/components/backend.md): the `plone-backend` image, its pods, and environment variables
+* [Frontend](docs/components/frontend.md): the Volto frontend, or the Classic UI without it
+* [Varnish](docs/components/varnish.md): the optional cache in front of the backend, and its VCL
+* [Routing](docs/components/routing.md): Gateway API, ingress-nginx, and the Zope virtual host paths
+* [Replicas and high availability](docs/components/high-availability.md): running more pods of each component
 
 ## Migrating from the previous charts
 

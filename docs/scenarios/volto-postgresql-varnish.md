@@ -5,8 +5,8 @@ Varnish sends the requests it doesn't cache to the backend Service, which balanc
 
 ## Prerequisites
 
-* The [CloudNativePG operator](../README.md#cloudnativepg-operator)
-* [Gateway API](../README.md#gateway-api): the CRDs, an implementation, and a Gateway
+* The [CloudNativePG operator](../../README.md#cloudnativepg-operator)
+* [Gateway API](../../README.md#gateway-api): the CRDs, an implementation, and a Gateway
 
 ## Values
 
@@ -36,8 +36,8 @@ Requests flow as follows:
 * everything else: Gateway → frontend pods
 
 Varnish is installed with the `varnish-cache` chart of Varnish Software, as a Deployment with one pod.
-See [Varnish](../README.md#varnish) to customize the VCL.
+See [Varnish](../components/varnish.md) to customize the VCL.
 
 Varnish can be added to any other scenario in the same way, with `varnish.enabled: true`.
 
-This scenario, with ingress-nginx routing, is tested by [`ci/varnish-ingress-nginx-values.yaml`](../charts/plone/ci/varnish-ingress-nginx-values.yaml).
+This scenario, with ingress-nginx routing, is tested by [`ci/varnish-ingress-nginx-values.yaml`](../../charts/plone/ci/varnish-ingress-nginx-values.yaml).

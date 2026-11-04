@@ -4,8 +4,8 @@ Plone with the Classic UI, rendered by the backend, without the Volto frontend, 
 
 ## Prerequisites
 
-* The [CloudNativePG operator](../README.md#cloudnativepg-operator)
-* [Gateway API](../README.md#gateway-api): the CRDs, an implementation, and a Gateway
+* The [CloudNativePG operator](../../README.md#cloudnativepg-operator)
+* [Gateway API](../../README.md#gateway-api): the CRDs, an implementation, and a Gateway
 
 ## Values
 
@@ -34,4 +34,4 @@ For example, `/news` becomes `/VirtualHostBase/https/plone.example.com:443/Plone
 
 The backend creates a Classic UI site on its first start.
 
-This scenario is tested by [`ci/classic-values.yaml`](../charts/plone/ci/classic-values.yaml).
+This scenario is tested by [`ci/classic-values.yaml`](../../charts/plone/ci/classic-values.yaml).

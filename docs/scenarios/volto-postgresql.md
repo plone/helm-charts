@@ -5,8 +5,8 @@ This is the default scenario, and the recommended setup for new sites.
 
 ## Prerequisites
 
-* The [CloudNativePG operator](../README.md#cloudnativepg-operator)
-* [Gateway API](../README.md#gateway-api): the CRDs, an implementation, and a Gateway
+* The [CloudNativePG operator](../../README.md#cloudnativepg-operator)
+* [Gateway API](../../README.md#gateway-api): the CRDs, an implementation, and a Gateway
 
 ## Values
 
@@ -38,8 +38,8 @@ The chart creates:
 * the backend StatefulSet, with one pod
 * the frontend Deployment, with one pod
 * a PostgreSQL cluster with one instance
+* an HTTPRoute attached to the Gateway, see [Gateway API routing](../components/routing.md#gateway-api-routing)
 
-See [Replicas and high availability](../README.md#replicas-and-high-availability) to run more pods of each.
-* an HTTPRoute attached to the Gateway, see [Gateway API routing](../README.md#gateway-api-routing)
+See [Replicas and high availability](../components/high-availability.md) to run more pods of each.
 
-This scenario is tested by [`ci/default-values.yaml`](../charts/plone/ci/default-values.yaml).
+This scenario is tested by [`ci/default-values.yaml`](../../charts/plone/ci/default-values.yaml).
