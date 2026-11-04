@@ -38,4 +38,4 @@ and open http://localhost:8080/{{ .Values.site.id }}.
 {{- end }}
 
 The plone-backend image comes with an "admin" user with the password "admin".
-Change it before exposing the site, see the chart README.
+Change it before exposing the site, see https://github.com/plone/helm-charts#admin-user.
