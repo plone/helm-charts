@@ -5,7 +5,7 @@ Use it if you prefer the ZODB file storage over PostgreSQL, or to move an existi
 
 ## Prerequisites
 
-* [Gateway API](../../README.md#gateway-api): the CRDs, an implementation, and a Gateway
+* A [Gateway API](../../README.md#gateway-api) implementation, and a Gateway
 
 It doesn't need the CloudNativePG operator.
 

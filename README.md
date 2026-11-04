@@ -44,7 +44,7 @@ Depending on the values, the chart installs:
 [Helm](https://helm.sh) must be installed to use the chart.
 Please refer to Helm's [documentation](https://helm.sh/docs) to get started.
 
-1. Install the CloudNativePG operator, see [CloudNativePG operator](#cloudnativepg-operator):
+1. Install the CloudNativePG operator, see [CloudNativePG operator](docs/prerequisites/cloudnativepg.md):
 
    ```shell
    helm repo add cnpg https://cloudnative-pg.github.io/charts
@@ -110,119 +110,18 @@ The [`charts/plone/ci`](charts/plone/ci) directory has the values of the scenari
 
 * Kubernetes 1.29 or later
 * Helm 3.8 or later, for the OCI registry of the `varnish-cache` chart
-* For the PostgreSQL scenarios with `postgresql.enabled`: the [CloudNativePG operator](#cloudnativepg-operator)
-* For `routing.type: gateway`: the [Gateway API CRDs, an implementation, and a Gateway](#gateway-api)
-* For `routing.type: ingress-nginx`: the [ingress-nginx controller](#ingress-nginx)
-
-### CloudNativePG operator
-
-The PostgreSQL cluster is run by the CloudNativePG operator, a CNCF project, which takes care of the database pods, volumes, credentials, failover, and backups.
-Install it once per Kubernetes cluster, before you install the chart.
-It needs permissions to create cluster-wide resources (CustomResourceDefinitions and ClusterRoles), usually as a cluster administrator.
-
-With Helm:
-
-```shell
-helm repo add cnpg https://cloudnative-pg.github.io/charts
-helm upgrade --install cnpg cnpg/cloudnative-pg \
-    --namespace cnpg-system --create-namespace --wait
-```
-
-Or with `kubectl`, from the release manifest:
-
-```shell
-kubectl apply --server-side -f \
-    https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.30/releases/cnpg-1.30.1.yaml
-kubectl rollout status deployment -n cnpg-system cnpg-controller-manager
-```
-
-Check that the operator is installed with:
-
-```shell
-kubectl get crd clusters.postgresql.cnpg.io
-```
-
-To upgrade the operator later, run the same commands with a newer version.
-See the [CloudNativePG installation documentation](https://cloudnative-pg.io/documentation/current/installation_upgrade/) for other methods, such as OLM, and for upgrade notes.
+* For the PostgreSQL scenarios with `postgresql.enabled`: the [CloudNativePG operator](docs/prerequisites/cloudnativepg.md)
+* For `routing.type: gateway`: a [Gateway API](#gateway-api) implementation, and a Gateway
+* For `routing.type: ingress-nginx`: the [ingress-nginx](#ingress-nginx) controller
 
 ### Gateway API
 
-With `routing.type: gateway`, the chart creates an HTTPRoute attached to an existing Gateway.
-It only uses features of the Gateway API standard channel (`URLRewrite` with `ReplacePrefixMatch`), so it works with any conformant implementation, such as [Envoy Gateway](https://gateway.envoyproxy.io), [Traefik](https://doc.traefik.io/traefik/routing/providers/kubernetes-gateway/), [Istio](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/), [Cilium](https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/), or [NGINX Gateway Fabric](https://docs.nginx.com/nginx-gateway-fabric/).
+With `routing.type: gateway`, the chart only creates an HTTPRoute, attached to an existing Gateway with `routing.gateway.parentRefs`, see [Routing](docs/components/routing.md#gateway-api-routing).
+Installing the Gateway API CRDs, an implementation, and the Gateway is outside the scope of this chart: see the [Gateway API guides](https://gateway-api.sigs.k8s.io/guides/) and the documentation of your implementation.
+Many implementations install the Gateway API CRDs themselves.
+
+The HTTPRoute only uses features of the Gateway API standard channel (`URLRewrite` with `ReplacePrefixMatch`), so it works with any conformant implementation, such as [Envoy Gateway](https://gateway.envoyproxy.io), [Traefik](https://doc.traefik.io/traefik/routing/providers/kubernetes-gateway/), [Istio](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/), [Cilium](https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/), or [NGINX Gateway Fabric](https://docs.nginx.com/nginx-gateway-fabric/).
 See the [list of implementations](https://gateway-api.sigs.k8s.io/implementations/).
-
-#### Install the Gateway API CRDs
-
-Many implementations install the Gateway API CRDs themselves, so check their documentation first.
-Otherwise, install the standard channel CRDs with:
-
-```shell
-kubectl apply --server-side -f \
-    https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.7.0/standard-install.yaml
-```
-
-Check that they are installed with:
-
-```shell
-kubectl get crd httproutes.gateway.networking.k8s.io
-```
-
-#### Install an implementation
-
-For example, to install Envoy Gateway with Helm:
-
-```shell
-helm install eg oci://docker.io/envoyproxy/gateway-helm \
-    --version v1.9.3 \
-    --namespace envoy-gateway-system --create-namespace --wait
-```
-
-Then create its GatewayClass:
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1
-kind: GatewayClass
-metadata:
-  name: eg
-spec:
-  controllerName: gateway.envoyproxy.io/gatewayclass-controller
-```
-
-Follow the documentation of your implementation for production settings.
-
-#### Create a Gateway
-
-The Gateway is usually shared by several applications and managed by the cluster administrator, so this chart doesn't create it.
-For example, a Gateway named `plone` with an HTTP listener, and an HTTPS listener with a certificate in the `plone-tls` secret:
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: plone
-  namespace: gateway-system
-spec:
-  gatewayClassName: eg
-  listeners:
-    - name: http
-      protocol: HTTP
-      port: 80
-      allowedRoutes:
-        namespaces:
-          from: All
-    - name: https
-      protocol: HTTPS
-      port: 443
-      hostname: plone.example.com
-      tls:
-        certificateRefs:
-          - name: plone-tls
-      allowedRoutes:
-        namespaces:
-          from: All
-```
-
-[cert-manager](https://cert-manager.io/docs/usage/gateway/) can issue the certificate for the HTTPS listener.
 
 ### ingress-nginx
 

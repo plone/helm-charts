@@ -5,8 +5,8 @@ This is the default scenario, and the recommended setup for new sites.
 
 ## Prerequisites
 
-* The [CloudNativePG operator](../../README.md#cloudnativepg-operator)
-* [Gateway API](../../README.md#gateway-api): the CRDs, an implementation, and a Gateway
+* The [CloudNativePG operator](../prerequisites/cloudnativepg.md)
+* A [Gateway API](../../README.md#gateway-api) implementation, and a Gateway
 
 ## Values
 

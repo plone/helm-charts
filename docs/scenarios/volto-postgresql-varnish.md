@@ -5,8 +5,8 @@ Varnish sends the requests it doesn't cache to the backend Service, which balanc
 
 ## Prerequisites
 
-* The [CloudNativePG operator](../../README.md#cloudnativepg-operator)
-* [Gateway API](../../README.md#gateway-api): the CRDs, an implementation, and a Gateway
+* The [CloudNativePG operator](../prerequisites/cloudnativepg.md)
+* A [Gateway API](../../README.md#gateway-api) implementation, and a Gateway
 
 ## Values
 

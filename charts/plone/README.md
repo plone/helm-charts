@@ -13,7 +13,7 @@ The full documentation, with the prerequisites, the scenarios, and the configura
 
 ## Quick start
 
-The default scenario needs the [CloudNativePG operator](https://github.com/plone/helm-charts#cloudnativepg-operator):
+The default scenario needs the [CloudNativePG operator](https://github.com/plone/helm-charts/blob/main/docs/prerequisites/cloudnativepg.md):
 
 ```shell
 helm repo add cnpg https://cloudnative-pg.github.io/charts

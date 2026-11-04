@@ -46,14 +46,14 @@ fi
 # CloudNativePG operator, which must be installed in the cluster.
 if ! kubectl get crd clusters.postgresql.cnpg.io &> /dev/null
 then
-    echo "CloudNativePG operator not found, see README.md on how to install it"
+    echo "CloudNativePG operator not found, see docs/prerequisites/cloudnativepg.md on how to install it"
     exit 1
 fi
 
 # The gateway routing creates a Gateway API HTTPRoute.
 if ! kubectl get crd httproutes.gateway.networking.k8s.io &> /dev/null
 then
-    echo "Gateway API CRDs not found, see README.md on how to install them"
+    echo "Gateway API CRDs not found, see https://gateway-api.sigs.k8s.io/guides/ on how to install them"
     exit 1
 fi
 
