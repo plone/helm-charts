@@ -18,3 +18,47 @@ nginx:
     #  - secretName: chart-example-tls
     #    hosts:
     #      - chart-example.local
+
+# Values for the Varnish Cache community chart (varnish-cache).
+# See https://github.com/varnish/helm-varnish-cache for all options.
+varnish:
+  # Number of backend replicas to balance in the VCL below. Keep it in sync
+  # with backend.replicaCount.
+  ploneBackendReplicas: 2
+  server:
+    kind: StatefulSet
+    replicas: 2
+    pdb:
+      enabled: true
+      minAvailable: 50%
+    service:
+      type: ClusterIP
+      http:
+        port: 6081
+    # Round-robin requests between the backend pods, addressed through the
+    # headless "<release>-backend-director" service.
+    # https://www.varnish-software.com/developers/tutorials/multiple-backends/#loadbalancing-requests-between-multiple-backends
+    vclConfig: |
+      vcl 4.1;
+
+      import directors;
+
+      {{- $name := .Release.Name -}}
+      {{- $replicas := .Values.ploneBackendReplicas | int -}}
+      {{- range until $replicas }}
+      backend backend{{ . }} {
+          .host = "{{ $name }}-backend-{{ . }}.{{ $name }}-backend-director";
+          .port = "8080";
+      }
+      {{- end }}
+
+      sub vcl_init {
+          new vdir = directors.round_robin();
+          {{- range until $replicas }}
+          vdir.add_backend(backend{{ . }});
+          {{- end }}
+      }
+
+      sub vcl_recv {
+          set req.backend_hint = vdir.backend();
+      }

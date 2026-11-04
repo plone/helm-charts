@@ -2,9 +2,9 @@ dependencies:
 - name: postgresql
   repository: file://../postgresql
   version: 0.1.0
-- name: varnish
-  repository: file://../varnish
-  version: 0.1.0
+- name: varnish-cache
+  repository: oci://registry-1.docker.io/varnish
+  version: 1.1.1
 - name: backend
   repository: file://../backend
   version: 0.1.0
@@ -14,5 +14,5 @@ dependencies:
 - name: nginx
   repository: file://../nginx
   version: 0.1.0
-digest: sha256:e91bba4e6bb943d5ff9a851baaf72c3316ba35b91cb8c2a4e70ee9d891213567
-generated: "2024-04-25T15:34:56.512707063+02:00"
+digest: sha256:93e06974197c7cc161c36e795d0476bf6f24406e752c35f2d64c70956042b512
+generated: "2026-11-03T13:05:08.149431129-03:00"

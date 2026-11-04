@@ -2,7 +2,7 @@ apiVersion: v2
 name: plone6-volto-pg-nginx-varnish
 description: Helmchart to deploy Plone 6 with Volto, PosgreSQL, Varnish and Nginx
 type: application
-version: 0.1.0
+version: 0.2.0
 appVersion: "6.0.10"
 
 dependencies:
@@ -13,11 +13,14 @@ dependencies:
       - child: dbsecret
         parent: backend.dbsecret
 
-  - name: "varnish"
-    version: "0.1.0"
-    repository: "file://../varnish"
+  # Varnish Cache community chart, maintained by Varnish Software.
+  # The alias keeps the service name "<release>-varnish" used by nginx.
+  - name: "varnish-cache"
+    alias: "varnish"
+    version: "1.1.1"
+    repository: "oci://registry-1.docker.io/varnish"
     import-values:
-      - child: service
+      - child: server.service.http
         parent: nginx.varnish
 
   - name: "backend"
