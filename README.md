@@ -241,6 +241,33 @@ The NGINX Ingress Controller by F5 is a different product with different annotat
 All values are documented in [`charts/plone/values.yaml`](charts/plone/values.yaml).
 This section explains the main ones.
 
+### Replicas and high availability
+
+By default, each component runs a single pod: one backend, one frontend, one PostgreSQL instance, and one Varnish pod when enabled.
+For high availability, run more pods of each:
+
+```yaml
+backend:
+  replicas: 2
+frontend:
+  replicas: 2
+postgresql:
+  cluster:
+    instances: 3
+    enablePDB: true
+varnish:
+  server:
+    replicas: 2
+    pdb:
+      enabled: true
+```
+
+With more than one replica, the chart creates a PodDisruptionBudget for the backend and the frontend, keeping at least half of their pods running during voluntary disruptions, such as node drains.
+The PodDisruptionBudgets of PostgreSQL and Varnish come from their charts, so enable them as above when you run more instances.
+They are disabled by default, because with a single pod they would block node drains.
+
+The ZEO server is a single pod, and can't be replicated.
+
 ### Site
 
 ```yaml
@@ -357,7 +384,7 @@ pack:
 
 ```yaml
 backend:
-  replicas: 2
+  replicas: 1
   zodbCacheSize: 50000
   env: []
   resources:
@@ -381,7 +408,7 @@ frontend:
   image:
     repository: docker.io/plone/plone-frontend
     tag: "19.6.1"
-  replicas: 2
+  replicas: 1
   env: []
 ```
 
@@ -392,7 +419,8 @@ The frontend calls the backend directly for server-side rendering, through `RAZZ
 ### Varnish
 
 With `varnish.enabled`, the chart installs Varnish with the `varnish-cache` chart, and routes the backend requests through it.
-The default configuration runs two Varnish replicas, as a Deployment with a PodDisruptionBudget, behind a `ClusterIP` service on port 6081.
+The default configuration runs one Varnish replica, as a Deployment, behind a `ClusterIP` service on port 6081.
+See [Replicas and high availability](#replicas-and-high-availability) to run more.
 
 The VCL is set in `varnish.server.vclConfig`.
 The default VCL has a single backend, the `<release>-backend` Service:
@@ -401,7 +429,7 @@ The default VCL has a single backend, the `<release>-backend` Service:
 varnish:
   enabled: true
   server:
-    replicas: 2
+    replicas: 1
     vclConfig: |
       vcl 4.1;
 

@@ -98,7 +98,8 @@ backend:
     # Defaults to the chart appVersion.
     tag: ""
     pullPolicy: IfNotPresent
-  replicas: 2
+  replicas: 1
+  # Only created with more than one replica.
   podDisruptionBudget:
     enabled: true
     minAvailable: 50%
@@ -154,7 +155,8 @@ frontend:
     repository: docker.io/plone/plone-frontend
     tag: "19.6.1"
     pullPolicy: IfNotPresent
-  replicas: 2
+  replicas: 1
+  # Only created with more than one replica.
   podDisruptionBudget:
     enabled: true
     minAvailable: 50%
@@ -209,9 +211,11 @@ postgresql:
 varnish:
   enabled: false
   server:
-    replicas: 2
+    replicas: 1
+    # With a single replica, a PodDisruptionBudget would block node drains.
+    # Enable it when running more replicas.
     pdb:
-      enabled: true
+      enabled: false
       minAvailable: 50%
     service:
       type: ClusterIP

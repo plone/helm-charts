@@ -35,9 +35,11 @@ Requests flow as follows:
 
 The chart creates:
 
-* the backend StatefulSet, with two pods
-* the frontend Deployment, with two pods
-* a PostgreSQL cluster with one instance, see [RelStorage and PostgreSQL](../README.md#relstorage-and-postgresql) for high availability
+* the backend StatefulSet, with one pod
+* the frontend Deployment, with one pod
+* a PostgreSQL cluster with one instance
+
+See [Replicas and high availability](../README.md#replicas-and-high-availability) to run more pods of each.
 * an HTTPRoute attached to the Gateway, see [Gateway API routing](../README.md#gateway-api-routing)
 
 This scenario is tested by [`ci/default-values.yaml`](../charts/plone/ci/default-values.yaml).

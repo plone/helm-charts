@@ -35,7 +35,7 @@ Requests flow as follows:
 * `/++api++`: Gateway → Varnish → backend pods → PostgreSQL
 * everything else: Gateway → frontend pods
 
-Varnish is installed with the `varnish-cache` chart of Varnish Software, as a Deployment with two pods.
+Varnish is installed with the `varnish-cache` chart of Varnish Software, as a Deployment with one pod.
 See [Varnish](../README.md#varnish) to customize the VCL.
 
 Varnish can be added to any other scenario in the same way, with `varnish.enabled: true`.
