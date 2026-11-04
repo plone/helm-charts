@@ -43,12 +43,18 @@ jobs:
       - name: Run chart-testing (lint)
         # if: steps.list-changed.outputs.changed == 'true'
         # run: ct lint --target-branch ${{ github.event.repository.default_branch }}
-        run: ct lint --all  --chart-dirs ./
+        run: ct lint --all  --chart-dirs ./ --chart-repos cnpg=https://cloudnative-pg.github.io/charts
 
       - name: Create kind cluster
         # if: steps.list-changed.outputs.changed == 'true'
         uses: helm/kind-action@v1
 
+      # The PostgreSQL clusters of the *-pg charts are managed by the CloudNativePG operator.
+      - name: Install CloudNativePG operator
+        run: |
+          helm repo add cnpg https://cloudnative-pg.github.io/charts
+          helm upgrade --install cnpg cnpg/cloudnative-pg --namespace cnpg-system --create-namespace --wait
+
       - name: Run chart-testing (install)
         # if: steps.list-changed.outputs.changed == 'true'
-        run: ct install --all  --chart-dirs ./ --excluded-charts backend,frontend,nginx,postgresql,zeoserver,plone6-classic-nodb
+        run: ct install --all  --chart-dirs ./ --chart-repos cnpg=https://cloudnative-pg.github.io/charts --excluded-charts backend,frontend,nginx,zeoserver,plone6-classic-nodb

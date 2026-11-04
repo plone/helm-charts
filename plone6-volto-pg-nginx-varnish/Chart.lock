@@ -1,18 +1,18 @@
 dependencies:
-- name: postgresql
-  repository: file://../postgresql
-  version: 0.1.0
+- name: cluster
+  repository: https://cloudnative-pg.github.io/charts
+  version: 0.9.0
 - name: varnish-cache
   repository: oci://registry-1.docker.io/varnish
   version: 1.1.1
 - name: backend
   repository: file://../backend
-  version: 0.1.0
+  version: 0.2.0
 - name: frontend
   repository: file://../frontend
   version: 0.1.0
 - name: nginx
   repository: file://../nginx
   version: 0.1.0
-digest: sha256:93e06974197c7cc161c36e795d0476bf6f24406e752c35f2d64c70956042b512
-generated: "2026-11-03T13:05:08.149431129-03:00"
+digest: sha256:b1dc8480e52ed74fef6f57c68d0fea6947e617fb5cbafdb3fd06ce4ecbfbf907
+generated: "2026-11-04T11:01:17.105343897-03:00"

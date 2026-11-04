@@ -17,10 +17,10 @@ The image is used as-is, without any additional add-ons.
 `plone-backend` will be provided as a Deployment with at least two replicas.
 A LoadBalancer service bundles the `plone-backend` pods.
 
-The database is provided by a PostgreSQL StatefulSet with one replica.
-It needs a PersistentVolumeClaim to store the data.
+The database is provided by a PostgreSQL cluster managed by the CloudNativePG operator, with one instance by default.
+The operator creates the PersistentVolumeClaims to store the data, and the credentials secret.
 
-The `plone-backend` pods connect to the PostgreSQL pod.
+The `plone-backend` pods connect to the primary PostgreSQL instance through the cluster's read-write service.
 
 ## Scenario 2: Plone with Volto using PostgreSQL and Routing capable Ingress
 Plone with Volto using PostgreSQL is the next step.

@@ -49,3 +49,29 @@ Selector labels
 app.kubernetes.io/name: {{ include "backend.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{/*
+Database connection environment variables
+*/}}
+{{- define "backend.dbEnv" -}}
+{{- $secret := tpl (required "dbsecret.name is required" .Values.dbsecret.name) . -}}
+- name: DBHOST
+  value: {{ tpl (.Values.databasehost | default (printf "%s-postgresql" .Release.Name)) . | quote }}
+- name: DBPORT
+  value: {{ .Values.databaseport | default 5432 | quote }}
+- name: DBNAME
+  valueFrom:
+    secretKeyRef:
+      name: {{ $secret }}
+      key: {{ dig "keys" "database" "database-name" .Values.dbsecret }}
+- name: DBUSER
+  valueFrom:
+    secretKeyRef:
+      name: {{ $secret }}
+      key: {{ dig "keys" "user" "database-user" .Values.dbsecret }}
+- name: DBPASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ $secret }}
+      key: {{ dig "keys" "password" "database-password" .Values.dbsecret }}
+{{- end }}

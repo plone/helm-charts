@@ -2,8 +2,36 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# PostgreSQL cluster managed by the CloudNativePG operator (cnpg/cluster chart).
+# See https://github.com/cloudnative-pg/charts/tree/main/charts/cluster for all options.
+# Set enabled to false to use an external database instead, and point
+# backend.databasehost and backend.dbsecret to it.
+postgresql:
+  enabled: true
+  cluster:
+    # A single instance, like a plain PostgreSQL pod. For high availability,
+    # use 3 instances and set enablePDB to true.
+    instances: 1
+    enablePDB: false
+    # Plone only needs the database owner created by initdb.
+    enableSuperuserAccess: false
+    storage:
+      size: 8Gi
+    initdb:
+      database: plone
+      owner: plone
+
 backend:
   replicaCount: 1
+  # Connect to the read-write service of the PostgreSQL cluster, with the
+  # credentials secret that CloudNativePG generates for the database owner.
+  databasehost: "{{ .Release.Name }}-postgresql-rw"
+  dbsecret:
+    name: "{{ .Release.Name }}-postgresql-app"
+    keys:
+      database: dbname
+      user: username
+      password: password
 
 frontend:
   replicaCount: 1

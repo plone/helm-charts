@@ -6,12 +6,13 @@ version: 0.2.0
 appVersion: "6.0.10"
 
 dependencies:
-  - name: "postgresql"
-    version: "0.1.0"
-    repository: "file://../postgresql"
-    import-values:
-      - child: dbsecret
-        parent: backend.dbsecret
+  # PostgreSQL cluster managed by the CloudNativePG operator, which must be
+  # installed in the Kubernetes cluster beforehand. See the README.
+  - name: "cluster"
+    alias: "postgresql"
+    version: "0.9.0"
+    repository: "https://cloudnative-pg.github.io/charts"
+    condition: postgresql.enabled
 
   # Varnish Cache community chart, maintained by Varnish Software.
   # The alias keeps the service name "<release>-varnish" used by nginx.
@@ -24,7 +25,7 @@ dependencies:
         parent: nginx.varnish
 
   - name: "backend"
-    version: "0.1.0"
+    version: "0.2.0"
     repository: "file://../backend"
 
   - name: "frontend"

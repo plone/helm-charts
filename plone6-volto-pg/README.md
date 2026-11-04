@@ -1,48 +1,33 @@
 # Install Plone 6 with RelStorage/PostgreSQL, Volto, and optional Traefik IngressRoute
 
-This Helm chart combines the PostgreSQL, backend, and frontend subcharts to install Plone 6 with RelStorage/PostgreSQL as the database backend, Volto frontend, and an optional Traefik IngressRoute.
+This Helm chart combines the CloudNativePG PostgreSQL cluster, backend, and frontend subcharts to install Plone 6 with RelStorage/PostgreSQL as the database backend, Volto frontend, and an optional Traefik IngressRoute.
 
 ## Prerequisites
 
-You need a persistent volume claim to hold the PostgreSQL database and a secret to provide the database credentials.
-
-### Database persistent volume claim
-
-The PostgreSQL subchart expects a Persistent Volume Claim with a default name of `db-pvc` for the database (PGDATA) directory.
-Override the default in `values.yaml` with:
-
-```yaml
-postgresql:
-  persistentVolumeClaim:
-    claimName: <your-pvc>
-```
-
-### Database credentials
-
-Database credentials (database name, user name, and password) are expected in a secret.
-The secret name defaults to `plonedb`.
-
-Using the `kubectl` command, you can create a secret.
-
-```shell
-kubectl create secret generic plonedb \
-    --from-literal=database-name='plone' \
-    --from-literal=database-user='plone' \
-    --from-literal=database-password='plone'
-```
-
-You can override the default secret name in `values.yaml`:
-
-```yaml
-postgresql:
-  dbsecret:
-    name: <your-secret>
-```
-
-See also the Kubernetes documentation [Create a Secret](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl/#create-a-secret).
+The [CloudNativePG](https://cloudnative-pg.io) operator must be installed in your Kubernetes cluster.
+See [Install the operator](../README.md#install-the-operator).
 
 The optional IngressRoute will only work with Traefik Ingress Controller.
 Let's Encrypt is used as the certificate authority when TLS is enabled, and needs to be properly configured in your cluster.
+
+## Database
+
+This chart depends on the CloudNativePG `cluster` chart, under the alias `postgresql`.
+By default, it creates a single-instance PostgreSQL cluster with a `plone` database.
+The operator creates the database volume and generates the credentials in the `<release>-postgresql-app` secret, which the backend uses to connect to the `<release>-postgresql-rw` service.
+You don't need to create a PersistentVolumeClaim or a credentials secret.
+
+Set the options of the `cluster` chart under the `postgresql` key, for example for high availability:
+
+```yaml
+postgresql:
+  cluster:
+    instances: 3
+    enablePDB: true
+```
+
+To use an external database instead, set `postgresql.enabled` to `false` and configure `backend.databasehost` and `backend.dbsecret`.
+See [PostgreSQL with CloudNativePG](../README.md#postgresql-with-cloudnativepg) for details.
 
 ## Options and defaults
 

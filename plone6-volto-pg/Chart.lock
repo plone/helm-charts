@@ -1,12 +1,12 @@
 dependencies:
-- name: postgresql
-  repository: file://../postgresql
-  version: 0.1.0
+- name: cluster
+  repository: https://cloudnative-pg.github.io/charts
+  version: 0.9.0
 - name: backend
   repository: file://../backend
-  version: 0.1.0
+  version: 0.2.0
 - name: frontend
   repository: file://../frontend
   version: 0.1.0
-digest: sha256:39d2391bb09ce45b2f4d74a3a7e81daeb03116dbe7e7283313371a74c2eb694a
-generated: "2024-04-25T15:34:06.495598179+02:00"
+digest: sha256:23a52e7e30c94d703c5370e137fb85421a5619308aa092038dccce75c9702aaf
+generated: "2026-11-04T11:01:12.055718708-03:00"

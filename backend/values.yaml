@@ -13,7 +13,18 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-dbsecret: {}
+# PostgreSQL connection. databasehost and dbsecret.name can be templated
+# strings, e.g. "{{ .Release.Name }}-postgresql-rw".
+# databasehost defaults to "<release>-postgresql".
+databasehost: ""
+databaseport: 5432
+dbsecret:
+  name: ""
+  # Keys holding the database name, user name and password in the secret.
+  keys:
+    database: database-name
+    user: database-user
+    password: database-password
 
 podAnnotations: {}
 instancehome: /app

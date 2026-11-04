@@ -41,6 +41,16 @@ then
     generate_k8s_images=false
 fi
 
+# The PostgreSQL clusters of the *-pg charts are managed by the CloudNativePG
+# operator, which must be installed in the cluster. See README.md.
+if ! kubectl get crd clusters.postgresql.cnpg.io &> /dev/null
+then
+    echo "CloudNativePG operator not found, see README.md on how to install it"
+    exit 1
+fi
+
+helm repo add cnpg https://cloudnative-pg.github.io/charts
+
 function finish {
   kubectl delete namespace plone-helm
 }

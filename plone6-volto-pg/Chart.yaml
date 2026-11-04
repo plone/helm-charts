@@ -2,19 +2,20 @@ apiVersion: v2
 name: plone6-volto-pg
 description: Helmchart to deploy Plone 6 with Volto, PosgreSQL and optional Traefik IngressRoute
 type: application
-version: 0.1.0
+version: 0.2.0
 appVersion: "6.0.10"
 
 dependencies:
-  - name: "postgresql"
-    version: "0.1.0"
-    repository: "file://../postgresql"
-    import-values:
-      - child: dbsecret
-        parent: backend.dbsecret
+  # PostgreSQL cluster managed by the CloudNativePG operator, which must be
+  # installed in the Kubernetes cluster beforehand. See the README.
+  - name: "cluster"
+    alias: "postgresql"
+    version: "0.9.0"
+    repository: "https://cloudnative-pg.github.io/charts"
+    condition: postgresql.enabled
 
   - name: "backend"
-    version: "0.1.0"
+    version: "0.2.0"
     repository: "file://../backend"
 
   - name: "frontend"

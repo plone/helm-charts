@@ -27,25 +27,7 @@ spec:
             - env:
               - name: INSTANCE
                 value: {{ .Values.instancehome }}
-              - name: DBHOST
-                value: {{ .Values.databasehost | default (printf "%s-postgresql" ( .Release.Name )) }}
-              - name: DBPORT
-                value: "{{ .Values.databaseport | default 5432 }}"
-              - name: DBNAME
-                valueFrom:
-                  secretKeyRef:
-                    name: {{ .Values.dbsecret.name }}
-                    key: database-name
-              - name: DBUSER
-                valueFrom:
-                  secretKeyRef:
-                    name: {{ .Values.dbsecret.name }}
-                    key: database-user
-              - name: DBPASSWORD
-                valueFrom:
-                  secretKeyRef:
-                    name: {{ .Values.dbsecret.name }}
-                    key: database-password
+              {{- include "backend.dbEnv" . | nindent 14 }}
               name: zodbpack
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
               imagePullPolicy: {{ .Values.image.pullPolicy }}
