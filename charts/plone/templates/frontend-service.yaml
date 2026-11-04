@@ -1,0 +1,18 @@
+{{- if .Values.frontend.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "plone.fullname" . }}-frontend
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  type: {{ .Values.frontend.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.frontend.service.port }}
+      targetPort: http
+      protocol: TCP
+  selector:
+    {{- include "plone.selectorLabels" (dict "context" . "component" "frontend") | nindent 4 }}
+{{- end }}

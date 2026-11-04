@@ -1,0 +1,11 @@
+# Volto, PostgreSQL with CloudNativePG, Varnish, ingress-nginx.
+backend:
+  replicas: 2
+frontend:
+  replicas: 1
+varnish:
+  enabled: true
+  server:
+    replicas: 1
+routing:
+  type: ingress-nginx

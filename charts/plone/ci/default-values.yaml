@@ -1,0 +1,5 @@
+# Default scenario: Volto, PostgreSQL with CloudNativePG, Gateway API.
+backend:
+  replicas: 1
+frontend:
+  replicas: 1

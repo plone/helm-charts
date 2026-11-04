@@ -1,0 +1,101 @@
+{{- include "plone.validate" . }}
+{{- $fullname := include "plone.fullname" . }}
+{{- $b := .Values.backend }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $fullname }}-backend
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  replicas: {{ $b.replicas }}
+  serviceName: {{ $fullname }}-backend-director
+  selector:
+    matchLabels:
+      {{- include "plone.selectorLabels" (dict "context" . "component" "backend") | nindent 6 }}
+  template:
+    metadata:
+      {{- with $b.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "plone.labels" . | nindent 8 }}
+        app.kubernetes.io/component: backend
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $b.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: backend
+          image: "{{ $b.image.repository }}:{{ $b.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ $b.image.pullPolicy }}
+          {{- with $b.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            {{- if .Values.site.create }}
+            # Creates the site on start, if it doesn't exist yet.
+            - name: SITE
+              value: {{ .Values.site.id | quote }}
+            - name: TYPE
+              value: {{ ternary "volto" "classic" .Values.frontend.enabled }}
+            {{- with .Values.site.profiles }}
+            - name: PROFILES
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.site.defaultLanguage }}
+            - name: SITE_DEFAULT_LANGUAGE
+              value: {{ . | quote }}
+            {{- end }}
+            {{- end }}
+            - name: ZODB_CACHE_SIZE
+              value: {{ $b.zodbCacheSize | quote }}
+            {{- include "plone.storageEnv" . | nindent 12 }}
+            {{- with $b.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          {{- with $b.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $b.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $b.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml $b.resources | nindent 12 }}
+          volumeMounts:
+            # Client home, blob cache, and ZEO client cache.
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+      {{- with $b.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $b.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $b.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

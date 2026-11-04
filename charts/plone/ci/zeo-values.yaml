@@ -1,0 +1,9 @@
+# Volto, ZEO server of the chart, Gateway API.
+storage:
+  type: zeo
+postgresql:
+  enabled: false
+backend:
+  replicas: 1
+frontend:
+  replicas: 1

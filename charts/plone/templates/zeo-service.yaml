@@ -1,0 +1,18 @@
+{{- if include "plone.zeo.enabled" . }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "plone.fullname" . }}-zeo
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: zeo
+spec:
+  type: ClusterIP
+  ports:
+    - name: zeo
+      port: 8100
+      targetPort: zeo
+      protocol: TCP
+  selector:
+    {{- include "plone.selectorLabels" (dict "context" . "component" "zeo") | nindent 4 }}
+{{- end }}

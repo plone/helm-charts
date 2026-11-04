@@ -1,0 +1,45 @@
+{{- if .Values.pack.enabled }}
+{{- $b := .Values.backend }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "plone.fullname" . }}-pack
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: pack
+spec:
+  schedule: {{ .Values.pack.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "plone.labels" . | nindent 12 }}
+            app.kubernetes.io/component: pack
+        spec:
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $b.podSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          restartPolicy: Never
+          containers:
+            - name: pack
+              image: "{{ $b.image.repository }}:{{ $b.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ $b.image.pullPolicy }}
+              # zodbpack with RelStorage, zeopack with ZEO.
+              args:
+                - pack
+                - -d
+                - {{ .Values.pack.days | quote }}
+              env:
+                {{- include "plone.storageEnv" . | nindent 16 }}
+              resources:
+                {{- toYaml .Values.pack.resources | nindent 16 }}
+{{- end }}

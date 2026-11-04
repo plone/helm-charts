@@ -1,0 +1,107 @@
+{{- if include "plone.zeo.enabled" . }}
+{{- $fullname := include "plone.fullname" . }}
+{{- $z := .Values.storage.zeo.server }}
+{{- $image := printf "%s:%s" $z.image.repository $z.image.tag }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $fullname }}-zeo
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: zeo
+spec:
+  # ZEO is a single server.
+  replicas: 1
+  serviceName: {{ $fullname }}-zeo
+  selector:
+    matchLabels:
+      {{- include "plone.selectorLabels" (dict "context" . "component" "zeo") | nindent 6 }}
+  template:
+    metadata:
+      {{- with $z.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "plone.labels" . | nindent 8 }}
+        app.kubernetes.io/component: zeo
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        # The volume must be writable by the plone user of the image.
+        - name: chown-data
+          image: {{ $image | quote }}
+          imagePullPolicy: {{ $z.image.pullPolicy }}
+          command: ["chown", "plone:plone", "/data"]
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      containers:
+        - name: zeo
+          image: {{ $image | quote }}
+          imagePullPolicy: {{ $z.image.pullPolicy }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 500
+          {{- with $z.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: zeo
+              containerPort: 8100
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: zeo
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: zeo
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 5
+          resources:
+            {{- toYaml $z.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      {{- if not $z.persistence.enabled }}
+      volumes:
+        - name: data
+          emptyDir: {}
+      {{- end }}
+      {{- with $z.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $z.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $z.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- if $z.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - {{ $z.persistence.accessMode }}
+        {{- with $z.persistence.storageClass }}
+        storageClassName: {{ if eq . "-" }}""{{ else }}{{ . | quote }}{{ end }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $z.persistence.size }}
+  {{- end }}
+{{- end }}

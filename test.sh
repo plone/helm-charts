@@ -2,8 +2,9 @@
 
 set -e
 
-# This is a simplified "end to end" test script that installs all Plone helm charts
-# in a local K8S cluster. Please make sure this script runs without errors before
+# This is a simplified "end to end" test script that installs the Plone helm chart
+# in a local K8S cluster, once for each scenario in charts/plone/ci.
+# Please make sure this script runs without errors before
 # doing merging changes (this validation may be done automatically using the Github
 # Actions).
 #
@@ -41,22 +42,26 @@ then
     generate_k8s_images=false
 fi
 
-# The PostgreSQL clusters of the *-pg charts are managed by the CloudNativePG
-# operator, which must be installed in the cluster. See README.md.
+# The PostgreSQL clusters of the relstorage scenarios are managed by the
+# CloudNativePG operator, which must be installed in the cluster.
 if ! kubectl get crd clusters.postgresql.cnpg.io &> /dev/null
 then
-    echo "CloudNativePG operator not found, see README.md on how to install it"
+    echo "CloudNativePG operator not found, see charts/plone/README.md on how to install it"
     exit 1
 fi
 
-# plone6-volto-pg-varnish creates a Gateway API HTTPRoute by default.
+# The gateway routing creates a Gateway API HTTPRoute.
 if ! kubectl get crd httproutes.gateway.networking.k8s.io &> /dev/null
 then
-    echo "Gateway API CRDs not found, see plone6-volto-pg-varnish/README.md on how to install them"
+    echo "Gateway API CRDs not found, see charts/plone/README.md on how to install them"
     exit 1
 fi
 
+chart=./charts/plone
+
 helm repo add cnpg https://cloudnative-pg.github.io/charts
+helm dependency update $chart
+helm dependency list $chart
 
 function finish {
   kubectl delete namespace plone-helm
@@ -65,36 +70,30 @@ trap finish EXIT
 
 kubectl create namespace plone-helm
 
-for helm_name in $(cat all-charts.txt | xargs); {
-    echo Testing $helm_name
+for values in $chart/ci/*-values.yaml; {
+    scenario=$(basename $values -values.yaml)
+    echo Testing scenario $scenario
 
-    helm dependency update ./$helm_name
-    helm dependency list ./$helm_name
+    helm lint $chart --values $values
 
-    helm lint ./$helm_name
-
-    helm install -n plone-helm myplone ./$helm_name
-
-    sleep 5
+    # The backend creates the Plone site on its first start.
+    helm install -n plone-helm myplone $chart --values $values --wait --timeout 15m
 
     if [ "$generate_k8s_images" = true ]; then
-        dotdir="$(pwd)/$helm_name/diagrams"
+        dotdir="$(pwd)/diagrams/$scenario"
         svgdir="$(pwd)/img"
-
-        # wait more time, k8s deployment time may vary
-        sleep 300
 
         rm -rf $dotdir
         k8s-diagrams --namespace plone-helm \
                      --outputDirectory $dotdir \
-                     --label "helm $helm_name"
+                     --label "helm plone ($scenario)"
         mkdir -p $svgdir
         cd $dotdir
-        dot -Tpng k8s.dot > $helm_name.png
-        dot -Tsvg k8s.dot > $helm_name.svg
-        cp -prf $helm_name.png $helm_name.svg assets $svgdir
+        dot -Tpng k8s.dot > $scenario.png
+        dot -Tsvg k8s.dot > $scenario.svg
+        cp -prf $scenario.png $scenario.svg assets $svgdir
         cd -
     fi
 
-    helm uninstall -n plone-helm myplone
+    helm uninstall -n plone-helm myplone --wait
 }

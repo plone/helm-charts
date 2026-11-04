@@ -1,0 +1,20 @@
+{{- $b := .Values.backend }}
+{{- if and (gt (int $b.replicas) 1) $b.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "plone.fullname" . }}-backend
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  {{- with $b.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ . }}
+  {{- end }}
+  {{- with $b.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ . }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "plone.selectorLabels" (dict "context" . "component" "backend") | nindent 6 }}
+{{- end }}

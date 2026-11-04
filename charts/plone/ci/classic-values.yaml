@@ -1,0 +1,5 @@
+# Classic UI, PostgreSQL with CloudNativePG, Gateway API.
+frontend:
+  enabled: false
+backend:
+  replicas: 1

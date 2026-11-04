@@ -1,6 +1,0 @@
-dependencies:
-- name: backend
-  repository: file://../backend
-  version: 0.2.0
-digest: sha256:30510c98b23c9162aab3dfebc97d23ad6a695719e491bda5101a0013dd93bc4a
-generated: "2026-11-04T11:01:01.016253407-03:00"

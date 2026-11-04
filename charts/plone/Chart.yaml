@@ -1,0 +1,40 @@
+apiVersion: v2
+name: plone
+description: Plone 6 with the Volto or Classic UI, on PostgreSQL (RelStorage) or ZEO, with optional Varnish, routed with Gateway API or ingress-nginx
+type: application
+version: 0.2.0
+appVersion: "6.1.5"
+kubeVersion: ">=1.29.0-0"
+
+keywords:
+- plone
+- zope
+- volto
+- cms
+- relstorage
+- zeo
+
+dependencies:
+  # PostgreSQL cluster managed by the CloudNativePG operator, which must be
+  # installed in the Kubernetes cluster beforehand. See the README.
+  - name: "cluster"
+    alias: "postgresql"
+    version: "0.9.0"
+    repository: "https://cloudnative-pg.github.io/charts"
+    condition: postgresql.enabled
+
+  # Varnish Cache community chart, maintained by Varnish Software.
+  - name: "varnish-cache"
+    alias: "varnish"
+    version: "1.1.1"
+    repository: "oci://registry-1.docker.io/varnish"
+    condition: varnish.enabled
+
+home: https://plone.org
+sources:
+- https://github.com/plone/helm-charts/
+maintainers:
+- name: xiru
+- name: jensens
+- name: fabiorauber
+- name: tschorr
