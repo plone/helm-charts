@@ -255,12 +255,13 @@ routing:
   port: ""
 
   gateway:
-    # Gateways the HTTPRoute attaches to. They must exist already, usually
-    # managed by the cluster administrator.
-    parentRefs:
-      - name: plone
-        # namespace: gateway-system
-        # sectionName: http
+    # Gateways the HTTPRoute attaches to, required with the gateway type.
+    # They must exist already, usually managed by the cluster administrator.
+    # Gateway API has no default Gateway, so there is no sensible default.
+    parentRefs: []
+    #  - name: plone
+    #    namespace: gateway-system
+    #    sectionName: http
     annotations: {}
 
   # The ingress-nginx project is retired since March 2026 and gets no more

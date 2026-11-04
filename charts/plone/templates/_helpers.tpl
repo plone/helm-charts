@@ -64,6 +64,9 @@ Validate the combination of values.
 {{- if not (has .Values.routing.type $routingTypes) -}}
 {{- fail (printf "routing.type must be one of %s, got %q" (join ", " $routingTypes) .Values.routing.type) -}}
 {{- end -}}
+{{- if and (eq .Values.routing.type "gateway") (empty .Values.routing.gateway.parentRefs) -}}
+{{- fail "routing.gateway.parentRefs is required with routing.type gateway: set it to the Gateway that serves the site (see https://github.com/plone/helm-charts#gateway-api), or set routing.type to none" -}}
+{{- end -}}
 {{- if eq .Values.storage.type "relstorage" -}}
 {{- if and (not .Values.postgresql.enabled) (or (not .Values.storage.relstorage.host) (not .Values.storage.relstorage.secret.name)) -}}
 {{- fail "storage.relstorage.host and storage.relstorage.secret.name are required with postgresql.enabled false" -}}

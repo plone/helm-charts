@@ -38,6 +38,8 @@ routing:
 ```
 
 `routing.gateway.parentRefs` lists the Gateways, and optionally their listeners, that the HTTPRoute attaches to.
+It's required with `routing.type: gateway`, and empty by default, because Gateway API has no default Gateway: the chart fails to install without it, rather than creating a route that no Gateway serves.
+To install the chart without any routing, set `routing.type` to `none`.
 Check that the Gateway accepted the route with:
 
 ```shell

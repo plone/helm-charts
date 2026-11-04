@@ -3,3 +3,9 @@ storage:
   type: zeo
 postgresql:
   enabled: false
+routing:
+  gateway:
+    # The CI cluster has the Gateway API CRDs but no Gateway: the route is
+    # created, and stays unattached.
+    parentRefs:
+      - name: ci
