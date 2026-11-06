@@ -16,7 +16,7 @@ With `frontend.enabled` set to `false`, the chart creates no frontend resources,
 | Value | Default |
 |---|---|
 | `frontend.image.repository` | `docker.io/plone/plone-frontend` |
-| `frontend.image.tag` | `19.6.1` |
+| `frontend.image.tag` | `19.7.0` |
 | `frontend.image.pullPolicy` | `IfNotPresent` |
 
 ## Environment variables

@@ -119,7 +119,7 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 |---|---|---|
 | `frontend.enabled` | `true` | Installs the Volto frontend. Set it to `false` for the Classic UI. |
 | `frontend.image.repository` | `"docker.io/plone/plone-frontend"` | Image of the frontend. |
-| `frontend.image.tag` | `"19.6.1"` | Tag of the frontend image. |
+| `frontend.image.tag` | `"19.7.0"` | Tag of the frontend image. |
 | `frontend.image.pullPolicy` | `"IfNotPresent"` | Pull policy of the frontend image. |
 | `frontend.replicas` | `1` | Number of frontend pods. |
 | `frontend.podDisruptionBudget.enabled` | `true` | Creates a PodDisruptionBudget, when there is more than one replica. |

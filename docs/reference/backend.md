@@ -20,7 +20,7 @@ It gives each pod a stable DNS name, `<release>-backend-<n>.<release>-backend-di
 | Value | Default |
 |---|---|
 | `backend.image.repository` | `docker.io/plone/plone-backend` |
-| `backend.image.tag` | the `appVersion` of the chart, `6.1.5` |
+| `backend.image.tag` | the `appVersion` of the chart, `6.2.2` |
 | `backend.image.pullPolicy` | `IfNotPresent` |
 
 ## Environment variables
