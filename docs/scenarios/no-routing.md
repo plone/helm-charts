@@ -7,18 +7,14 @@ It works with any of the other scenarios.
 
 * The prerequisites of the scenario it's combined with, except Gateway API
 
-## Values
-
-```yaml
-routing:
-  type: none
-```
-
-Install the chart with them:
+## Install
 
 ```shell
-helm install plone plone/plone --namespace plone --create-namespace --values values.yaml
+helm install plone plone/plone --namespace plone --create-namespace \
+    --set routing.type=none
 ```
+
+Combine these values with the ones of any other scenario, for example `--set frontend.enabled=false` for the Classic UI.
 
 To try the site, forward a local port to the frontend, or to the backend with the Classic UI:
 

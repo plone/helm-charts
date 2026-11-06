@@ -255,13 +255,22 @@ routing:
   port: ""
 
   gateway:
-    # Gateways the HTTPRoute attaches to, required with the gateway type.
-    # They must exist already, usually managed by the cluster administrator.
+    # Gateway the HTTPRoute attaches to, required with the gateway type.
+    # It must exist already, usually managed by the cluster administrator.
     # Gateway API has no default Gateway, so there is no sensible default.
+    name: ""
+    # Namespace of the Gateway. Defaults to the namespace of the release.
+    namespace: ""
+    # Listener of the Gateway to attach to, such as http or https. Defaults to
+    # all the listeners that accept the route.
+    sectionName: ""
+    # To attach the HTTPRoute to several Gateways, list them here instead, as
+    # Gateway API parentRefs. Takes precedence over name, namespace, and
+    # sectionName.
     parentRefs: []
     #  - name: plone
     #    namespace: gateway-system
-    #    sectionName: http
+    #    sectionName: https
     annotations: {}
 
   # The ingress-nginx project is retired since March 2026 and gets no more

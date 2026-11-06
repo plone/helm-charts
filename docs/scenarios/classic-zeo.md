@@ -8,29 +8,20 @@ Plone with the Classic UI, rendered by the backend, without the Volto frontend, 
 
 It doesn't need the CloudNativePG operator.
 
-## Values
-
-```yaml
-frontend:
-  enabled: false
-storage:
-  type: zeo
-postgresql:
-  enabled: false
-routing:
-  hostname: plone.example.com
-  https: true
-  gateway:
-    parentRefs:
-      - name: plone
-        namespace: gateway-system
-```
-
-Install the chart with them:
+## Install
 
 ```shell
-helm install plone plone/plone --namespace plone --create-namespace --values values.yaml
+helm install plone plone/plone --namespace plone --create-namespace \
+    --set frontend.enabled=false \
+    --set storage.type=zeo \
+    --set postgresql.enabled=false \
+    --set routing.hostname=plone.example.com \
+    --set routing.gateway.name=<gateway> \
+    --set routing.gateway.namespace=<gateway-namespace>
 ```
+
+Replace `<gateway>` and `<gateway-namespace>` with the name and namespace of the Gateway that serves the site, and `plone.example.com` with its hostname.
+The site is served over HTTP. To serve it over HTTPS, see [HTTPS](../components/routing.md#https).
 
 ## How it works
 

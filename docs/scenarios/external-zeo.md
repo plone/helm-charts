@@ -9,22 +9,20 @@ It works with Volto or the Classic UI, and with any routing.
 
 It doesn't need the CloudNativePG operator.
 
-## Values
-
-```yaml
-storage:
-  type: zeo
-  zeo:
-    address: zeo.example.com:8100
-postgresql:
-  enabled: false
-```
-
-Install the chart with them:
+## Install
 
 ```shell
-helm install plone plone/plone --namespace plone --create-namespace --values values.yaml
+helm install plone plone/plone --namespace plone --create-namespace \
+    --set storage.type=zeo \
+    --set storage.zeo.address=zeo.example.com:8100 \
+    --set postgresql.enabled=false \
+    --set routing.hostname=plone.example.com \
+    --set routing.gateway.name=<gateway> \
+    --set routing.gateway.namespace=<gateway-namespace>
 ```
+
+Replace `<gateway>` and `<gateway-namespace>` with the name and namespace of the Gateway that serves the site, and `plone.example.com` with its hostname.
+Combine these values with the ones of any other scenario, for example `--set frontend.enabled=false` for the Classic UI.
 
 ## How it works
 

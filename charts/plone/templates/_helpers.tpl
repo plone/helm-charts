@@ -64,8 +64,8 @@ Validate the combination of values.
 {{- if not (has .Values.routing.type $routingTypes) -}}
 {{- fail (printf "routing.type must be one of %s, got %q" (join ", " $routingTypes) .Values.routing.type) -}}
 {{- end -}}
-{{- if and (eq .Values.routing.type "gateway") (empty .Values.routing.gateway.parentRefs) -}}
-{{- fail "routing.gateway.parentRefs is required with routing.type gateway: set it to the Gateway that serves the site (see https://github.com/plone/helm-charts#gateway-api), or set routing.type to none" -}}
+{{- if and (eq .Values.routing.type "gateway") (not .Values.routing.gateway.name) (empty .Values.routing.gateway.parentRefs) -}}
+{{- fail "routing.gateway.name is required with routing.type gateway: set it to the Gateway that serves the site (see https://github.com/plone/helm-charts#gateway-api), or set routing.type to none" -}}
 {{- end -}}
 {{- if eq .Values.storage.type "relstorage" -}}
 {{- if and (not .Values.postgresql.enabled) (or (not .Values.storage.relstorage.host) (not .Values.storage.relstorage.secret.name)) -}}
@@ -149,6 +149,25 @@ the backend otherwise.
 {{- .Values.varnish.server.service.http.port -}}
 {{- else -}}
 {{- .Values.backend.service.port -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+parentRefs of the HTTPRoute: routing.gateway.parentRefs if set, or the
+Gateway of routing.gateway.name, namespace, and sectionName.
+*/}}
+{{- define "plone.routing.parentRefs" -}}
+{{- $g := .Values.routing.gateway -}}
+{{- if $g.parentRefs -}}
+{{- toYaml $g.parentRefs -}}
+{{- else -}}
+- name: {{ $g.name | quote }}
+{{- with $g.namespace }}
+  namespace: {{ . | quote }}
+{{- end }}
+{{- with $g.sectionName }}
+  sectionName: {{ . | quote }}
+{{- end }}
 {{- end -}}
 {{- end }}
 

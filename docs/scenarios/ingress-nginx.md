@@ -12,28 +12,19 @@ It works with any of the other scenarios.
 * The [ingress-nginx controller](../../README.md#ingress-nginx)
 * The prerequisites of the scenario it's combined with, except Gateway API
 
-## Values
-
-```yaml
-routing:
-  type: ingress-nginx
-  hostname: plone.example.com
-  https: true
-  ingressNginx:
-    className: nginx
-    annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-    tls:
-      - secretName: plone-tls
-        hosts:
-          - plone.example.com
-```
-
-Install the chart with them:
+## Install
 
 ```shell
-helm install plone plone/plone --namespace plone --create-namespace --values values.yaml
+helm install plone plone/plone --namespace plone --create-namespace \
+    --set routing.type=ingress-nginx \
+    --set routing.hostname=plone.example.com
 ```
+
+Replace `plone.example.com` with the hostname of the site.
+The Ingress resources use the `nginx` IngressClass, set another one with `--set routing.ingressNginx.className=<class>`.
+Combine these values with the ones of any other scenario, for example `--set varnish.enabled=true`.
+
+The site is served over HTTP. To serve it over HTTPS, see [HTTPS](../components/routing.md#https).
 
 ## How it works
 

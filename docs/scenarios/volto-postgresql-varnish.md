@@ -8,25 +8,18 @@ Varnish sends the requests it doesn't cache to the backend Service, which balanc
 * The [CloudNativePG operator](../prerequisites/cloudnativepg.md)
 * A [Gateway API](../../README.md#gateway-api) implementation, and a Gateway
 
-## Values
-
-```yaml
-varnish:
-  enabled: true
-routing:
-  hostname: plone.example.com
-  https: true
-  gateway:
-    parentRefs:
-      - name: plone
-        namespace: gateway-system
-```
-
-Install the chart with them:
+## Install
 
 ```shell
-helm install plone plone/plone --namespace plone --create-namespace --values values.yaml
+helm install plone plone/plone --namespace plone --create-namespace \
+    --set varnish.enabled=true \
+    --set routing.hostname=plone.example.com \
+    --set routing.gateway.name=<gateway> \
+    --set routing.gateway.namespace=<gateway-namespace>
 ```
+
+Replace `<gateway>` and `<gateway-namespace>` with the name and namespace of the Gateway that serves the site, and `plone.example.com` with its hostname.
+The site is served over HTTP. To serve it over HTTPS, see [HTTPS](../components/routing.md#https).
 
 ## How it works
 

@@ -12,7 +12,7 @@ metadata:
   {{- end }}
 spec:
   parentRefs:
-    {{- toYaml (required "routing.gateway.parentRefs is required" $r.gateway.parentRefs) | nindent 4 }}
+    {{- include "plone.routing.parentRefs" . | nindent 4 }}
   hostnames:
     - {{ $r.hostname | quote }}
   rules:

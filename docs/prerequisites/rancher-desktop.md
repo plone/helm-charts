@@ -45,20 +45,14 @@ If you already have a `HelmChartConfig` named `traefik`, add these values to it 
 
 ## Install the chart
 
-Attach the HTTPRoute of the chart to the `traefik-gateway` Gateway:
-
-```yaml
-routing:
-  hostname: localhost
-  gateway:
-    parentRefs:
-      - name: traefik-gateway
-        namespace: kube-system
-        sectionName: web
-```
+Install the chart, attaching its HTTPRoute to the `traefik-gateway` Gateway:
 
 ```shell
-helm install plone plone/plone --namespace plone --create-namespace --values values.yaml
+helm install plone plone/plone --namespace plone --create-namespace \
+    --set routing.hostname=localhost \
+    --set routing.gateway.name=traefik-gateway \
+    --set routing.gateway.namespace=kube-system \
+    --set routing.gateway.sectionName=web
 ```
 
 The chart also needs the [CloudNativePG operator](cloudnativepg.md) for the default scenario.

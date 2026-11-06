@@ -9,47 +9,37 @@ It works with Volto or the Classic UI, and with any routing.
 
 It doesn't need the CloudNativePG operator.
 
-## Values
+## Install
 
 Create a secret with the credentials:
 
 ```shell
+kubectl create namespace plone
 kubectl create secret generic plonedb --namespace plone \
     --from-literal=database-name='plone' \
     --from-literal=database-user='plone' \
     --from-literal=database-password='<password>'
 ```
 
-and point the chart to the server:
-
-```yaml
-postgresql:
-  enabled: false
-storage:
-  relstorage:
-    host: db.example.com
-    port: 5432
-    secret:
-      name: plonedb
-```
-
-Install the chart with them:
+and install the chart, pointing it to the server:
 
 ```shell
-helm install plone plone/plone --namespace plone --values values.yaml
+helm install plone plone/plone --namespace plone \
+    --set postgresql.enabled=false \
+    --set storage.relstorage.host=db.example.com \
+    --set storage.relstorage.secret.name=plonedb \
+    --set routing.hostname=plone.example.com \
+    --set routing.gateway.name=<gateway> \
+    --set routing.gateway.namespace=<gateway-namespace>
 ```
 
-If your secret uses other keys, for example one created by another tool, set them in `storage.relstorage.secret.keys`:
+Replace `<gateway>` and `<gateway-namespace>` with the name and namespace of the Gateway that serves the site, and `plone.example.com` with its hostname.
+If your secret uses other keys, for example one created by another tool, set them too:
 
-```yaml
-storage:
-  relstorage:
-    secret:
-      name: my-db-secret
-      keys:
-        database: dbname
-        user: username
-        password: password
+```shell
+--set storage.relstorage.secret.keys.database=dbname \
+--set storage.relstorage.secret.keys.user=username \
+--set storage.relstorage.secret.keys.password=password
 ```
 
 ## How it works
