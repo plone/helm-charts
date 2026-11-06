@@ -46,7 +46,7 @@ fi
 # CloudNativePG operator, which must be installed in the cluster.
 if ! kubectl get crd clusters.postgresql.cnpg.io &> /dev/null
 then
-    echo "CloudNativePG operator not found, see docs/prerequisites/cloudnativepg.md on how to install it"
+    echo "CloudNativePG operator not found, see docs/how-to/install-cloudnativepg.md on how to install it"
     exit 1
 fi
 
