@@ -12,7 +12,7 @@ Values that aren't set by default are marked as not set.
 | `fullnameOverride` | `""` | Overrides the prefix of the resource names, which is the release name by default. |
 | `imagePullSecrets` | `[]` | Pull secrets of all the pods. |
 
-## global
+## `global`
 
 The VCL of Varnish only reads the global values, see [Varnish](varnish.md#the-services-in-global-values).
 With `varnish.enabled`, the chart fails if they don't match the values they mirror.
@@ -23,7 +23,7 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `global.plone.backendPort` | `8080` | Must match `backend.service.port`. |
 | `global.plone.frontendPort` | `3000` | Must match `frontend.service.port`. |
 
-## site
+## `site`
 
 | Key | Default | Description |
 |---|---|---|
@@ -32,13 +32,13 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `site.profiles` | `""` | Add-on profiles to apply when creating the site, comma separated. |
 | `site.defaultLanguage` | `""` | Default language of the site, such as `en` or `pt-br`. |
 
-## storage
+## `storage`
 
 | Key | Default | Description |
 |---|---|---|
 | `storage.type` | `"relstorage"` | `relstorage` for RelStorage on PostgreSQL, or `zeo` for a ZEO server. |
 
-### storage.relstorage
+### `storage.relstorage`
 
 | Key | Default | Description |
 |---|---|---|
@@ -49,14 +49,14 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `storage.relstorage.keepHistory` | `true` | Keeps the history of the objects, needed for undo. |
 | `storage.relstorage.blobCacheSize` | `"100mb"` | Size of the blob cache of each backend pod. |
 
-### storage.zeo
+### `storage.zeo`
 
 | Key | Default | Description |
 |---|---|---|
 | `storage.zeo.address` | `""` | `host:port` of an external ZEO server. Empty deploys a ZEO server with the chart. |
 | `storage.zeo.clientCacheSize` | `"128MB"` | Size of the ZEO client cache of each backend pod. |
 
-### storage.zeo.server
+### `storage.zeo.server`
 
 | Key | Default | Description |
 |---|---|---|
@@ -76,7 +76,7 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `storage.zeo.server.tolerations` | `[]` | Tolerations of the ZEO server pod. |
 | `storage.zeo.server.affinity` | `{}` | Affinity of the ZEO server pod. |
 
-## pack
+## `pack`
 
 | Key | Default | Description |
 |---|---|---|
@@ -87,7 +87,7 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `pack.activeDeadlineSeconds` | `82800` | Stops a pack that runs for longer, 23 hours by default. Keep it below the schedule interval. |
 | `pack.resources` | `{}` | Resources of the pack job. |
 
-## backend
+## `backend`
 
 | Key | Default | Description |
 |---|---|---|
@@ -113,7 +113,7 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `backend.tolerations` | `[]` | Tolerations of the backend pods. |
 | `backend.affinity` | `{}` | Affinity of the backend pods. |
 
-## frontend
+## `frontend`
 
 | Key | Default | Description |
 |---|---|---|
@@ -138,7 +138,7 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `frontend.tolerations` | `[]` | Tolerations of the frontend pods. |
 | `frontend.affinity` | `{}` | Affinity of the frontend pods. |
 
-## postgresql
+## `postgresql`
 
 These values configure the PostgreSQL cluster of the CloudNativePG `cluster` chart.
 The chart accepts all the other values of that chart under `postgresql` too, see its [documentation](https://github.com/cloudnative-pg/charts/tree/main/charts/cluster).
@@ -153,10 +153,10 @@ The chart accepts all the other values of that chart under `postgresql` too, see
 | `postgresql.cluster.initdb.database` | `"plone"` | Name of the database. |
 | `postgresql.cluster.initdb.owner` | `"plone"` | Owner of the database. |
 
-## varnish
+## `varnish`
 
 These values configure the Varnish cache, which the `varnish-cache` chart installs.
-The chart accepts all the other values of that chart under `varnish` too, see its [documentation](https://github.com/varnish/helm-varnish-cache).
+The chart accepts all the other values of that chart under `varnish` too, see its [documentation](https://github.com/varnish/helm-varnish).
 
 | Key | Default | Description |
 |---|---|---|
@@ -170,7 +170,7 @@ The chart accepts all the other values of that chart under `varnish` too, see it
 | `varnish.server.affinity` | a preference for pod anti-affinity by node | Affinity of the Varnish pods. See [Varnish](varnish.md#affinity). |
 | `varnish.server.vclConfig` | the default VCL | VCL of Varnish, rendered as a template. See [Varnish](varnish.md#default-vcl). |
 
-## routing
+## `routing`
 
 | Key | Default | Description |
 |---|---|---|
@@ -179,17 +179,17 @@ The chart accepts all the other values of that chart under `varnish` too, see it
 | `routing.https` | `false` | Whether clients reach the site over HTTPS. Used to build the URLs, and doesn't configure TLS. |
 | `routing.port` | `""` | Public port of the site. Empty uses 443 with HTTPS, and 80 without. |
 
-### routing.gateway
+### `routing.gateway`
 
 | Key | Default | Description |
 |---|---|---|
 | `routing.gateway.name` | `""` | Gateway of the HTTPRoute. Required with `routing.type: gateway`, unless `parentRefs` is set. |
-| `routing.gateway.namespace` | `""` | Namespace of the Gateway. Empty uses the namespace of the release. |
+| `routing.gateway.namespace` | `""` | The namespace of the Gateway. Empty uses the namespace of the release. |
 | `routing.gateway.sectionName` | `""` | Listener of the Gateway. Empty accepts all the listeners that accept the route. |
 | `routing.gateway.parentRefs` | `[]` | Gateways to attach to, as Gateway API parent references. Takes precedence over `name`, `namespace`, and `sectionName`. |
 | `routing.gateway.annotations` | `{}` | Annotations of the HTTPRoute. |
 
-### routing.ingressNginx
+### `routing.ingressNginx`
 
 | Key | Default | Description |
 |---|---|---|

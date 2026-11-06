@@ -7,7 +7,7 @@ For background, see [Gateway API](../explanation/gateway-api.md).
 ## Prerequisites
 
 * The Gateway API CRDs, and an implementation of them with a Gateway that serves your site
-  See the [Gateway API guides](https://gateway-api.sigs.k8s.io/guides/) and the [list of implementations](https://gateway-api.sigs.k8s.io/implementations/).
+  See the [Gateway API guides](https://gateway-api.sigs.k8s.io/guides/getting-started/introduction/) and the [list of implementations](https://gateway-api.sigs.k8s.io/docs/implementations/list/).
   Many implementations install the CRDs themselves.
 
 ## Find the Gateway

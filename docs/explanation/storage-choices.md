@@ -29,7 +29,7 @@ It doesn't need PostgreSQL, so it has fewer components to run.
 
 ## Packing
 
-Both storages keep the old revisions of the objects until they are packed.
+Both storage types keep the old revisions of the objects until they are packed.
 The revisions make the undo of older changes possible, and they take space.
 Packing removes the revisions that you no longer need, and the `pack.days` value decides how many days of history to keep.
 
