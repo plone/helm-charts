@@ -187,7 +187,7 @@ frontend:
   enabled: true
   image:
     repository: docker.io/plone/plone-frontend
-    tag: "19.6.1"
+    tag: "19.7.0"
     pullPolicy: IfNotPresent
   replicas: 1
   # Only created with more than one replica.
