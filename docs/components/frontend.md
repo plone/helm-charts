@@ -13,7 +13,7 @@ frontend:
   enabled: true
   image:
     repository: docker.io/plone/plone-frontend
-    tag: "19.6.1"
+    tag: "19.7.0"
   replicas: 1
   env: []
 ```
