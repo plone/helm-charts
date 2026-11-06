@@ -225,6 +225,20 @@ varnish:
       type: ClusterIP
       http:
         port: 6081
+    # Prefer, rather than require as varnish-cache does by default, to run each
+    # Varnish pod on a different node. Requiring it blocks the rolling updates
+    # of Varnish, such as after a change of the VCL, on clusters with no spare
+    # node, like single-node clusters.
+    affinity: |
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: {{ include "varnish-cache.name" . }}
+                  app.kubernetes.io/instance: {{ .Release.Name }}
+              topologyKey: kubernetes.io/hostname
     # VCL of Varnish, rendered as a template by the varnish-cache chart, which
     # restarts the Varnish pods when it changes. Varnish receives all the
     # requests of the site, and sends them to the backend and frontend

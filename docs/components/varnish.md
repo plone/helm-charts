@@ -4,6 +4,9 @@ With `varnish.enabled`, the chart installs Varnish with the [`varnish-cache` cha
 The default configuration runs one Varnish replica, as the `<release>-varnish` Deployment, behind the `<release>-varnish` `ClusterIP` service on port 6081.
 See [Replicas and high availability](high-availability.md) to run more.
 
+The `varnish-cache` chart requires each Varnish pod to run on a different node, which blocks the rolling updates of Varnish on clusters with no spare node, such as single-node clusters: the new pod can't start while the old one runs, and the old VCL stays in use.
+This chart overrides `varnish.server.affinity` to only prefer it, so that the pods still spread over the nodes when there are several.
+
 ## Requests
 
 With Volto, Varnish caches both the backend and the frontend:
