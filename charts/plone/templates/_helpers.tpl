@@ -64,6 +64,9 @@ Validate the combination of values.
 {{- if not (has .Values.routing.type $routingTypes) -}}
 {{- fail (printf "routing.type must be one of %s, got %q" (join ", " $routingTypes) .Values.routing.type) -}}
 {{- end -}}
+{{- if and .Values.varnish.enabled (ne (.Values.frontend.enabled | toString) (.Values.varnish.ploneFrontend | toString)) -}}
+{{- fail (printf "varnish.ploneFrontend must match frontend.enabled, so that the VCL of Varnish uses the frontend only when it exists: set varnish.ploneFrontend to %v" .Values.frontend.enabled) -}}
+{{- end -}}
 {{- if and (eq .Values.routing.type "gateway") (not .Values.routing.gateway.name) (empty .Values.routing.gateway.parentRefs) -}}
 {{- fail "routing.gateway.name is required with routing.type gateway: set it to the Gateway that serves the site (see https://github.com/plone/helm-charts#gateway-api), or set routing.type to none" -}}
 {{- end -}}
@@ -171,8 +174,24 @@ Gateway of routing.gateway.name, namespace, and sectionName.
 {{- end -}}
 {{- end }}
 
+{{/*
+Service and port of the frontend as seen by the routing: Varnish if enabled,
+which caches the frontend too, the frontend otherwise.
+*/}}
 {{- define "plone.routing.frontendService" -}}
+{{- if .Values.varnish.enabled -}}
+{{- include "plone.dependencyFullname" (dict "context" . "name" "varnish" "values" .Values.varnish) -}}
+{{- else -}}
 {{- printf "%s-frontend" (include "plone.fullname" .) -}}
+{{- end -}}
+{{- end }}
+
+{{- define "plone.routing.frontendPort" -}}
+{{- if .Values.varnish.enabled -}}
+{{- .Values.varnish.server.service.http.port -}}
+{{- else -}}
+{{- .Values.frontend.service.port -}}
+{{- end -}}
 {{- end }}
 
 {{/*

@@ -210,6 +210,10 @@ postgresql:
 # See https://github.com/varnish/helm-varnish-cache for all options.
 varnish:
   enabled: false
+  # Whether the default VCL sends requests to the Volto frontend. It must match
+  # frontend.enabled: set it to false for the Classic UI. The VCL is rendered
+  # by varnish-cache, which can't read frontend.enabled itself.
+  ploneFrontend: true
   server:
     replicas: 1
     # With a single replica, a PodDisruptionBudget would block node drains.
@@ -222,16 +226,45 @@ varnish:
       http:
         port: 6081
     # VCL of Varnish, rendered as a template by the varnish-cache chart, which
-    # restarts the Varnish pods when it changes. The backend is the backend
-    # Service, which balances the connections between the backend pods.
-    # Rendered with the values of varnish-cache, so it names the Service after
-    # the release: change the host if you set fullnameOverride.
+    # restarts the Varnish pods when it changes. Varnish receives all the
+    # requests of the site, and sends them to the backend and frontend
+    # Services, which balance the connections between their pods.
+    # Rendered with the values of varnish-cache, so it names the Services after
+    # the release: change the hosts if you set fullnameOverride.
     vclConfig: |
       vcl 4.1;
 
-      backend default {
+      # The Plone backend: the API requests with Volto, all requests with the
+      # Classic UI.
+      backend plone {
           .host = "{{ .Release.Name }}-backend";
           .port = "8080";
+      }
+      {{- if .Values.ploneFrontend }}
+
+      # The Volto frontend: the pages and static assets of the site.
+      backend volto {
+          .host = "{{ .Release.Name }}-frontend";
+          .port = "3000";
+      }
+      {{- end }}
+
+      sub vcl_recv {
+          {{- if .Values.ploneFrontend }}
+          # The routing rewrites the API requests to Zope virtual host paths.
+          if (req.url ~ "^/VirtualHostBase/") {
+              set req.backend_hint = plone;
+          } else {
+              set req.backend_hint = volto;
+              # The static assets of Volto don't depend on cookies, which
+              # would prevent caching them.
+              if (req.url ~ "^/static/") {
+                  unset req.http.Cookie;
+              }
+          }
+          {{- else }}
+          set req.backend_hint = plone;
+          {{- end }}
       }
 
 # Routing of the requests to Plone.

@@ -31,7 +31,7 @@ The site is served over HTTP. To serve it over HTTPS, see [HTTPS](../components/
 With Volto, the chart creates two Ingress resources:
 
 * `<release>-api`: `/++api++` to the backend (or Varnish), rewritten to the Zope virtual host path with the `use-regex` and `rewrite-target` annotations
-* `<release>`: everything else to the frontend
+* `<release>`: everything else to the frontend (or Varnish)
 
 With the Classic UI, it creates a single `<release>` Ingress, sending everything to the backend (or Varnish), rewritten to the Zope virtual host path.
 

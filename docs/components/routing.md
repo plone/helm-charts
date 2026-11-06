@@ -4,7 +4,7 @@ The routing sends the requests to the frontend and the backend:
 
 * With Volto:
   * `/++api++` goes to the backend (through Varnish if enabled), rewritten for the Zope virtual host monster, for example `/++api++/news` becomes `/VirtualHostBase/https/plone.example.com:443/Plone/++api++/VirtualHostRoot/news`, so that the backend generates URLs with the public hostname.
-  * Everything else goes to the frontend. The frontend itself sends the caching headers of its static assets, with a one year `max-age` for `/static`.
+  * Everything else goes to the frontend (through Varnish if enabled). The frontend itself sends the caching headers of its static assets, with a one year `max-age` for `/static`.
 * With the Classic UI, everything goes to the backend (through Varnish if enabled), rewritten to `/VirtualHostBase/https/plone.example.com:443/Plone/VirtualHostRoot/...`.
 
 The options shared by both routing types are:

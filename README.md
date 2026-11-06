@@ -8,7 +8,7 @@ A single chart covers the common ways to run Plone, selected with a few values:
 * **User interface:** the [Volto](https://6.docs.plone.org/volto/) frontend (default), or the Classic UI rendered by the backend
 * **Storage:** RelStorage on PostgreSQL (default), or a ZEO server
 * **Database:** a PostgreSQL cluster managed by [CloudNativePG](https://cloudnative-pg.io) (default), or an external PostgreSQL server
-* **Cache:** an optional [Varnish](https://varnish-cache.org) cache in front of the backend
+* **Cache:** an optional [Varnish](https://varnish-cache.org) cache in front of the site
 * **Routing:** a [Gateway API](https://gateway-api.sigs.k8s.io) HTTPRoute (default), Ingress resources for ingress-nginx, or none
 
 The default installs Plone 6 with Volto, PostgreSQL, and Gateway API.
@@ -89,7 +89,7 @@ Then [change the password of the `admin` user](docs/components/site.md#admin-use
 
 Each scenario is a set of values, described in its own page in the [`docs/scenarios`](docs/scenarios) directory.
 Put the values in a file, and install the chart with `--values <file>`.
-The scenarios can be combined: for example, add `varnish.enabled: true` to any of them, or replace the Gateway API routing with ingress-nginx.
+The scenarios can be combined: for example, add `--set varnish.enabled=true` to any of them, or replace the Gateway API routing with ingress-nginx.
 The chart fails with an explanation when the values don't make sense together.
 
 | Scenario | UI | Storage | Database or server | Routing |
@@ -141,7 +141,7 @@ The [`docs/components`](docs/components) directory explains the main ones, per c
 * [Storage](docs/components/storage.md): RelStorage on PostgreSQL with CloudNativePG, ZEO, and packing
 * [Backend](docs/components/backend.md): the `plone-backend` image, its pods, and environment variables
 * [Frontend](docs/components/frontend.md): the Volto frontend, or the Classic UI without it
-* [Varnish](docs/components/varnish.md): the optional cache in front of the backend, and its VCL
+* [Varnish](docs/components/varnish.md): the optional cache in front of the site, and its VCL
 * [Routing](docs/components/routing.md): Gateway API, ingress-nginx, and the Zope virtual host paths
 * [Replicas and high availability](docs/components/high-availability.md): running more pods of each component
 

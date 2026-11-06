@@ -29,8 +29,9 @@ and open http://localhost:3000.
 Your routing must send:
 
 * with Volto:
-  * `/++api++` requests to the `<release>-backend` service on port 8080, or to `<release>-varnish` on port 6081 with Varnish, rewritten to `/VirtualHostBase/<scheme>/<hostname>:<port>/<site id>/++api++/VirtualHostRoot/...`
+  * `/++api++` requests to the `<release>-backend` service on port 8080, rewritten to `/VirtualHostBase/<scheme>/<hostname>:<port>/<site id>/++api++/VirtualHostRoot/...`
   * all other requests to the `<release>-frontend` service on port 3000
-* with the Classic UI: all requests to the backend (or Varnish), rewritten to `/VirtualHostBase/<scheme>/<hostname>:<port>/<site id>/VirtualHostRoot/...`
+* with the Classic UI: all requests to the backend, rewritten to `/VirtualHostBase/<scheme>/<hostname>:<port>/<site id>/VirtualHostRoot/...`
+* with Varnish: all the requests, rewritten as above, to the `<release>-varnish` service on port 6081, instead of the backend and the frontend
 
 For example, with the hostname `plone.example.com` over HTTPS and the default site id, `/++api++/news` becomes `/VirtualHostBase/https/plone.example.com:443/Plone/++api++/VirtualHostRoot/news`.

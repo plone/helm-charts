@@ -38,7 +38,7 @@ spec:
             value: /
       backendRefs:
         - name: {{ include "plone.routing.frontendService" . }}
-          port: {{ .Values.frontend.service.port }}
+          port: {{ include "plone.routing.frontendPort" . }}
     {{- else }}
     # Classic UI: everything goes to the backend, rewritten to the Zope virtual host path.
     - matches:

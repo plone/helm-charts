@@ -6,7 +6,7 @@ A single chart covers the common ways to run Plone, selected with a few values:
 * **User interface:** the Volto frontend (default), or the Classic UI rendered by the backend
 * **Storage:** RelStorage on PostgreSQL (default), or a ZEO server
 * **Database:** a PostgreSQL cluster managed by CloudNativePG (default), or an external PostgreSQL server
-* **Cache:** an optional Varnish cache in front of the backend
+* **Cache:** an optional Varnish cache in front of the site
 * **Routing:** a Gateway API HTTPRoute (default), Ingress resources for ingress-nginx, or none
 
 The full documentation, with the prerequisites, the scenarios, and the configuration, is in the [repository README](https://github.com/plone/helm-charts#readme).

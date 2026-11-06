@@ -42,7 +42,7 @@ spec:
               service:
                 name: {{ include "plone.routing.frontendService" . }}
                 port:
-                  number: {{ .Values.frontend.service.port }}
+                  number: {{ include "plone.routing.frontendPort" . }}
           {{- else }}
           - path: /(.*)
             pathType: ImplementationSpecific
