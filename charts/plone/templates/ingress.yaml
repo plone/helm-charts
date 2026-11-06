@@ -1,0 +1,55 @@
+{{- if eq .Values.routing.type "ingress-nginx" }}
+{{- $r := .Values.routing }}
+{{- $n := $r.ingressNginx }}
+{{- if .Values.frontend.enabled }}
+# Volto: everything but the API (see ingress-api.yaml) goes to the frontend.
+{{- else }}
+# Classic UI: everything goes to the backend, rewritten to the Zope virtual host path.
+{{- end }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "plone.fullname" . }}
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+  {{- if .Values.frontend.enabled }}
+  {{- with $n.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- else }}
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: {{ printf "%s/$1" (include "plone.routing.backendPath" .) | quote }}
+    {{- with $n.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  ingressClassName: {{ $n.className }}
+  {{- with $n.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    - host: {{ $r.hostname | quote }}
+      http:
+        paths:
+          {{- if .Values.frontend.enabled }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "plone.routing.frontendService" . }}
+                port:
+                  number: {{ include "plone.routing.frontendPort" . }}
+          {{- else }}
+          - path: /(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "plone.routing.backendService" . }}
+                port:
+                  number: {{ include "plone.routing.backendPort" . }}
+          {{- end }}
+{{- end }}

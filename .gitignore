@@ -1,6 +1,6 @@
 *.tgz
 diagrams
-charts/
+charts/*/charts/
 *.swp
 ct
 chart_schema.yaml
