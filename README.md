@@ -9,7 +9,8 @@ The default installs Plone 6 with Volto, PostgreSQL, and Gateway API.
 
 ## Documentation
 
-The documentation is in [`docs`](docs/index.md), organized by the [Diátaxis](https://diataxis.fr) framework:
+The documentation is published at [plone.github.io/helm-charts](https://plone.github.io/helm-charts/), from the sources in [`docs`](docs/index.md).
+It is organized by the [Diátaxis](https://diataxis.fr) framework:
 
 * [Tutorial](docs/tutorials/install-plone-on-rancher-desktop.md): install Plone on Rancher Desktop, step by step.
 * [How-to guides](docs/how-to/index.md): install each scenario, attach the site to a Gateway, serve it over HTTPS, cache it with Varnish, and more.
@@ -86,3 +87,18 @@ helm install plone ./charts/plone --values ./charts/plone/ci/default-values.yaml
 
 The [`charts/plone/ci`](charts/plone/ci) directory has a values file per tested scenario.
 The GitHub Actions workflow lints and installs the chart with each of them, and [`test.sh`](test.sh) does the same in a local cluster.
+
+### Documentation
+
+The documentation is built with [Sphinx](https://www.sphinx-doc.org) and [MyST](https://myst-parser.readthedocs.io), with the theme of the [Plone documentation](https://6.docs.plone.org/), and checked with [Vale](https://vale.sh).
+The tools are installed with [uv](https://docs.astral.sh/uv/):
+
+```shell
+make docs           # build the HTML in docs/_build/html, warnings are errors
+make docs-livehtml  # rebuild on changes, at http://localhost:8050
+make docs-vale      # check the style and spelling
+make docs-linkcheck # check the external links
+```
+
+When a change reaches `main`, the release workflow publishes the documentation to GitHub Pages, together with the `index.yaml` of the Helm repository, which chart-releaser keeps in the `gh-pages` branch.
+Pull requests build and check the documentation without publishing it.

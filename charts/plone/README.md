@@ -11,7 +11,7 @@ A single chart covers the common ways to run Plone, selected with a few values:
 
 ## Quick start
 
-The default scenario needs the [CloudNativePG operator](https://github.com/plone/helm-charts/blob/main/docs/how-to/install-cloudnativepg.md).
+The default scenario needs the [CloudNativePG operator](https://plone.github.io/helm-charts/how-to/install-cloudnativepg.html).
 To try Plone without routing:
 
 ```shell
@@ -29,9 +29,9 @@ Then open http://localhost:3000.
 
 ## Documentation
 
-The full documentation is in the [repository](https://github.com/plone/helm-charts/blob/main/docs/index.md):
+The full documentation is published at [plone.github.io/helm-charts](https://plone.github.io/helm-charts/):
 
-* [Tutorial: install Plone on Rancher Desktop](https://github.com/plone/helm-charts/blob/main/docs/tutorials/install-plone-on-rancher-desktop.md)
-* [How-to guides](https://github.com/plone/helm-charts/blob/main/docs/how-to/index.md), with the scenarios, routing, and operations
-* [Values reference](https://github.com/plone/helm-charts/blob/main/docs/reference/values.md)
-* [Explanation](https://github.com/plone/helm-charts/blob/main/docs/explanation/index.md)
+* [Tutorial: install Plone on Rancher Desktop](https://plone.github.io/helm-charts/tutorials/install-plone-on-rancher-desktop.html)
+* [How-to guides](https://plone.github.io/helm-charts/how-to/index.html), with the scenarios, routing, and operations
+* [Values reference](https://plone.github.io/helm-charts/reference/values.html)
+* [Explanation](https://plone.github.io/helm-charts/explanation/index.html)
