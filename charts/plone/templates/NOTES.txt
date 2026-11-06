@@ -6,7 +6,7 @@ Plone {{ .Chart.AppVersion }} is being installed as release {{ .Release.Name }}:
 * Routing: {{ .Values.routing.type }}
 {{- if .Values.site.create }}
 
-The backend creates the Plone site "{{ .Values.site.id }}" on its first start, which takes a few minutes.
+The {{ include "plone.fullname" . }}-site Job created the Plone site "{{ .Values.site.id }}", if it didn't exist yet.
 {{- end }}
 {{- if ne .Values.routing.type "none" }}
 

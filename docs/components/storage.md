@@ -64,6 +64,9 @@ postgresql:
 Set `postgresql.enabled` to `false` with ZEO, so that the chart doesn't create a PostgreSQL cluster that Plone wouldn't use.
 The volume is created from a volume claim template of the ZEO StatefulSet, so it's kept when you uninstall the chart.
 
+The ZEO server runs as the `plone` user of the image, with the id 500, and `fsGroup` makes the volume writable by it.
+The defaults of `storage.zeo.server.podSecurityContext` and `storage.zeo.server.securityContext` comply with the `restricted` [Pod Security Standard](https://kubernetes.io/docs/concepts/security/pod-security-standards/).
+
 To use an external ZEO server, see [External ZEO server](../scenarios/external-zeo.md).
 
 ## Packing
@@ -74,6 +77,13 @@ The `<release>-pack` CronJob packs the database regularly, removing old object r
 pack:
   enabled: true
   schedule: "45 9 * * *"
-  # Keep the history of the last days. 0 packs everything.
-  days: 0
+  # Keep the history of the last days, so that undo works for them. 0 removes
+  # all of the history.
+  days: 7
+  # Retries of a failed pack, until the next schedule.
+  backoffLimit: 1
+  # Stop a pack running for longer than this, 23 hours by default.
+  activeDeadlineSeconds: 82800
 ```
+
+Keep `pack.activeDeadlineSeconds` below the interval of `pack.schedule`, so that a stuck pack doesn't block the next one.

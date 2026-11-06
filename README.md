@@ -80,7 +80,7 @@ Please refer to Helm's [documentation](https://helm.sh/docs) to get started.
 
    and open http://localhost:3000.
 
-The backend creates the Plone site on its first start, which takes a few minutes.
+A Job creates the Plone site after the install, which takes a few minutes, and `helm install` waits for it.
 Follow it with `kubectl logs --namespace plone plone-backend-0 --follow`.
 
 Then [change the password of the `admin` user](docs/components/site.md#admin-user).

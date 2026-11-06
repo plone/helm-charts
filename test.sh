@@ -76,7 +76,7 @@ for values in $chart/ci/*-values.yaml; {
 
     helm lint $chart --values $values
 
-    # The backend creates the Plone site on its first start.
+    # Helm waits for the Job that creates the Plone site.
     helm install -n plone-helm myplone $chart --values $values --wait --timeout 15m
 
     if [ "$generate_k8s_images" = true ]; then

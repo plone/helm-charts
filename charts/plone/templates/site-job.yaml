@@ -1,0 +1,80 @@
+{{- if .Values.site.create }}
+{{- $b := .Values.backend }}
+# Creates the Plone site, if it doesn't exist yet. The image can also do it when
+# the backend starts, but that isn't meant for production: every pod would go
+# through it on every start.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "plone.fullname" . }}-site
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: site
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  # Without helm --wait, the database may still be starting.
+  backoffLimit: 6
+  template:
+    metadata:
+      labels:
+        {{- include "plone.selectorLabels" (dict "context" . "component" "site") | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $b.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      restartPolicy: Never
+      containers:
+        - name: site
+          image: "{{ $b.image.repository }}:{{ $b.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ $b.image.pullPolicy }}
+          {{- with $b.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          args:
+            - create-site
+          env:
+            - name: SITE_ID
+              value: {{ .Values.site.id | quote }}
+            - name: TYPE
+              value: {{ ternary "volto" "classic" .Values.frontend.enabled }}
+            {{- with .Values.site.profiles }}
+            - name: PROFILES
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.site.defaultLanguage }}
+            - name: SITE_DEFAULT_LANGUAGE
+              value: {{ . | quote }}
+            {{- end }}
+            {{- include "plone.storageEnv" . | nindent 12 }}
+            {{- with $b.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml $b.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+      {{- with $b.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $b.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $b.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

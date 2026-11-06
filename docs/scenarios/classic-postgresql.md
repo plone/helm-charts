@@ -25,6 +25,6 @@ The site is served over HTTP. To serve it over HTTPS, see [HTTPS](../components/
 All requests go from the Gateway to the backend pods, rewritten to the Zope virtual host path of the site.
 For example, `/news` becomes `/VirtualHostBase/https/plone.example.com:443/Plone/VirtualHostRoot/news`.
 
-The backend creates a Classic UI site on its first start.
+The site creation Job creates a Classic UI site.
 
 This scenario is tested by [`ci/classic-values.yaml`](../../charts/plone/ci/classic-values.yaml).

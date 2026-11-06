@@ -20,8 +20,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "plone.labels" . | nindent 8 }}
-        app.kubernetes.io/component: frontend
+        {{- include "plone.selectorLabels" (dict "context" . "component" "frontend") | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:

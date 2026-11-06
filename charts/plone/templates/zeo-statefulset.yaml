@@ -23,32 +23,24 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "plone.labels" . | nindent 8 }}
-        app.kubernetes.io/component: zeo
+        {{- include "plone.selectorLabels" (dict "context" . "component" "zeo") | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      initContainers:
-        # The volume must be writable by the plone user of the image.
-        - name: chown-data
-          image: {{ $image | quote }}
-          imagePullPolicy: {{ $z.image.pullPolicy }}
-          command: ["chown", "plone:plone", "/data"]
-          securityContext:
-            runAsNonRoot: false
-            runAsUser: 0
-          volumeMounts:
-            - name: data
-              mountPath: /data
+      {{- with $z.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: zeo
           image: {{ $image | quote }}
           imagePullPolicy: {{ $z.image.pullPolicy }}
+          {{- with $z.securityContext }}
           securityContext:
-            runAsNonRoot: true
-            runAsUser: 500
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with $z.env }}
           env:
             {{- toYaml . | nindent 12 }}

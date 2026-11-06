@@ -2,7 +2,7 @@
 
 The backend runs the [`plone-backend` image](https://6.docs.plone.org/install/containers/images/backend.html), configured with its environment variables.
 It serves the REST API for the Volto frontend, or the whole site with the Classic UI.
-On its first start, it creates the Plone site, see [Site](site.md).
+The Plone site is created by a Job, see [Site](site.md).
 
 The chart creates:
 
@@ -27,4 +27,4 @@ The image tag defaults to the chart `appVersion`.
 To run your own image with add-ons, set `backend.image.repository` and `backend.image.tag`.
 
 The backend is a StatefulSet, with the headless `<release>-backend-director` service that StatefulSets require, so that each pod has a stable name.
-Its startup probe allows 10 minutes for the first start, during which the site is created.
+Its startup probe allows 10 minutes for the first start, during which the database is initialized.

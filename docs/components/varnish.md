@@ -29,7 +29,7 @@ The default VCL:
 
 Kubernetes balances per connection, not per request, but Varnish keeps a pool of connections to each Service, which spreads the load between the pods.
 
-The default VCL can't read `frontend.enabled`, because it's rendered by the `varnish-cache` chart, with its own values.
+The default VCL can't read the values of this chart, such as `frontend.enabled`, because it's rendered by the `varnish-cache` chart, with its own values.
 So, with the Classic UI, also set `varnish.ploneFrontend` to `false`, and the VCL only uses the backend:
 
 ```shell
@@ -44,11 +44,30 @@ helm install plone plone/plone --namespace plone --create-namespace \
 
 The chart fails with an explanation when `varnish.ploneFrontend` doesn't match `frontend.enabled`.
 
+For the same reason, the VCL gets the Services from the global values, the only ones that the two charts share.
+If you change `fullnameOverride`, `backend.service.port`, or `frontend.service.port`, set the same value in `global.plone`:
+
+```yaml
+fullnameOverride: web
+backend:
+  service:
+    port: 80
+frontend:
+  service:
+    port: 81
+global:
+  plone:
+    fullnameOverride: web
+    backendPort: 80
+    frontendPort: 81
+```
+
+The chart fails with an explanation when they don't match.
+
 ## Custom VCL
 
 To customize the caching, for example for the caching rules of [plone.app.caching](https://pypi.org/project/plone.app.caching/), replace `varnish.server.vclConfig` with your own VCL in a values file, keeping the backends of the default VCL.
-It's rendered as a template by the `varnish-cache` chart, with its own values, so it can use `.Release.Name` and the values under `varnish`, but not the other values of this chart.
-If you set `fullnameOverride`, set the hosts of the backends to `<fullnameOverride>-backend` and `<fullnameOverride>-frontend`.
+It's rendered as a template by the `varnish-cache` chart, with its own values, so it can use `.Release.Name`, the values under `varnish`, and the values under `global`, but not the other values of this chart.
 The `varnish-cache` chart restarts the Varnish pods when the VCL changes.
 
 All the options of the `varnish-cache` chart can be set under `varnish`, see its [documentation](https://github.com/varnish/helm-varnish-cache).

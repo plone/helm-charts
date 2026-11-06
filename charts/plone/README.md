@@ -30,7 +30,7 @@ helm install plone plone/plone --namespace plone --create-namespace \
 kubectl port-forward --namespace plone service/plone-frontend 3000:3000
 ```
 
-The backend creates the Plone site on its first start, which takes a few minutes.
+A Job creates the Plone site after the install, which takes a few minutes, and `helm install` waits for it.
 Then open http://localhost:3000.
 
 ## Scenarios

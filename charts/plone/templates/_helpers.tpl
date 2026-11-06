@@ -8,9 +8,19 @@ Expand the name of the chart.
 {{/*
 Prefix of the resource names: the release name, unless overridden.
 The components are named <fullname>-backend, <fullname>-frontend, and so on.
+Truncated so that <fullname>-backend fits the 52 characters of a StatefulSet
+name, whose pods have a label with the name and a hash.
 */}}
 {{- define "plone.fullname" -}}
-{{- default .Release.Name .Values.fullnameOverride | trunc 52 | trimSuffix "-" }}
+{{- default .Release.Name .Values.fullnameOverride | trunc 44 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+plone.fullname for the VCL of Varnish, which is rendered by the varnish-cache
+chart, with its values: of the values of this chart, it only has the global ones.
+*/}}
+{{- define "plone.vcl.fullname" -}}
+{{- default .Release.Name .Values.global.plone.fullnameOverride | trunc 44 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
@@ -67,6 +77,18 @@ Validate the combination of values.
 {{- if and .Values.varnish.enabled (ne (.Values.frontend.enabled | toString) (.Values.varnish.ploneFrontend | toString)) -}}
 {{- fail (printf "varnish.ploneFrontend must match frontend.enabled, so that the VCL of Varnish uses the frontend only when it exists: set varnish.ploneFrontend to %v" .Values.frontend.enabled) -}}
 {{- end -}}
+{{- if .Values.varnish.enabled -}}
+{{- $g := .Values.global.plone -}}
+{{- if ne (include "plone.fullname" .) (include "plone.vcl.fullname" .) -}}
+{{- fail (printf "global.plone.fullnameOverride must match fullnameOverride, so that the VCL of Varnish finds the Services: set global.plone.fullnameOverride to %q" .Values.fullnameOverride) -}}
+{{- end -}}
+{{- if ne (.Values.backend.service.port | toString) ($g.backendPort | toString) -}}
+{{- fail (printf "global.plone.backendPort must match backend.service.port, so that the VCL of Varnish finds the Service: set global.plone.backendPort to %v" .Values.backend.service.port) -}}
+{{- end -}}
+{{- if and .Values.frontend.enabled (ne (.Values.frontend.service.port | toString) ($g.frontendPort | toString)) -}}
+{{- fail (printf "global.plone.frontendPort must match frontend.service.port, so that the VCL of Varnish finds the Service: set global.plone.frontendPort to %v" .Values.frontend.service.port) -}}
+{{- end -}}
+{{- end -}}
 {{- if and (eq .Values.routing.type "gateway") (not .Values.routing.gateway.name) (empty .Values.routing.gateway.parentRefs) -}}
 {{- fail "routing.gateway.name is required with routing.type gateway: set it to the Gateway that serves the site (see https://github.com/plone/helm-charts#gateway-api), or set routing.type to none" -}}
 {{- end -}}
@@ -92,6 +114,7 @@ true
 Environment variables that configure the storage of the plone-backend image.
 */}}
 {{- define "plone.storageEnv" -}}
+{{- /* The password can't have ' or \, see docs/scenarios/external-postgresql.md. */ -}}
 {{- if eq .Values.storage.type "relstorage" -}}
 {{- $r := .Values.storage.relstorage -}}
 {{- $cluster := include "plone.dependencyFullname" (dict "context" . "name" "postgresql" "values" .Values.postgresql) -}}

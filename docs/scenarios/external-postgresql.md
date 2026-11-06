@@ -34,6 +34,11 @@ helm install plone plone/plone --namespace plone \
 ```
 
 Replace `<gateway>` and `<gateway-namespace>` with the name and namespace of the Gateway that serves the site, and `plone.example.com` with its hostname.
+
+The password can't contain single quotes (`'`) or backslashes (`\`).
+The chart builds the connection string in the pod, wrapping the values of the secret in single quotes, and it can't escape them: a single quote makes the connection string invalid, and a backslash is dropped, so the authentication fails.
+The same applies to the database and user names.
+
 If your secret uses other keys, for example one created by another tool, set them too:
 
 ```shell

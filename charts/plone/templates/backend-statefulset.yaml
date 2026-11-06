@@ -21,8 +21,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "plone.labels" . | nindent 8 }}
-        app.kubernetes.io/component: backend
+        {{- include "plone.selectorLabels" (dict "context" . "component" "backend") | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -41,21 +40,6 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           env:
-            {{- if .Values.site.create }}
-            # Creates the site on start, if it doesn't exist yet.
-            - name: SITE
-              value: {{ .Values.site.id | quote }}
-            - name: TYPE
-              value: {{ ternary "volto" "classic" .Values.frontend.enabled }}
-            {{- with .Values.site.profiles }}
-            - name: PROFILES
-              value: {{ . | quote }}
-            {{- end }}
-            {{- with .Values.site.defaultLanguage }}
-            - name: SITE_DEFAULT_LANGUAGE
-              value: {{ . | quote }}
-            {{- end }}
-            {{- end }}
             - name: ZODB_CACHE_SIZE
               value: {{ $b.zodbCacheSize | quote }}
             {{- include "plone.storageEnv" . | nindent 12 }}

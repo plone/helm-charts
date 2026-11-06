@@ -14,11 +14,12 @@ spec:
   failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
+      backoffLimit: {{ .Values.pack.backoffLimit }}
+      activeDeadlineSeconds: {{ .Values.pack.activeDeadlineSeconds }}
       template:
         metadata:
           labels:
-            {{- include "plone.labels" . | nindent 12 }}
-            app.kubernetes.io/component: pack
+            {{- include "plone.selectorLabels" (dict "context" . "component" "pack") | nindent 12 }}
         spec:
           {{- with .Values.imagePullSecrets }}
           imagePullSecrets:
@@ -33,6 +34,10 @@ spec:
             - name: pack
               image: "{{ $b.image.repository }}:{{ $b.image.tag | default .Chart.AppVersion }}"
               imagePullPolicy: {{ $b.image.pullPolicy }}
+              {{- with $b.securityContext }}
+              securityContext:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
               # zodbpack with RelStorage, zeopack with ZEO.
               args:
                 - pack
