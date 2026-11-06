@@ -1,0 +1,67 @@
+# Builds the GitHub Pages site: the documentation, and the index.yaml of the
+# Helm repository that chart-releaser keeps in the gh-pages branch.
+# Pull requests only build and check it. The release workflow calls this one
+# after chart-releaser, with deploy set, so that the site serves the new index.
+name: Documentation
+
+on:
+  pull_request:
+  workflow_call:
+    inputs:
+      deploy:
+        description: "Deploy the site to GitHub Pages"
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Deploy the site to GitHub Pages"
+        type: boolean
+        default: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Build the documentation and add the Helm repository index
+        run: make docs-site
+
+      - name: Check with Vale
+        run: make docs-vale DOCS_VALEOPTS="--minAlertLevel=error"
+
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v5.0.0
+        with:
+          path: docs/_build/html/
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: inputs.deploy && github.ref == 'refs/heads/main'
+    needs:
+      - build
+    # Queue deployments: Pages refuses a new one while another is in
+    # progress.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5.0.1
