@@ -1,6 +1,6 @@
 # How to customize the Varnish VCL
 
-This guide shows you how to replace the default VCL of Varnish with your own, for example to apply the caching rules of [plone.app.caching](https://pypi.org/project/plone.app.caching/).
+This guide shows you how to replace the default VCL of Varnish with your own, for example to apply the caching rules of [`plone.app.caching`](https://pypi.org/project/plone.app.caching/).
 
 ## Start from the default VCL
 
@@ -25,4 +25,4 @@ Run `helm upgrade` with the values file.
 The `varnish-cache` chart restarts the Varnish pods when the VCL changes.
 
 For the other options of the `varnish-cache` chart, set them under `varnish`.
-See its [documentation](https://github.com/varnish/helm-varnish-cache).
+See its [documentation](https://github.com/varnish/helm-varnish).

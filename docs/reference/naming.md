@@ -25,7 +25,7 @@ The names of the PostgreSQL and Varnish resources follow the conventions of thei
 When the release name already contains the name of the dependency, the resources use the release name alone, so that the name isn't repeated.
 Otherwise, the name is the release name followed by the dependency name, as in `<release>-postgresql`.
 
-The fullname is cut at 44 characters for the chart resources, so that `<fullname>-backend` fits the 52 characters of a StatefulSet name, whose pods have a label with the name and a hash.
+The prefix of the names of the chart resources, the release name or `fullnameOverride`, is cut at 44 characters, so that `<prefix>-backend` fits the 52 characters of a StatefulSet name, whose pods have a label with the name and a hash.
 
 ## Labels
 

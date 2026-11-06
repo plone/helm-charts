@@ -1,3 +1,7 @@
+---
+orphan: true
+---
+
 # Site
 
 The Plone site is documented in the how-to guides:
