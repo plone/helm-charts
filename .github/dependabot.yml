@@ -1,0 +1,21 @@
+version: 2
+updates:
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # Helm chart dependencies (cluster from cnpg, varnish-cache from OCI) in Chart.yaml
+  - package-ecosystem: "helm"
+    directory: "/charts/plone"
+    schedule:
+      interval: "weekly"
+    groups:
+      helm-dependencies:
+        patterns:
+          - "*"
