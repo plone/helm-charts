@@ -114,7 +114,7 @@ true
 Environment variables that configure the storage of the plone-backend image.
 */}}
 {{- define "plone.storageEnv" -}}
-{{- /* The password can't have ' or \, see docs/scenarios/external-postgresql.md. */ -}}
+{{- /* The password can't have ' or \, see docs/how-to/use-external-postgresql.md. */ -}}
 {{- if eq .Values.storage.type "relstorage" -}}
 {{- $r := .Values.storage.relstorage -}}
 {{- $cluster := include "plone.dependencyFullname" (dict "context" . "name" "postgresql" "values" .Values.postgresql) -}}
