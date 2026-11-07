@@ -21,7 +21,7 @@ With `routing.type` set to `none`, the chart doesn't create any routing.
 
 The HTTPRoute uses only the features of the standard channel of Gateway API, such as the `URLRewrite` filter with `ReplacePrefixMatch`.
 So the same chart works with any conformant implementation, such as Envoy Gateway, Traefik, Istio, Cilium, or NGINX Gateway Fabric.
-See the [list of implementations](https://gateway-api.sigs.k8s.io/implementations/).
+See the [list of implementations](https://gateway-api.sigs.k8s.io/docs/implementations/list/).
 
 ## What it doesn't cover
 

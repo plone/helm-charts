@@ -5,3 +5,9 @@ charts/*/charts/
 ct
 chart_schema.yaml
 lintconf.yaml
+
+# Documentation
+.venv/
+docs/_build/
+# Downloaded by "vale sync"
+docs/_styles/Microsoft/

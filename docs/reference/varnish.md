@@ -1,6 +1,6 @@
 # Varnish
 
-With `varnish.enabled` set to `true`, the chart installs Varnish with the [`varnish-cache` chart](https://github.com/varnish/helm-varnish-cache) of Varnish Software, and routes all the requests of the site through it.
+With `varnish.enabled` set to `true`, the chart installs Varnish with the [`varnish-cache` chart](https://github.com/varnish/helm-varnish) of Varnish Software, and routes all the requests of the site through it.
 
 ## Resources
 
@@ -99,5 +99,5 @@ A custom VCL replaces `varnish.server.vclConfig`.
 It is rendered as a template by the `varnish-cache` chart, so it can use `.Release.Name`, the values under `varnish`, and the values under `global`, but not the other values of this chart.
 The `varnish-cache` chart restarts the Varnish pods when the VCL changes.
 
-All the options of the `varnish-cache` chart are set under `varnish`, see its [documentation](https://github.com/varnish/helm-varnish-cache).
+All the options of the `varnish-cache` chart are set under `varnish`, see its [documentation](https://github.com/varnish/helm-varnish).
 For how to write a custom VCL, see [How to customize the Varnish VCL](../how-to/customize-varnish-vcl.md).
