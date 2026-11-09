@@ -1,0 +1,34 @@
+{{- if and (eq .Values.routing.type "ingress-nginx") .Values.frontend.enabled }}
+{{- $r := .Values.routing }}
+{{- $n := $r.ingressNginx }}
+# Volto: API requests go to the backend, rewritten to the Zope virtual host path.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "plone.fullname" . }}-api
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: {{ printf "%s$1" (include "plone.routing.backendPath" .) | quote }}
+    {{- with $n.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ $n.className }}
+  {{- with $n.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    - host: {{ $r.hostname | quote }}
+      http:
+        paths:
+          - path: /\+\+api\+\+($|/.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "plone.routing.backendService" . }}
+                port:
+                  number: {{ include "plone.routing.backendPort" . }}
+{{- end }}

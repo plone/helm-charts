@@ -27,28 +27,24 @@ jobs:
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2
 
-      # we can not check against the main branch, because it has a different structure as we are in a refactoring branch
-      # skip this
-      # - name: Run chart-testing (list-changed)
-      #   id: list-changed
-      #   run: |
-      #     # List the changed charts on the target branch and set the 'changed' output to 'true' if there are any changes.
-      #     CHART_DIRS=$(for chartdir in $CHARTS_TO_CHECK; do echo -n ",./${chartdir} "; done)
-      #     echo $CHART_DIRS
-      #     changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }} --chart-dirs $CHART_DIRS )
-      #     if [[ -n "$changed" ]]; then
-      #       echo "changed=true" >> "$GITHUB_OUTPUT"
-      #     fi
-
+      # Lints the chart once per scenario in charts/plone/ci.
       - name: Run chart-testing (lint)
-        # if: steps.list-changed.outputs.changed == 'true'
-        # run: ct lint --target-branch ${{ github.event.repository.default_branch }}
-        run: ct lint --all  --chart-dirs ./
+        run: ct lint --all --chart-dirs charts --chart-repos cnpg=https://cloudnative-pg.github.io/charts
 
       - name: Create kind cluster
-        # if: steps.list-changed.outputs.changed == 'true'
         uses: helm/kind-action@v1
 
+      # The PostgreSQL clusters of the relstorage scenarios are managed by the CloudNativePG operator.
+      - name: Install CloudNativePG operator
+        run: |
+          helm repo add cnpg https://cloudnative-pg.github.io/charts
+          helm upgrade --install cnpg cnpg/cloudnative-pg --namespace cnpg-system --create-namespace --wait
+
+      # The gateway routing creates an HTTPRoute.
+      - name: Install Gateway API CRDs
+        run: kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.7.0/standard-install.yaml
+
+      # Installs the chart once per scenario in charts/plone/ci. The backend creates
+      # the Plone site on its first start, which takes a few minutes.
       - name: Run chart-testing (install)
-        # if: steps.list-changed.outputs.changed == 'true'
-        run: ct install --all  --chart-dirs ./ --excluded-charts backend,frontend,nginx,varnish,postgresql,zeoserver,plone6-classic-nodb
+        run: ct install --all --chart-dirs charts --chart-repos cnpg=https://cloudnative-pg.github.io/charts --helm-extra-args "--timeout 15m"

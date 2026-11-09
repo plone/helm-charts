@@ -1,0 +1,41 @@
+Plone {{ .Chart.AppVersion }} is being installed as release {{ .Release.Name }}:
+
+* User interface: {{ ternary "Volto frontend" "Classic UI" .Values.frontend.enabled }}
+* Storage: {{ if eq .Values.storage.type "relstorage" }}RelStorage on {{ ternary "the CloudNativePG cluster of this release" .Values.storage.relstorage.host .Values.postgresql.enabled }}{{ else }}ZEO server {{ .Values.storage.zeo.address | default "of this release" }}{{ end }}
+* Varnish: {{ ternary "enabled" "disabled" .Values.varnish.enabled }}
+* Routing: {{ .Values.routing.type }}
+{{- if .Values.site.create }}
+
+The {{ include "plone.fullname" . }}-site Job created the Plone site "{{ .Values.site.id }}", if it didn't exist yet.
+{{- end }}
+{{- if ne .Values.routing.type "none" }}
+
+Once the pods are ready, the site is available at:
+
+  {{ include "plone.url" . }}
+{{- if eq .Values.routing.type "gateway" }}
+
+Check that the Gateway accepted the route with:
+
+  kubectl describe httproute --namespace {{ .Release.Namespace }} {{ include "plone.fullname" . }}
+{{- end }}
+{{- else }}
+
+No routing resources were created (routing.type none).
+{{- end }}
+
+To access {{ ternary "the frontend" "the site" .Values.frontend.enabled }} without routing, run:
+{{- if .Values.frontend.enabled }}
+
+  kubectl port-forward --namespace {{ .Release.Namespace }} service/{{ include "plone.fullname" . }}-frontend 3000:{{ .Values.frontend.service.port }}
+
+and open http://localhost:3000.
+{{- else }}
+
+  kubectl port-forward --namespace {{ .Release.Namespace }} service/{{ include "plone.fullname" . }}-backend 8080:{{ .Values.backend.service.port }}
+
+and open http://localhost:8080/{{ .Values.site.id }}.
+{{- end }}
+
+The plone-backend image comes with an "admin" user with the password "admin".
+Change it before exposing the site, see https://github.com/plone/helm-charts/blob/main/docs/components/site.md#admin-user.

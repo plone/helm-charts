@@ -1,0 +1,8 @@
+# Volto, PostgreSQL with CloudNativePG, Varnish, ingress-nginx.
+# Two backend pods, to test Varnish with several pods behind the Service.
+backend:
+  replicas: 2
+varnish:
+  enabled: true
+routing:
+  type: ingress-nginx
