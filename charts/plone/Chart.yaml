@@ -2,8 +2,8 @@ apiVersion: v2
 name: plone
 description: Plone 6 with the Volto or Classic UI, on PostgreSQL (RelStorage) or ZEO, with optional Varnish, routed with Gateway API or ingress-nginx
 type: application
-version: 0.2.0
-appVersion: "6.1.5"
+version: 0.3.0
+appVersion: "6.2.2"
 kubeVersion: ">=1.29.0-0"
 
 keywords:

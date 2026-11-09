@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
@@ -18,7 +18,9 @@ jobs:
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - name: Install Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@v5.0.1
+        with:
+          version: v4.3.1
 
       # Repository of the CloudNativePG cluster chart, a dependency of charts/plone.
       # The varnish-cache dependency is pulled from an OCI registry.
@@ -26,7 +28,20 @@ jobs:
         run: helm repo add cnpg https://cloudnative-pg.github.io/charts
 
       - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.4.0
+        uses: helm/chart-releaser-action@v1.9.0
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           CR_SKIP_EXISTING: true
+
+  # Publishes the documentation, with the index.yaml that chart-releaser has
+  # just updated, to GitHub Pages.
+  docs:
+    needs:
+      - release
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/docs.yml
+    with:
+      deploy: true
