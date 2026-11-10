@@ -42,7 +42,22 @@ The chart fails with an explanation when `varnish.server.vclConfig` is set, or `
 
 Varnish reads the VCL when it starts.
 The `varnish-cache` chart only restarts the Varnish pods when its own configuration changes, which doesn't include the ConfigMap of this chart.
-After a change of the VCL, restart Varnish:
+
+This chart sets a default `varnish.server.podAnnotations`, which the `varnish-cache` chart renders with its own values, where `varnish.vcl` is `.Values.vcl`:
+
+```yaml
+varnish:
+  server:
+    podAnnotations: |
+      checksum/plone-vcl: {{ .Values.vcl | sha256sum }}
+```
+
+A change of `varnish.vcl` changes the annotation, and rolls out the Varnish pods, which read the new VCL.
+The annotation hashes the text of `varnish.vcl`, not the rendered VCL.
+Keep the value a string, so that the `varnish-cache` chart renders it, and keep the annotation when you set annotations of your own.
+
+A change of the values that the VCL reads doesn't restart Varnish: `frontend.enabled`, `fullnameOverride`, `backend.service.port` or `frontend.service.port` for the default VCL, and any value that your own VCL reads.
+After such a change, restart Varnish:
 
 ```shell
 kubectl rollout restart --namespace <namespace> deployment/<release>-varnish
