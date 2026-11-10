@@ -12,17 +12,6 @@ Values that aren't set by default are marked as not set.
 | `fullnameOverride` | `""` | Overrides the prefix of the resource names, which is the release name by default. |
 | `imagePullSecrets` | `[]` | Pull secrets of all the pods. |
 
-## `global`
-
-The VCL of Varnish only reads the global values, see [Varnish](varnish.md#the-services-in-global-values).
-With `varnish.enabled`, the chart fails if they don't match the values they mirror.
-
-| Key | Default | Description |
-|---|---|---|
-| `global.plone.fullnameOverride` | `""` | Must match `fullnameOverride`. |
-| `global.plone.backendPort` | `8080` | Must match `backend.service.port`. |
-| `global.plone.frontendPort` | `3000` | Must match `frontend.service.port`. |
-
 ## `site`
 
 | Key | Default | Description |
@@ -164,14 +153,16 @@ The chart accepts all the other values of that chart under `varnish` too, see it
 | Key | Default | Description |
 |---|---|---|
 | `varnish.enabled` | `false` | Installs Varnish in front of the site. |
-| `varnish.ploneFrontend` | `true` | Whether the default VCL sends requests to the Volto frontend. It must match `frontend.enabled`. Set it to `false` for the Classic UI. |
+| `varnish.vcl` | `""` | VCL of Varnish, rendered as a template with the values of this chart. Empty uses the default VCL. Restart Varnish after a change. See [Varnish](varnish.md#the-vcl). |
 | `varnish.server.replicas` | `1` | Number of Varnish pods. |
 | `varnish.server.pdb.enabled` | `false` | Creates a PodDisruptionBudget for Varnish. |
 | `varnish.server.pdb.minAvailable` | `"50%"` | Minimum number of available Varnish pods. |
 | `varnish.server.service.type` | `"ClusterIP"` | Type of the Varnish service. |
 | `varnish.server.service.http.port` | `6081` | Port of the Varnish service. |
 | `varnish.server.affinity` | a preference for pod anti-affinity by node | Affinity of the Varnish pods. See [Varnish](varnish.md#affinity). |
-| `varnish.server.vclConfig` | the default VCL | VCL of Varnish, rendered as a template. See [Varnish](varnish.md#default-vcl). |
+| `varnish.server.vclConfigPath` | `"/etc/varnish/plone/default.vcl"` | The VCL file that Varnish reads, from the ConfigMap `<release>-varnish-vcl`. |
+| `varnish.server.extraVolumes` | the `plone-vcl` volume | Mounts the ConfigMap `<release>-varnish-vcl`. Keep it when you add volumes. |
+| `varnish.server.extraVolumeMounts` | the `plone-vcl` mount, at `/etc/varnish/plone` | Keep it when you add mounts. |
 
 ## `routing`
 
@@ -206,7 +197,7 @@ The chart fails to install with an explanation when the values don't make sense 
 
 * `storage.type` must be `relstorage` or `zeo`.
 * `routing.type` must be `gateway`, `ingress-nginx`, or `none`.
-* With `varnish.enabled`, `varnish.ploneFrontend` must match `frontend.enabled`.
+* With `varnish.enabled`, the VCL is set in `varnish.vcl`: `varnish.server.vclConfig` must be empty, and `varnish.server.vclConfigs` must not set the file of `varnish.server.vclConfigPath`.
 * With `routing.type: gateway`, `routing.gateway.name` or `routing.gateway.parentRefs` must be set.
 * With `postgresql.enabled` set to `false` and `storage.type: relstorage`, `storage.relstorage.host` and `storage.relstorage.secret.name` must be set.
 * With `storage.type: zeo`, `postgresql.enabled` must be `false`.

@@ -17,14 +17,6 @@ label with the name and a hash.
 {{- end }}
 
 {{/*
-plone.fullname for the VCL of Varnish, which is rendered by the varnish-cache
-chart, with its values: of the values of this chart, it only has the global ones.
-*/}}
-{{- define "plone.vcl.fullname" -}}
-{{- default .Release.Name .Values.global.plone.fullnameOverride | trunc 44 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
 Common labels
 */}}
 {{- define "plone.labels" -}}
@@ -75,19 +67,10 @@ Validate the combination of values.
 {{- if not (has .Values.routing.type $routingTypes) -}}
 {{- fail (printf "routing.type must be one of %s, got %q" (join ", " $routingTypes) .Values.routing.type) -}}
 {{- end -}}
-{{- if and .Values.varnish.enabled (ne (.Values.frontend.enabled | toString) (.Values.varnish.ploneFrontend | toString)) -}}
-{{- fail (printf "varnish.ploneFrontend must match frontend.enabled, so that the VCL of Varnish uses the frontend only when it exists: set varnish.ploneFrontend to %v" .Values.frontend.enabled) -}}
-{{- end -}}
 {{- if .Values.varnish.enabled -}}
-{{- $g := .Values.global.plone -}}
-{{- if ne (include "plone.fullname" .) (include "plone.vcl.fullname" .) -}}
-{{- fail (printf "global.plone.fullnameOverride must match fullnameOverride, so that the VCL of Varnish finds the Services: set global.plone.fullnameOverride to %q" .Values.fullnameOverride) -}}
-{{- end -}}
-{{- if ne (.Values.backend.service.port | toString) ($g.backendPort | toString) -}}
-{{- fail (printf "global.plone.backendPort must match backend.service.port, so that the VCL of Varnish finds the Service: set global.plone.backendPort to %v" .Values.backend.service.port) -}}
-{{- end -}}
-{{- if and .Values.frontend.enabled (ne (.Values.frontend.service.port | toString) ($g.frontendPort | toString)) -}}
-{{- fail (printf "global.plone.frontendPort must match frontend.service.port, so that the VCL of Varnish finds the Service: set global.plone.frontendPort to %v" .Values.frontend.service.port) -}}
+{{- $s := .Values.varnish.server -}}
+{{- if or $s.vclConfig (hasKey ($s.vclConfigs | default dict) (base $s.vclConfigPath)) -}}
+{{- fail "Set the VCL of Varnish with varnish.vcl, which is rendered with the values of this chart, instead of varnish.server.vclConfig or varnish.server.vclConfigs" -}}
 {{- end -}}
 {{- end -}}
 {{- if and (eq .Values.routing.type "gateway") (not .Values.routing.gateway.name) (empty .Values.routing.gateway.parentRefs) -}}
@@ -225,6 +208,47 @@ Environment variables that configure the storage of the plone-backend image.
 - name: ZEO_CLIENT_CACHE_SIZE
   value: {{ .Values.storage.zeo.clientCacheSize | quote }}
 {{- end -}}
+{{- end }}
+
+{{/*
+Default VCL of Varnish. It sends the requests to the backend and frontend
+Services, which balance the connections of Varnish between their pods.
+*/}}
+{{- define "plone.varnish.defaultVcl" -}}
+vcl 4.1;
+
+# The Plone backend: the API requests with Volto, all requests with the
+# Classic UI.
+backend plone {
+    .host = "{{ include "plone.fullname" . }}-backend";
+    .port = "{{ .Values.backend.service.port }}";
+}
+{{- if .Values.frontend.enabled }}
+
+# The Volto frontend: the pages and static assets of the site.
+backend volto {
+    .host = "{{ include "plone.fullname" . }}-frontend";
+    .port = "{{ .Values.frontend.service.port }}";
+}
+{{- end }}
+
+sub vcl_recv {
+    {{- if .Values.frontend.enabled }}
+    # The routing rewrites the API requests to Zope virtual host paths.
+    if (req.url ~ "^/VirtualHostBase/") {
+        set req.backend_hint = plone;
+    } else {
+        set req.backend_hint = volto;
+        # The static assets of Volto don't depend on cookies, which
+        # would prevent caching them.
+        if (req.url ~ "^/static/") {
+            unset req.http.Cookie;
+        }
+    }
+    {{- else }}
+    set req.backend_hint = plone;
+    {{- end }}
+}
 {{- end }}
 
 {{/*

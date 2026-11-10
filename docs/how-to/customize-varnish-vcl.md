@@ -5,24 +5,43 @@ This guide shows you how to replace the default VCL of Varnish with your own, fo
 ## Start from the default VCL
 
 Copy the default VCL from [Varnish](../reference/varnish.md#default-vcl), and keep its backends.
-The VCL goes in `varnish.server.vclConfig`, in a values file that you pass with `--values`.
+The VCL goes in `varnish.vcl`, in a values file that you pass with `--values`:
+
+```yaml
+varnish:
+  enabled: true
+  vcl: |
+    vcl 4.1;
+
+    backend plone {
+        .host = "{{ include "plone.fullname" . }}-backend";
+        .port = "{{ .Values.backend.service.port }}";
+    }
+    # ...
+```
 
 ## Keep the backends
 
 Your VCL must keep the two backends of the default VCL, `plone` and `volto`, which point to the `<release>-backend` and `<release>-frontend` Services.
 Without the Volto frontend, keep only the `plone` backend, as the default VCL does.
 
-Keep their hosts and ports as in the default VCL, which reads them from `global.plone`.
+Keep their hosts and ports as in the default VCL, which builds them with the `plone.fullname` template, and reads the ports from `backend.service.port` and `frontend.service.port`.
 
 ## Know what the VCL can read
 
-The VCL is rendered as a template by the `varnish-cache` chart, with its own values.
-It can use `.Release.Name`, the values under `varnish`, and the values under `global`, but not the other values of this chart.
+The chart renders the VCL as a template, with its own values.
+It can use the templates of the chart, such as `plone.fullname`, and all its values, such as `frontend.enabled` or `routing.hostname`.
 
 ## Apply the change
 
-Run `helm upgrade` with the values file.
-The `varnish-cache` chart restarts the Varnish pods when the VCL changes.
+1. Run `helm upgrade` with the values file.
+   The chart updates the ConfigMap `<release>-varnish-vcl`.
+
+2. Restart Varnish, which reads the VCL when it starts:
+
+   ```shell
+   kubectl rollout restart --namespace <namespace> deployment/<release>-varnish
+   ```
 
 For the other options of the `varnish-cache` chart, set them under `varnish`.
 See its [documentation](https://github.com/varnish/helm-varnish).

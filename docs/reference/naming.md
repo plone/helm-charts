@@ -21,10 +21,12 @@ The name of each component is the prefix, followed by the component name.
 | PostgreSQL read-write service | `<fullname>-postgresql-rw` | 5432 |
 | PostgreSQL credentials secret | `<fullname>-postgresql-app` | |
 | Varnish | `<fullname>-varnish` | 6081 |
+| Varnish VCL | `<release>-varnish-vcl` | |
 
 The names of the PostgreSQL and Varnish resources follow the conventions of their charts.
 When the release name already contains the name of the dependency, the resources use the release name alone, so that the name isn't repeated.
 Otherwise, the name is the release name followed by the dependency name, as in `<release>-postgresql`.
+The ConfigMap of the Varnish VCL is named after the release name only, even with `fullnameOverride`, because the `varnish-cache` chart, which mounts it, doesn't know the values of this chart.
 
 The prefix of the names of the chart resources, the release name or `fullnameOverride`, is cut at 44 characters, so that the component names fit the 52 characters of a StatefulSet name, such as the one of the ZEO server, whose pods have a label with the name and a hash.
 

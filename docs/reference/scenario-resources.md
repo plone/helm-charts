@@ -23,7 +23,8 @@ Resources created by the `cnpg` cluster chart and the `varnish-cache` chart are 
 | Ingress `<release>-api` | `routing.type` is `ingress-nginx`, and `frontend.enabled` is `true` |
 | Ingress `<release>` | `routing.type` is `ingress-nginx` |
 | Cluster `<release>-postgresql` | `postgresql.enabled` is `true`, from the `cnpg` cluster chart |
-| Deployment `<release>-varnish`, Service `<release>-varnish`, ServiceAccount `<release>-varnish`, ConfigMap `<release>-varnish-vcl` | `varnish.enabled` is `true`, from the `varnish-cache` chart |
+| Deployment `<release>-varnish`, Service `<release>-varnish`, ServiceAccount `<release>-varnish` | `varnish.enabled` is `true`, from the `varnish-cache` chart |
+| ConfigMap `<release>-varnish-vcl` | `varnish.enabled` is `true` |
 
 The cluster chart also renders a ConfigMap and a test Job for the PostgreSQL cluster.
 The PodDisruptionBudget of PostgreSQL isn't rendered by the chart: the CloudNativePG operator creates it, when `postgresql.cluster.enablePDB` is `true`.
