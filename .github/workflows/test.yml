@@ -31,9 +31,12 @@ jobs:
         with:
           version: 3.15.0
 
+      # The steps run the make targets that run the same checks locally, see
+      # the Tests section of the README.
+
       # Lints the chart once per scenario in charts/plone/ci.
       - name: Run chart-testing (lint)
-        run: ct lint --all --chart-dirs charts --chart-repos cnpg=https://cloudnative-pg.github.io/charts
+        run: make lint
 
       # The unit tests of the templates, in charts/plone/tests.
       - name: Run the unit tests
@@ -51,37 +54,10 @@ jobs:
           node_image: kindest/node:v1.37.0
           kubectl_version: v1.37.2
 
-      # The PostgreSQL clusters of the relstorage scenarios are managed by the CloudNativePG operator.
-      - name: Install CloudNativePG operator
-        run: |
-          helm repo add cnpg https://cloudnative-pg.github.io/charts
-          helm upgrade --install cnpg cnpg/cloudnative-pg --version 0.29.1 --namespace cnpg-system --create-namespace --wait
-
-      # The gateway routing creates an HTTPRoute.
-      - name: Install Gateway API CRDs
-        run: kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.7.0/standard-install.yaml
-
-      # Traefik serves the HTTPRoute of the gateway scenarios, with the Gateway
-      # traefik-gateway of its chart, as in docs/how-to/enable-traefik-gateway-api.md.
-      # A ClusterIP Service, as kind has no load balancer: helm test reaches it
-      # from inside the cluster.
-      - name: Install Traefik with its Gateway
-        run: |
-          helm repo add traefik https://traefik.github.io/charts
-          helm upgrade --install traefik traefik/traefik --version 42.3.2 --namespace traefik --create-namespace --wait \
-            --set service.type=ClusterIP \
-            --set providers.kubernetesGateway.enabled=true \
-            --set gateway.listeners.web.namespacePolicy.from=All
-          kubectl wait --for=create gateway/traefik-gateway --namespace traefik --timeout=120s
-          kubectl wait --for=condition=Programmed gateway/traefik-gateway --namespace traefik --timeout=120s
-
-      # The ingress-nginx controller serves the Ingress resources of the
-      # varnish-ingress-nginx scenario.
-      - name: Install the ingress-nginx controller
-        run: |
-          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-          helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --version 4.15.1 --namespace ingress-nginx --create-namespace --wait \
-            --set controller.service.type=ClusterIP
+      # The CloudNativePG operator, the Gateway API CRDs, Traefik with a
+      # Gateway, and the ingress-nginx controller.
+      - name: Install the cluster dependencies
+        run: make cluster-deps
 
       # Installs the chart once per scenario in charts/plone/ci. Helm waits for the
       # Job that creates the Plone site after the install, which takes a few minutes.
@@ -89,4 +65,4 @@ jobs:
       # routing: the home page, the public URL in the API, the admin password, and
       # the Varnish cache.
       - name: Run chart-testing (install)
-        run: ct install --all --chart-dirs charts --chart-repos cnpg=https://cloudnative-pg.github.io/charts --helm-extra-args "--timeout 15m"
+        run: make test-install

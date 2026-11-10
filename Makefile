@@ -36,6 +36,13 @@ KUBECONFORM_CRD_SCHEMAS := https://raw.githubusercontent.com/datreeio/CRDs-catal
 # schema refuses.
 KUBECONFORM_SKIP ?= Cluster
 
+# What make cluster-deps installs in the cluster of make test-install, as in CI.
+CNPG_REPO := https://cloudnative-pg.github.io/charts
+CNPG_OPERATOR_VERSION ?= 0.29.1
+GATEWAY_API_VERSION ?= v1.7.0
+TRAEFIK_CHART_VERSION ?= 42.3.2
+INGRESS_NGINX_CHART_VERSION ?= 4.15.1
+
 .PHONY: help
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -72,6 +79,45 @@ test-manifests: chart-deps ## Validate the manifests of each CI scenario against
 				|| exit 1; \
 		done; \
 	done
+
+.PHONY: lint
+lint: ## Lint the chart once per CI scenario, as CI does (needs ct, from chart-testing)
+	@echo -e "$(GREEN)==> Lint the chart$(RESET)"
+	@ct lint --all --chart-dirs charts --chart-repos cnpg=$(CNPG_REPO)
+
+.PHONY: cluster-deps
+cluster-deps: ## Install what the CI scenarios need in the current kubectl cluster: CloudNativePG, Gateway API, Traefik, ingress-nginx, external servers
+	@echo -e "$(GREEN)==> Install the CloudNativePG operator$(RESET)"
+	@helm upgrade --install cnpg cloudnative-pg --repo $(CNPG_REPO) --version $(CNPG_OPERATOR_VERSION) \
+		--namespace cnpg-system --create-namespace --wait
+	@echo -e "$(GREEN)==> Install the Gateway API CRDs$(RESET)"
+	@kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/$(GATEWAY_API_VERSION)/standard-install.yaml
+	@# Traefik serves the HTTPRoute of the gateway scenarios, with the Gateway
+	@# traefik-gateway of its chart, as in docs/how-to/enable-traefik-gateway-api.md.
+	@# A ClusterIP Service, as kind has no load balancer: helm test reaches it
+	@# from inside the cluster.
+	@echo -e "$(GREEN)==> Install Traefik with its Gateway$(RESET)"
+	@helm upgrade --install traefik traefik --repo https://traefik.github.io/charts --version $(TRAEFIK_CHART_VERSION) \
+		--namespace traefik --create-namespace --wait \
+		--set service.type=ClusterIP \
+		--set providers.kubernetesGateway.enabled=true \
+		--set gateway.listeners.web.namespacePolicy.from=All
+	@kubectl wait --for=create gateway/traefik-gateway --namespace traefik --timeout=120s
+	@kubectl wait --for=condition=Programmed gateway/traefik-gateway --namespace traefik --timeout=120s
+	@# The ingress-nginx controller serves the Ingress resources of the
+	@# varnish-ingress-nginx scenario.
+	@echo -e "$(GREEN)==> Install the ingress-nginx controller$(RESET)"
+	@helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --version $(INGRESS_NGINX_CHART_VERSION) \
+		--namespace ingress-nginx --create-namespace --wait \
+		--set controller.service.type=ClusterIP
+
+.PHONY: test-install
+test-install: chart-deps ## Install the chart once per CI scenario in the current kubectl cluster, and run helm test, as CI does (needs ct, and make cluster-deps)
+	@echo -e "$(GREEN)==> Install the chart and run helm test$(RESET)"
+	@# Helm waits for the Job that creates the Plone site, which takes a few
+	@# minutes.
+	@ct install --all --chart-dirs charts --chart-repos cnpg=$(CNPG_REPO) \
+		--helm-extra-args "--timeout 15m"
 
 .PHONY: install
 install: ## Install the documentation tools
