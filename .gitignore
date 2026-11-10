@@ -5,6 +5,8 @@ charts/*/charts/
 ct
 chart_schema.yaml
 lintconf.yaml
+# Created by helm-unittest; the tests have no snapshots.
+charts/*/tests/__snapshot__/
 
 # Documentation
 .venv/

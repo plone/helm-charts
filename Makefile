@@ -52,7 +52,10 @@ test: test-unit test-manifests ## Run the unit tests, and validate the manifests
 .PHONY: test-unit
 test-unit: chart-deps ## Run the unit tests of the chart, in charts/plone/tests (helm-unittest)
 	@echo -e "$(GREEN)==> Run the unit tests$(RESET)"
-	@docker run --rm -v "$(CURDIR)/$(CHART_DIR):/apps" $(HELM_UNITTEST_IMAGE) .
+	@# As the owner of the checkout, so that helm-unittest can create
+	@# tests/__snapshot__: the image runs as uid 1000.
+	@docker run --rm --user "$$(id -u):$$(id -g)" -e HOME=/tmp \
+		-v "$(CURDIR)/$(CHART_DIR):/apps" $(HELM_UNITTEST_IMAGE) .
 
 .PHONY: test-manifests
 test-manifests: chart-deps ## Validate the manifests of each CI scenario against the schemas of KUBE_VERSIONS (kubeconform)
