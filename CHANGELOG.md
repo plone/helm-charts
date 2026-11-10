@@ -21,9 +21,10 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
 ### Changed
 
 - The `admin` user of the Zope root gets its password from a Secret: `site.admin.existingSecret`, or `<release>-admin`, which the chart generates on install and keeps on upgrades.
-  The backend pods and the site Job apply it at each start, while the Zope root has no other user.
+  The Job `<release>-admin` sets it after each install and upgrade, also on a site created by an earlier version of the chart, and creates the `admin` user if it is missing.
+  On a new database, the backend pods and the site Job also write it to the `inituser` file of Zope, so that the password `admin` never works.
   After the upgrade, log in with that password: the installation notes print how to read it.
-  Before, every new backend pod put back the password `admin` of the `plone-backend` image, also after a change in the Zope management interface.
+  A password changed in the Zope management interface lasts until the next install or upgrade.
   [#18](https://github.com/plone/helm-charts/issues/18)
 - The chart is marked as beta, and the documentation lists what it doesn't cover yet.
   [#21](https://github.com/plone/helm-charts/issues/21)
