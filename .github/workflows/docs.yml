@@ -33,6 +33,11 @@ jobs:
           python-version: "3.12"
           enable-cache: true
 
+      # Every value of values.yaml has a row in the values reference, with
+      # its default.
+      - name: Check the values reference
+        run: make docs-values
+
       - name: Build the documentation and add the Helm repository index
         run: make docs-site
 

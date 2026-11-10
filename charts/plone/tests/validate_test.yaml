@@ -19,14 +19,36 @@ tests:
       storage.type: mysql
     asserts:
       - failedTemplate:
-          errorPattern: 'storage.type must be one of relstorage, zeo, got "mysql"'
+          # values.schema.json refuses it before plone.validate.
+          errorPattern: "/storage/type': value must be one of 'relstorage', 'zeo'"
 
   - it: refuses an unknown routing type
     set:
       routing.type: traefik
     asserts:
       - failedTemplate:
-          errorPattern: 'routing.type must be one of gateway, ingress-nginx, none, got "traefik"'
+          errorPattern: "/routing/type': value must be one of 'gateway', 'ingress-nginx', 'none'"
+
+  - it: refuses a key that the chart doesn't have, such as a typo
+    set:
+      backend.replica: 3
+    asserts:
+      - failedTemplate:
+          errorPattern: "/backend': additional properties 'replica' not allowed"
+
+  - it: refuses a value of the wrong type
+    set:
+      backend.replicas: two
+    asserts:
+      - failedTemplate:
+          errorPattern: "/backend/replicas': got string, want integer"
+
+  - it: accepts the values of the subcharts
+    set:
+      postgresql.cluster.monitoring.enabled: true
+      varnish.server.resources.requests.cpu: 100m
+    asserts:
+      - notFailedTemplate: {}
 
   - it: requires a Gateway with the gateway routing
     set:
