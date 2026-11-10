@@ -24,8 +24,26 @@ See [Stopping a pod without failing requests](../explanation/architecture.md#sto
 | Value | Default |
 |---|---|
 | `backend.image.repository` | `docker.io/plone/plone-backend` |
-| `backend.image.tag` | the `appVersion` of the chart, `6.2.2` |
+| `backend.image.tag` | the `appVersion` of the chart, `6.2.3` |
 | `backend.image.pullPolicy` | `IfNotPresent` |
+
+### Image versions
+
+A release of the chart sets its `appVersion` to the latest release of Plone at the time, and the backend uses the image with that tag, unless `backend.image.tag` is set.
+So upgrading the chart upgrades Plone, and you can stay on a version of Plone by setting `backend.image.tag`.
+The frontend and ZEO images have their own tags, in `frontend.image.tag` and `storage.zeo.server.image.tag`.
+
+The Plone images are rebuilt with the same tag, for example to update their base image.
+With `pullPolicy: IfNotPresent`, a node keeps the image it pulled first, so two nodes can run different builds of the same tag.
+To run exactly one build, add its digest to the tag, which Kubernetes then uses instead of the tag:
+
+```yaml
+backend:
+  image:
+    tag: "6.2.3@sha256:a930828ea46b3ff134e3df1fb17d11a0ac61bf4fddef8df4f486a806acbe8b34"
+```
+
+To get the digest of a tag, run `docker buildx imagetools inspect docker.io/plone/plone-backend:6.2.3`.
 
 ## Environment variables
 
@@ -45,7 +63,7 @@ It sets these ones on the site Job, see [Site creation](#site-creation):
 | `SITE_DEFAULT_LANGUAGE` | `site.defaultLanguage` | `site.defaultLanguage` isn't empty |
 
 The backend container and the site Job both get the storage variables, which depend on `storage.type`.
-With RelStorage, the chart sets `DBHOST`, `DBPORT`, `DBNAME`, `DBUSER`, `DBPASSWORD`, `RELSTORAGE_DSN`, `RELSTORAGE_KEEP_HISTORY`, and `RELSTORAGE_BLOB_CACHE_SIZE`.
+With RelStorage, the chart sets `RELSTORAGE_DSN` with the host and the port, `PGDATABASE`, `PGUSER`, and `PGPASSWORD` from the secret, which libpq reads for the values that the DSN doesn't have, `PGSSLMODE` when `storage.relstorage.sslmode` is set, `RELSTORAGE_KEEP_HISTORY`, and `RELSTORAGE_BLOB_CACHE_SIZE`.
 With ZEO, it sets `ZEO_ADDRESS` and `ZEO_CLIENT_CACHE_SIZE`.
 See [Storage](storage.md).
 

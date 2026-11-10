@@ -2,3 +2,4 @@ Diátaxis
 HTTPRoute[s]{0,1}
 [Pp]ooler[s]{0,1}
 [Ss]ubchart[s]{0,1}
+libpq

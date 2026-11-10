@@ -36,9 +36,16 @@ helm install plone plone/plone --namespace plone \
 Replace `<gateway>` and `<gateway-namespace>` with the name and namespace of the Gateway that serves the site, and `plone.example.com` with its hostname.
 Replace `db.example.com` with the host of your PostgreSQL server.
 
-The password can't contain single quotes (`'`) or backslashes (`\`).
-The chart builds the connection string in the pod, wrapping the values of the secret in single quotes, and it can't escape them: a single quote makes the connection string invalid, and a backslash is dropped, so the authentication fails.
-The same applies to the database and user names.
+The database name, the user name, and the password can have any character: the chart passes them to the PostgreSQL client library in environment variables, outside the connection string.
+
+To require an encrypted connection, set `storage.relstorage.sslmode`, for example to `require`, or to `verify-full` to also check the certificate of the server against a trusted authority:
+
+```shell
+--set storage.relstorage.sslmode=require
+```
+
+The values are the ones of the [`sslmode` of libpq](https://www.postgresql.org/docs/current/libpq-ssl.html#LIBPQ-SSL-PROTECTION).
+Without it, the client uses SSL if the server offers it, without checking the certificate.
 
 If your secret uses other keys, for example one created by another tool, add these options to the install command:
 

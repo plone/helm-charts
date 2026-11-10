@@ -71,6 +71,10 @@ storage:
         # database: database-name
         # user: database-user
         # password: database-password
+    # SSL mode of the connection, such as require or verify-full, see
+    # https://www.postgresql.org/docs/current/libpq-ssl.html. Empty uses the
+    # default of libpq, prefer.
+    sslmode: ""
     # Keep the history of the objects, needed for undo.
     keepHistory: true
     # Size of the blob cache of each backend pod.
