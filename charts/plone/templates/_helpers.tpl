@@ -83,6 +83,30 @@ Validate the combination of values.
 {{- else if .Values.postgresql.enabled -}}
 {{- fail "storage.type zeo doesn't use PostgreSQL: set postgresql.enabled to false" -}}
 {{- end -}}
+{{- range $name := list "backend" "frontend" -}}
+{{- $c := index $.Values $name -}}
+{{- if and $c.preStopSleepSeconds (le (int $c.terminationGracePeriodSeconds) (int $c.preStopSleepSeconds)) -}}
+{{- fail (printf "%s.terminationGracePeriodSeconds must be longer than %s.preStopSleepSeconds, which it includes" $name $name) -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Grace period and preStop sleep of a pod, see preStopSleepSeconds in values.yaml.
+The sleep keeps the pod serving while it leaves the endpoints of its Service.
+Takes the values of the component: backend or frontend.
+*/}}
+{{- define "plone.terminationGracePeriod" -}}
+terminationGracePeriodSeconds: {{ .terminationGracePeriodSeconds }}
+{{- end }}
+
+{{- define "plone.preStop" -}}
+{{- with .preStopSleepSeconds }}
+lifecycle:
+  preStop:
+    exec:
+      command: ["sleep", "{{ . }}"]
+{{- end }}
 {{- end }}
 
 {{/*

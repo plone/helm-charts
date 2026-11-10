@@ -148,6 +148,13 @@ backend:
     enabled: true
     minAvailable: 50%
     # maxUnavailable:
+  # When a pod stops, it first sleeps for preStopSleepSeconds, so that it
+  # leaves the endpoints of its Service, and Varnish and the routing stop
+  # sending it requests, before it gets SIGTERM. 0 disables the sleep.
+  # terminationGracePeriodSeconds covers the sleep and the shutdown, and must
+  # be longer than the sleep.
+  preStopSleepSeconds: 5
+  terminationGracePeriodSeconds: 30
   # Size of the ZODB object cache, in objects.
   zodbCacheSize: 50000
   # Extra environment variables, see
@@ -205,6 +212,13 @@ frontend:
     enabled: true
     minAvailable: 50%
     # maxUnavailable:
+  # When a pod stops, it first sleeps for preStopSleepSeconds, so that it
+  # leaves the endpoints of its Service, and Varnish and the routing stop
+  # sending it requests, before it gets SIGTERM. 0 disables the sleep.
+  # terminationGracePeriodSeconds covers the sleep and the shutdown, and must
+  # be longer than the sleep.
+  preStopSleepSeconds: 5
+  terminationGracePeriodSeconds: 30
   # Extra environment variables, see
   # https://6.docs.plone.org/install/containers/images/frontend.html
   env: []
@@ -258,10 +272,17 @@ varnish:
   # the ConfigMap <release>-varnish-vcl. Empty uses the default VCL of the chart,
   # which sends the requests to the backend and frontend Services (see the
   # plone.varnish.defaultVcl template). Varnish reads the VCL when it starts:
-  # after a change, restart it with kubectl rollout restart.
+  # a change of this value restarts it (see server.podAnnotations), a change of
+  # the values that the VCL reads needs kubectl rollout restart.
   vcl: ""
   server:
     replicas: 1
+    # Restarts Varnish when varnish.vcl changes: varnish-cache renders this
+    # string with its own values, where varnish.vcl is .Values.vcl. It hashes
+    # the text of varnish.vcl, not the rendered VCL. Keep it a string, and keep
+    # this line if you set annotations of your own.
+    podAnnotations: |
+      checksum/plone-vcl: {{ .Values.vcl | sha256sum }}
     # With a single replica, a PodDisruptionBudget would block node drains.
     # Enable it when running more replicas.
     pdb:

@@ -13,7 +13,11 @@ It serves the REST API for the Volto frontend, or the whole site with the Classi
 | Secret | `<release>-admin`, key `password` | `site.admin.existingSecret` is empty |
 
 A rollout starts a new pod, and waits for it to be ready, before it stops an old one: `backend.updateStrategy` is a `RollingUpdate` with `maxSurge: 1` and `maxUnavailable: 0`.
-See [Why the backend is a Deployment](../explanation/architecture.md#why-the-backend-is-a-deployment).
+See [Why the backend is a Deployment](../explanation/architecture.md#why-the-backend-is-a-deployment), and [What a rolling update costs](../explanation/architecture.md#what-a-rolling-update-costs) for when to use `Recreate` instead.
+
+A stopping pod sleeps for `backend.preStopSleepSeconds`, 5 seconds, before it gets `SIGTERM`, with a `preStop` hook that runs `sleep`.
+`backend.terminationGracePeriodSeconds`, 30 seconds, must be longer, or the chart fails.
+See [Stopping a pod without failing requests](../explanation/architecture.md#stopping-a-pod-without-failing-requests).
 
 ## Image
 
