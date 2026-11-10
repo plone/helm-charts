@@ -3,6 +3,8 @@ suite: varnish
 templates:
   - templates/varnish-vcl.yaml
   - templates/httproute.yaml
+  - templates/ingress.yaml
+  - templates/ingress-api.yaml
 release:
   name: plone
   namespace: plone
@@ -87,3 +89,38 @@ tests:
           value:
             name: plone-varnish
             port: 6081
+
+  - it: routes all the requests through Varnish with the Classic UI
+    template: templates/httproute.yaml
+    set:
+      frontend.enabled: false
+    asserts:
+      - lengthEqual:
+          path: spec.rules
+          count: 1
+      - equal:
+          path: spec.rules[0].backendRefs[0]
+          value:
+            name: plone-varnish
+            port: 6081
+
+  - it: routes the Ingress resources of ingress-nginx through Varnish
+    set:
+      routing.type: ingress-nginx
+      routing.hostname: plone.example.org
+    asserts:
+      - template: templates/ingress.yaml
+        equal:
+          path: spec.rules[0].http.paths[0].backend.service
+          value:
+            name: plone-varnish
+            port:
+              number: 6081
+      - template: templates/ingress-api.yaml
+        equal:
+          path: spec.rules[0].http.paths[0].backend.service
+          value:
+            name: plone-varnish
+            port:
+              number: 6081
+
