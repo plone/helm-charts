@@ -107,7 +107,7 @@ cluster-deps: ## Install what the CI scenarios need in the current kubectl clust
 	@echo -e "$(GREEN)==> Install Traefik with its Gateway$(RESET)"
 	@helm upgrade --install traefik traefik --repo https://traefik.github.io/charts --version $(TRAEFIK_CHART_VERSION) \
 		--namespace traefik --create-namespace --wait \
-		--set service.type=ClusterIP \
+		--set service.spec.type=ClusterIP \
 		--set providers.kubernetesGateway.enabled=true \
 		--set gateway.listeners.web.namespacePolicy.from=All
 	@kubectl wait --for=create gateway/traefik-gateway --namespace traefik --timeout=120s
