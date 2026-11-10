@@ -93,3 +93,34 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+
+  - it: gives the site Job the storage, then backend.env
+    template: templates/site-job.yaml
+    set:
+      backend.env:
+        - name: EXTRA
+          value: "1"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[2].name
+          value: DBHOST
+      - equal:
+          path: spec.template.spec.containers[0].env[9].name
+          value: RELSTORAGE_BLOB_CACHE_SIZE
+      - equal:
+          path: spec.template.spec.containers[0].env[10]
+          value:
+            name: EXTRA
+            value: "1"
+
+  - it: gives the site Job the address of the ZEO server
+    template: templates/site-job.yaml
+    set:
+      storage.type: zeo
+      postgresql.enabled: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ZEO_ADDRESS
+            value: plone-zeo:8100

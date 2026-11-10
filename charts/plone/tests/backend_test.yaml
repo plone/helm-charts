@@ -35,7 +35,7 @@ tests:
           path: spec.template.spec.containers[0].image
           value: docker.io/plone/plone-backend:6.9.9
 
-  - it: sets the size of the ZODB cache, then backend.env
+  - it: sets the size of the ZODB cache, the storage, then backend.env
     template: templates/backend-deployment.yaml
     set:
       backend.env:
@@ -47,11 +47,21 @@ tests:
           value:
             name: ZODB_CACHE_SIZE
             value: "50000"
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
+      - equal:
+          path: spec.template.spec.containers[0].env[1].name
+          value: DBHOST
+      - equal:
+          path: spec.template.spec.containers[0].env[8].name
+          value: RELSTORAGE_BLOB_CACHE_SIZE
+      # backend.env comes last, so that it can override the variables above.
+      - equal:
+          path: spec.template.spec.containers[0].env[9]
+          value:
             name: EXTRA
             value: "1"
+      - lengthEqual:
+          path: spec.template.spec.containers[0].env
+          count: 10
 
   - it: uses fullnameOverride as the prefix of the names
     template: templates/backend-service.yaml
@@ -90,3 +100,24 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+
+  - it: sleeps before it stops, within the grace period
+    template: templates/backend-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 30
+      - equal:
+          path: spec.template.spec.containers[0].lifecycle.preStop.exec.command
+          value: ["sleep", "5"]
+
+  - it: has no preStop hook with backend.preStopSleepSeconds 0
+    template: templates/backend-deployment.yaml
+    set:
+      backend.preStopSleepSeconds: 0
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].lifecycle
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 30
