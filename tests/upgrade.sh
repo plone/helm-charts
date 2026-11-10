@@ -66,3 +66,24 @@ content check
 
 echo "==> Run helm test"
 helm test "$release" --namespace "$namespace" --logs
+
+# What helm uninstall does to the database, as the documentation warns: the
+# PostgreSQL Cluster is a resource of the release, and its volumes belong to
+# it, so they are deleted with it.
+echo "==> Uninstall, and check that the PostgreSQL volumes are deleted"
+pvcs() {
+    kubectl get pvc --namespace "$namespace" -l "cnpg.io/cluster=$release-postgresql" -o name
+}
+echo "Volumes before: $(pvcs | tr '\n' ' ')"
+[ -n "$(pvcs)" ] || { echo "No PostgreSQL volume found before the uninstall" >&2; exit 1; }
+helm uninstall "$release" --namespace "$namespace" --wait
+for _ in $(seq 24); do
+    [ -z "$(pvcs)" ] && break
+    sleep 5
+done
+kubectl get cluster,pvc --namespace "$namespace"
+if [ -n "$(pvcs)" ]; then
+    echo "The PostgreSQL volumes remain after helm uninstall: update the warning of the documentation" >&2
+    exit 1
+fi
+echo "helm uninstall deleted the PostgreSQL cluster and its volumes"

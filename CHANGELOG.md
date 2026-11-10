@@ -67,6 +67,8 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
 
 ### Fixed
 
+- The documentation warns that `helm uninstall` deletes the PostgreSQL cluster of the release, with its volumes and the content of the site, and the upgrade test of the CI checks it.
+  [#20](https://github.com/plone/helm-charts/issues/20)
 - A database name, user name, or password with a single quote or a backslash no longer breaks the connection to PostgreSQL.
   The backend gets them in `PGDATABASE`, `PGUSER`, and `PGPASSWORD`, which the PostgreSQL client reads, instead of in `RELSTORAGE_DSN`, which keeps the host and the port.
   The variables `DBHOST`, `DBPORT`, `DBNAME`, `DBUSER`, and `DBPASSWORD` are removed: if your `backend.env` refers to them, use the new ones.

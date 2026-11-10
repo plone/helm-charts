@@ -23,7 +23,6 @@ Its defaults install a minimal site, with one PostgreSQL instance, one backend, 
 These aren't covered yet:
 
 * backups and their restore, for [PostgreSQL](https://github.com/plone/helm-charts/issues/48) and [ZEO](https://github.com/plone/helm-charts/issues/49)
-* what [`helm uninstall` does to the PostgreSQL data](https://github.com/plone/helm-charts/issues/20)
 * [upgrades](https://github.com/plone/helm-charts/issues/55) of the chart and of Plone
 * a [guide for production](https://github.com/plone/helm-charts/issues/54)
 

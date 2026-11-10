@@ -22,6 +22,11 @@ Replace `<gateway>` and `<gateway-namespace>` with the name and namespace of the
 The site is served over HTTP.
 To serve it over HTTPS, see [How to serve the site over HTTPS](enable-https.md).
 
+```{warning}
+`helm uninstall` deletes the PostgreSQL cluster of the release, and with it its volumes and the content of the site.
+See [Uninstalling](../reference/storage.md#uninstalling).
+```
+
 ## How it works
 
 Requests flow as follows:
