@@ -34,6 +34,8 @@ site:
   # with an admin user whose password is "admin". The backend pods and the site
   # Job replace it with the password of this Secret each time they start, as
   # long as the Zope root has no other user.
+  # The Job <release>-admin sets it after each install and upgrade, and the
+  # backend pods when they start on a new database, before the site exists.
   admin:
     # Secret with the password, created beforehand. Leave it empty to have the
     # chart generate a random password into the Secret <release>-admin, which it

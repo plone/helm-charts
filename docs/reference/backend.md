@@ -93,16 +93,19 @@ The backend pods only serve the site, and don't go through the site creation of 
 
 ## Admin password
 
-The backend pods and the site Job set the password of the `admin` user of the Zope root, from the Secret `site.admin.existingSecret`, or the Secret `<release>-admin` that the chart generates.
+The chart sets the password of the `admin` user of the Zope root, from the Secret `site.admin.existingSecret`, or the Secret `<release>-admin` that the chart generates.
 
 | Setting | Value |
 |---|---|
-| Init container | `admin-password`, with the backend image, writes `admin:<password>` to the `admin` volume |
+| Job | `<release>-admin`, a Helm hook after each install and upgrade, after the site Job, runs `files/set-admin-password.py` from the ConfigMap `<release>-admin` |
+| Init container | `admin-password`, with the backend image, writes `admin:<password>` to the `admin` volume, in the backend pods and the site Job |
 | `admin` volume | `emptyDir` in memory, mounted at `/app/inituser`, the `inituser` file of Zope |
 | Generated password | 32 random letters and digits, kept on upgrades |
 | Password rules | not empty, no colon, no space at the start or the end; the init container fails otherwise |
 
-At each start, while the Zope root has no other user, Zope replaces the `admin` user with the one of `inituser`.
+At each start, while the Zope root has its own user folder, Zope replaces the `admin` user with the one of `inituser`, so that a new database never accepts the password `admin`.
+Creating a Plone site replaces that user folder with a PluggableAuthService, which ignores `inituser`.
+From then on, the Job sets the password, in the `users` plugin of the Zope root: it creates the `admin` user if it doesn't exist, and doesn't change the other users.
 See [How to change the admin password](../how-to/change-admin-password.md).
 
 ## Volume

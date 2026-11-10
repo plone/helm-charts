@@ -99,11 +99,13 @@ site.admin.existingSecret, or the Secret that the chart generates.
 
 {{/*
 Init container that writes the inituser file of Zope, with the admin password
-of the Secret. At each start, while the Zope root has no other user, Zope
-replaces the admin user with the one of /app/inituser. Without this, every new
-pod would restore the password "admin" of the inituser file of the image.
-Zope splits the line on colons and strips spaces, so the password can't have a
-colon, or start or end with a space.
+of the Secret. At each start, while the Zope root has its own user folder,
+Zope replaces the admin user with the one of /app/inituser: without this, a new
+database would get the password "admin" of the inituser file of the image.
+Creating a Plone site replaces that user folder with a PluggableAuthService,
+which ignores inituser: from then on, the Job <release>-admin sets the
+password. Zope splits the line on colons and strips spaces, so the password
+can't have a colon, or start or end with a space.
 */}}
 {{- define "plone.admin.initContainer" -}}
 {{- $b := .Values.backend -}}
