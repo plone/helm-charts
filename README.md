@@ -117,6 +117,7 @@ The other targets need [chart-testing](https://github.com/helm/chart-testing) (`
 make lint           # lint the chart once per scenario
 make cluster-deps   # install CloudNativePG, the Gateway API CRDs, Traefik with a Gateway, and ingress-nginx
 make test-install   # install the chart once per scenario, and run helm test
+make test-upgrade   # upgrade from the last published release, and check the content
 ```
 
 The GitHub Actions workflow runs the same targets, in this order, on a kind cluster, with `make test-unit` and `make test-manifests` before it creates the cluster.

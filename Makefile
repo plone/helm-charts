@@ -45,6 +45,11 @@ INGRESS_NGINX_CHART_VERSION ?= 4.15.1
 # Namespace of the releases of make test-install, with the external PostgreSQL
 # and ZEO servers of the scenarios that use them.
 CI_NAMESPACE ?= plone-ci
+# make test-upgrade: the published version to upgrade from, the latest when
+# empty, and the values of both installs.
+UPGRADE_FROM ?=
+UPGRADE_VALUES ?= $(CHART_DIR)/ci/default-values.yaml
+UPGRADE_NAMESPACE ?= plone-upgrade
 
 .PHONY: help
 help: ## Show this help
@@ -128,6 +133,12 @@ test-install: chart-deps ## Install the chart once per CI scenario in the curren
 	@# minutes.
 	@ct install --all --chart-dirs charts --chart-repos cnpg=$(CNPG_REPO) \
 		--namespace $(CI_NAMESPACE) --helm-extra-args "--timeout 15m"
+
+.PHONY: test-upgrade
+test-upgrade: chart-deps ## Install the last published release, create content, upgrade to this chart, and check the content (needs make cluster-deps)
+	@echo -e "$(GREEN)==> Test the upgrade from the published chart$(RESET)"
+	@UPGRADE_FROM="$(UPGRADE_FROM)" UPGRADE_VALUES="$(UPGRADE_VALUES)" UPGRADE_NAMESPACE="$(UPGRADE_NAMESPACE)" \
+		bash tests/upgrade.sh
 
 .PHONY: install
 install: ## Install the documentation tools

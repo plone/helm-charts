@@ -66,3 +66,8 @@ jobs:
       # the Varnish cache.
       - name: Run chart-testing (install)
         run: make test-install
+
+      # Installs the last published release, creates a page and a file,
+      # upgrades to the chart of the pull request, and checks them.
+      - name: Test the upgrade from the last release
+        run: make test-upgrade
