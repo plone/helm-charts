@@ -49,19 +49,19 @@ tests:
             value: "50000"
       - equal:
           path: spec.template.spec.containers[0].env[1].name
-          value: DBHOST
+          value: PGDATABASE
       - equal:
-          path: spec.template.spec.containers[0].env[8].name
+          path: spec.template.spec.containers[0].env[6].name
           value: RELSTORAGE_BLOB_CACHE_SIZE
       # backend.env comes last, so that it can override the variables above.
       - equal:
-          path: spec.template.spec.containers[0].env[9]
+          path: spec.template.spec.containers[0].env[7]
           value:
             name: EXTRA
             value: "1"
       - lengthEqual:
           path: spec.template.spec.containers[0].env
-          count: 10
+          count: 8
 
   - it: uses fullnameOverride as the prefix of the names
     template: templates/backend-service.yaml
