@@ -46,14 +46,20 @@ The chart prefers to spread the Varnish pods over the nodes.
 The `varnish-cache` chart requires it, which blocks rolling updates of Varnish on a cluster with one node.
 This chart only prefers it, so that Varnish can roll out on any cluster, and still spreads its pods when there are several nodes.
 
-## Why the backend is a StatefulSet
+## Why the backend is a Deployment
 
-The backend is a StatefulSet, although it doesn't keep its data on the pod.
+The backend doesn't keep its data on the pod.
 With RelStorage, the objects and the blobs are in the database, and each pod only keeps a cache.
 With ZEO, the data is in the ZEO server.
+A new pod starts with empty caches, and fills them as it serves requests.
 
-The StatefulSet gives each backend pod a stable name, and the headless service that StatefulSets require gives it a stable DNS name.
-The chart uses this identity, not storage, as the reason for the StatefulSet.
+So the backend pods are interchangeable, and the chart runs them as a Deployment.
+A rollout starts a new pod, and waits for it to be ready, before it stops an old one, so even a single backend pod is replaced without interrupting the site.
+`backend.updateStrategy` sets this behavior.
+
+Up to version 0.3 of the chart, the backend was a StatefulSet.
+A StatefulSet stops a pod before it starts its replacement, so every upgrade interrupted a site with one backend pod.
+Nothing used the stable pod names that a StatefulSet gives: Varnish and the routing address the backend Service.
 
 ## Why the database needs packing
 

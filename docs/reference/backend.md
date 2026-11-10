@@ -7,14 +7,13 @@ It serves the REST API for the Volto frontend, or the whole site with the Classi
 
 | Resource | Name | Created when |
 |---|---|---|
-| StatefulSet | `<release>-backend` | always |
+| Deployment | `<release>-backend` | always |
 | Service | `<release>-backend`, port 8080, port name `http` | always |
-| Headless service | `<release>-backend-director`, port 8080 | always |
 | PodDisruptionBudget | `<release>-backend` | `backend.replicas` is more than 1, and `backend.podDisruptionBudget.enabled` is `true` |
 | Secret | `<release>-admin`, key `password` | `site.admin.existingSecret` is empty |
 
-The headless service is the governing service that StatefulSets require.
-It gives each pod a stable DNS name, `<release>-backend-<n>.<release>-backend-director`.
+A rollout starts a new pod, and waits for it to be ready, before it stops an old one: `backend.updateStrategy` is a `RollingUpdate` with `maxSurge: 1` and `maxUnavailable: 0`.
+See [Why the backend is a Deployment](../explanation/architecture.md#why-the-backend-is-a-deployment).
 
 ## Image
 

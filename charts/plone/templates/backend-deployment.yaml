@@ -2,7 +2,7 @@
 {{- $fullname := include "plone.fullname" . }}
 {{- $b := .Values.backend }}
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: {{ $fullname }}-backend
   labels:
@@ -10,7 +10,10 @@ metadata:
     app.kubernetes.io/component: backend
 spec:
   replicas: {{ $b.replicas }}
-  serviceName: {{ $fullname }}-backend-director
+  {{- with $b.updateStrategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "plone.selectorLabels" (dict "context" . "component" "backend") | nindent 6 }}

@@ -85,7 +85,7 @@ Press Control-C to stop watching.
 To follow the creation of the site, open the log of the backend in another terminal:
 
 ```shell
-kubectl logs --namespace plone plone-backend-0 --follow
+kubectl logs --namespace plone deployment/plone-backend --follow
 ```
 
 ## Open the site

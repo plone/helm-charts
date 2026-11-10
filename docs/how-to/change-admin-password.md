@@ -51,7 +51,7 @@ Otherwise the pods don't start, and the log of their `admin-password` init conta
 2. Restart the backend pods, which apply the password when they start:
 
    ```shell
-   kubectl rollout restart --namespace <namespace> statefulset/<release>-backend
+   kubectl rollout restart --namespace <namespace> deployment/<release>-backend
    ```
 
 ## When the password doesn't apply

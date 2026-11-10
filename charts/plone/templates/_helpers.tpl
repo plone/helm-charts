@@ -8,8 +8,9 @@ Expand the name of the chart.
 {{/*
 Prefix of the resource names: the release name, unless overridden.
 The components are named <fullname>-backend, <fullname>-frontend, and so on.
-Truncated so that <fullname>-backend fits the 52 characters of a StatefulSet
-name, whose pods have a label with the name and a hash.
+Truncated at 44 characters, so that the component names fit the 52 characters
+of a StatefulSet name, such as the one of the ZEO server, whose pods have a
+label with the name and a hash.
 */}}
 {{- define "plone.fullname" -}}
 {{- default .Release.Name .Values.fullnameOverride | trunc 44 | trimSuffix "-" }}

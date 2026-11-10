@@ -97,6 +97,7 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `backend.image.tag` | `""` | Tag of the backend image. Empty uses the `appVersion` of the chart. |
 | `backend.image.pullPolicy` | `"IfNotPresent"` | Pull policy of the backend image. |
 | `backend.replicas` | `1` | Number of backend pods. |
+| `backend.updateStrategy` | `{type: RollingUpdate, rollingUpdate: {maxSurge: 1, maxUnavailable: 0}}` | Strategy of the backend Deployment. The default starts a new pod before it stops an old one. |
 | `backend.podDisruptionBudget.enabled` | `true` | Creates a PodDisruptionBudget, when there is more than one replica. |
 | `backend.podDisruptionBudget.minAvailable` | `"50%"` | Minimum number of available pods. |
 | `backend.podDisruptionBudget.maxUnavailable` | not set | Maximum number of unavailable pods, as an alternative to `minAvailable`. |

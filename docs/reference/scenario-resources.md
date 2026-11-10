@@ -8,9 +8,8 @@ Resources created by the `cnpg` cluster chart and the `varnish-cache` chart are 
 
 | Resource | Created when |
 |---|---|
-| StatefulSet `<release>-backend` | always |
+| Deployment `<release>-backend` | always |
 | Service `<release>-backend` | always |
-| Service `<release>-backend-director` | always |
 | PodDisruptionBudget `<release>-backend` | `backend.replicas` is more than 1, and `backend.podDisruptionBudget.enabled` is `true` |
 | Secret `<release>-admin` | `site.admin.existingSecret` is empty |
 | Deployment `<release>-frontend` | `frontend.enabled` is `true` |
@@ -34,9 +33,8 @@ The PodDisruptionBudget of Varnish comes from the `varnish-cache` chart, when `v
 
 | Resource | Default | Classic UI with ZEO | Volto with Varnish and ingress-nginx | External PostgreSQL, no routing |
 |---|:---:|:---:|:---:|:---:|
-| StatefulSet `<release>-backend` | yes | yes | yes | yes |
+| Deployment `<release>-backend` | yes | yes | yes | yes |
 | Service `<release>-backend` | yes | yes | yes | yes |
-| Service `<release>-backend-director` | yes | yes | yes | yes |
 | Secret `<release>-admin` | yes | yes | yes | yes |
 | Deployment and Service `<release>-frontend` | yes | no | yes | yes |
 | StatefulSet and Service `<release>-zeo` | no | yes | no | no |

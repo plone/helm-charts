@@ -9,7 +9,6 @@ The name of each component is the prefix, followed by the component name.
 | Component | Name | Port |
 |---|---|---|
 | Backend | `<fullname>-backend` | 8080, named `http` |
-| Backend director, headless | `<fullname>-backend-director` | 8080 |
 | Frontend | `<fullname>-frontend` | 3000, named `http` |
 | ZEO server | `<fullname>-zeo` | 8100, named `zeo` |
 | Pack job | `<fullname>-pack` | |
@@ -27,7 +26,7 @@ The names of the PostgreSQL and Varnish resources follow the conventions of thei
 When the release name already contains the name of the dependency, the resources use the release name alone, so that the name isn't repeated.
 Otherwise, the name is the release name followed by the dependency name, as in `<release>-postgresql`.
 
-The prefix of the names of the chart resources, the release name or `fullnameOverride`, is cut at 44 characters, so that `<prefix>-backend` fits the 52 characters of a StatefulSet name, whose pods have a label with the name and a hash.
+The prefix of the names of the chart resources, the release name or `fullnameOverride`, is cut at 44 characters, so that the component names fit the 52 characters of a StatefulSet name, such as the one of the ZEO server, whose pods have a label with the name and a hash.
 
 ## Labels
 

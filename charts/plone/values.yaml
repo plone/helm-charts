@@ -146,6 +146,14 @@ backend:
     tag: ""
     pullPolicy: IfNotPresent
   replicas: 1
+  # Strategy of the Deployment. The default starts a new pod, and waits for it
+  # to be ready, before it stops an old one, so that a rollout doesn't
+  # interrupt the site, even with one replica.
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   # Only created with more than one replica.
   podDisruptionBudget:
     enabled: true
