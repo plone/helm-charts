@@ -27,20 +27,25 @@ See [Why the backend is a Deployment](../explanation/architecture.md#why-the-bac
 
 The chart sets these variables on the backend container:
 
+| Variable | Value |
+|---|---|
+| `ZODB_CACHE_SIZE` | `backend.zodbCacheSize` |
+
+It sets these ones on the site Job, see [Site creation](#site-creation):
+
 | Variable | Value | Set when |
 |---|---|---|
-| `SITE` | `site.id` | `site.create` is `true` |
-| `TYPE` | `volto` with the frontend, `classic` without it | `site.create` is `true` |
-| `PROFILES` | `site.profiles` | `site.create` is `true`, and `site.profiles` isn't empty |
-| `SITE_DEFAULT_LANGUAGE` | `site.defaultLanguage` | `site.create` is `true`, and `site.defaultLanguage` isn't empty |
-| `ZODB_CACHE_SIZE` | `backend.zodbCacheSize` | always |
+| `SITE_ID` | `site.id` | always |
+| `TYPE` | `volto` with the frontend, `classic` without it | always |
+| `PROFILES` | `site.profiles` | `site.profiles` isn't empty |
+| `SITE_DEFAULT_LANGUAGE` | `site.defaultLanguage` | `site.defaultLanguage` isn't empty |
 
-The storage variables depend on `storage.type`.
+The backend container and the site Job both get the storage variables, which depend on `storage.type`.
 With RelStorage, the chart sets `DBHOST`, `DBPORT`, `DBNAME`, `DBUSER`, `DBPASSWORD`, `RELSTORAGE_DSN`, `RELSTORAGE_KEEP_HISTORY`, and `RELSTORAGE_BLOB_CACHE_SIZE`.
 With ZEO, it sets `ZEO_ADDRESS` and `ZEO_CLIENT_CACHE_SIZE`.
 See [Storage](storage.md).
 
-The `backend.env` list adds more variables, after the ones above.
+The `backend.env` list adds more variables to both, after the ones above.
 
 ## Probes
 
