@@ -49,3 +49,30 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].startupProbe.failureThreshold
           value: 60
+
+  - it: sleeps before it stops, within the grace period
+    template: templates/frontend-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 30
+      - equal:
+          path: spec.template.spec.containers[0].lifecycle.preStop.exec.command
+          value: ["sleep", "5"]
+
+  - it: has no preStop hook with frontend.preStopSleepSeconds 0
+    template: templates/frontend-deployment.yaml
+    set:
+      frontend.preStopSleepSeconds: 0
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].lifecycle
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 30
+
+  - it: has no PodDisruptionBudget with one replica
+    template: templates/frontend-pdb.yaml
+    asserts:
+      - hasDocuments:
+          count: 0

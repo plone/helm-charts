@@ -33,7 +33,6 @@ import time
 import urllib.error
 import urllib.request
 
-
 ENV = os.environ
 HOST = ENV["HOST"]
 PAGE_URL = ENV["PAGE_URL"]
@@ -42,7 +41,7 @@ SITE_URL = ENV["SITE_URL"]
 ADMIN_PASSWORD = ENV["ADMIN_PASSWORD"]
 VARNISH = ENV.get("VARNISH") == "true"
 VOLTO = ENV.get("UI", "volto") == "volto"
-TIMEOUT = int(ENV.get("TIMEOUT", "300"))
+TIMEOUT = int(ENV.get("TIMEOUT", "120"))
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -85,20 +84,35 @@ def request(
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
         with OPENER.open(req, timeout=30) as response:
-            status, raw_headers, content = response.status, response.headers, response.read()
+            status, raw_headers, content = (
+                response.status,
+                response.headers,
+                response.read(),
+            )
     except urllib.error.HTTPError as error:
         status, raw_headers, content = error.code, error.headers, error.read()
     return status, {k.lower(): v for k, v in raw_headers.items()}, content
 
 
 def wait_for_site() -> None:
-    """Wait until the home page answers, as the routing may still be starting."""
+    """Wait until the home page answers, as the routing may still be starting.
+
+    A redirect to HTTPS doesn't wait: the checks only send plain HTTP.
+    """
     deadline = time.monotonic() + TIMEOUT
     while True:
         try:
-            status = request(PAGE_URL)[0]
+            status, headers, _ = request(PAGE_URL)
         except OSError as error:
-            status = error
+            status, headers = error, {}
+        location = headers.get("location", "")
+        if status in (301, 302, 307, 308) and location.startswith("https://"):
+            print(
+                f"{PAGE_URL} redirects to {location}: the checks only send plain HTTP,"
+                " set tests.url to an address without the redirect, or leave it empty",
+                flush=True,
+            )
+            return
         if status == 200 or time.monotonic() > deadline:
             return
         print(f"Waiting for {PAGE_URL}: {status}", flush=True)
@@ -128,16 +142,20 @@ def check_portal_url() -> str:
     return expected
 
 
-def login(password: str) -> int:
+def login(password: str) -> tuple[int, dict]:
     if VOLTO:
         body = {"login": "admin", "password": password}
-        return request(f"{API_URL}/@login", "POST", body)[0]
-    # The Classic UI has no REST API: a page that only managers can see.
-    return request(f"{API_URL}/@@overview-controlpanel", password=password)[0]
+        status, headers, _ = request(f"{API_URL}/@login", "POST", body)
+    else:
+        # The Classic UI has no REST API: a page that only managers can see.
+        status, headers, _ = request(
+            f"{API_URL}/@@overview-controlpanel", password=password
+        )
+    return status, headers
 
 
 def check_admin_login() -> str:
-    status = login(ADMIN_PASSWORD)
+    status = login(ADMIN_PASSWORD)[0]
     assert status == 200, f"status {status}"
     return "with the password of the Secret"
 
@@ -145,9 +163,15 @@ def check_admin_login() -> str:
 def check_default_password() -> str:
     if ADMIN_PASSWORD == "admin":
         return "skipped: the password of the Secret is admin"
-    status = login("admin")
-    # The Classic UI redirects to its login form.
-    assert status in (401, 302), f"status {status}"
+    status, headers = login("admin")
+    if not VOLTO and status == 302:
+        # The Classic UI redirects to its login form, and only there.
+        location = headers.get("location", "")
+        assert "/require_login" in location, (
+            f"redirect to {location!r}, not to the login form"
+        )
+        return "redirected to the login form"
+    assert status == 401, f"status {status}"
     return "refused"
 
 

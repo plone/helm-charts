@@ -92,3 +92,26 @@ tests:
     asserts:
       - isKind:
           of: Deployment
+
+  - it: requires the host of an external PostgreSQL server, also with its secret
+    set:
+      postgresql.enabled: false
+      storage.relstorage.secret.name: db
+    asserts:
+      - failedTemplate:
+          errorPattern: "storage.relstorage.host and storage.relstorage.secret.name are required with postgresql.enabled false"
+
+  - it: requires a grace period longer than the preStop sleep
+    set:
+      frontend.preStopSleepSeconds: 30
+    asserts:
+      - failedTemplate:
+          errorPattern: "frontend.terminationGracePeriodSeconds must be longer than frontend.preStopSleepSeconds, which it includes"
+
+  - it: accepts any grace period without the preStop sleep
+    set:
+      backend.preStopSleepSeconds: 0
+      backend.terminationGracePeriodSeconds: 0
+    asserts:
+      - isKind:
+          of: Deployment

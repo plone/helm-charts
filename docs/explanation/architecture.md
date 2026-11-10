@@ -61,6 +61,33 @@ Up to version 0.3 of the chart, the backend was a StatefulSet.
 A StatefulSet stops a pod before it starts its replacement, so every upgrade interrupted a site with one backend pod.
 Nothing used the stable pod names that a StatefulSet gives: Varnish and the routing address the backend Service.
 
+### What a rolling update costs
+
+**Old and new code overlap.**
+For a few seconds, from the moment the new pod is ready until the old pod stops, both run against the same database.
+Several backend pods sharing a database is the normal way to run Plone, so the overlap itself is safe.
+The risk is narrower: an object that the new code writes, with a class that the old code doesn't have, can fail to load in the old pod until it stops.
+The chart doesn't run the upgrade steps of Plone or of add-ons, which you run from the control panel after the rollout, when only the new code is serving.
+So the overlap only matters when a release asks you to stop all the clients before you start the new code, such as for a change of the database schema.
+For such an upgrade, set `backend.updateStrategy` to `{type: Recreate}`: Kubernetes stops all the pods before it starts the new ones, and the site is down in between.
+
+**Room for one more pod.**
+With `maxSurge: 1`, each rollout needs room for one more backend pod, with its requests, and one more connection to PostgreSQL or the ZEO server.
+When the namespace quota or the nodes have no room for it, the new pod stays `Pending`, the old pods keep serving, and the rollout doesn't progress.
+`helm upgrade` reports success anyway, unless you run it with `--wait`.
+
+**No volume per pod.**
+A Deployment can't give each pod its own PersistentVolumeClaim, as `volumeClaimTemplates` of a StatefulSet do, and a `ReadWriteOnce` volume shared by the old and new pod would block the rollout.
+The backend doesn't need one: `/data` only holds caches, which a new pod fills again as it serves requests.
+Keeping the blob cache or the ZEO client cache across restarts would need such volumes, and so a StatefulSet again.
+
+### Stopping a pod without failing requests
+
+When a pod stops, it leaves the endpoints of its Service, and Kubernetes sends it `SIGTERM`.
+Both happen at the same time, so for a moment Varnish, the Gateway, or the ingress controller can still send requests to a pod that is shutting down, and these requests fail.
+The backend and frontend pods first sleep for `preStopSleepSeconds`, 5 seconds by default, while they still serve the requests that reach them, and only then get `SIGTERM`.
+`terminationGracePeriodSeconds`, 30 seconds by default, covers the sleep and the shutdown.
+
 ## Why the database needs packing
 
 The ZODB keeps the old revisions of the objects, which is what makes undo possible.
