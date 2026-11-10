@@ -56,3 +56,5 @@ For all the RelStorage options, see [RelStorage values](../reference/storage.md#
 With `postgresql.enabled` set to `false`, the chart doesn't create a PostgreSQL cluster.
 The backend connects to `storage.relstorage.host`, with the credentials from the `storage.relstorage.secret.name` secret.
 RelStorage creates its tables in the database on the first start.
+
+This scenario, with a CloudNativePG cluster outside the chart, is tested by [`ci/external-postgresql-values.yaml`](../../charts/plone/ci/external-postgresql-values.yaml).

@@ -1,0 +1,22 @@
+# Volto, an external PostgreSQL server, Gateway API.
+# The server is the CloudNativePG cluster external-postgresql of
+# tests/cluster/external-services.yaml, outside the chart.
+postgresql:
+  enabled: false
+storage:
+  relstorage:
+    host: external-postgresql-rw
+    secret:
+      name: external-postgresql-app
+      keys:
+        database: dbname
+        user: username
+        password: password
+routing:
+  gateway:
+    # The Gateway of Traefik, installed by make cluster-deps.
+    name: traefik-gateway
+    namespace: traefik
+# helm test sends its requests through Traefik.
+tests:
+  url: http://traefik.traefik.svc.cluster.local

@@ -42,6 +42,9 @@ CNPG_OPERATOR_VERSION ?= 0.29.1
 GATEWAY_API_VERSION ?= v1.7.0
 TRAEFIK_CHART_VERSION ?= 42.3.2
 INGRESS_NGINX_CHART_VERSION ?= 4.15.1
+# Namespace of the releases of make test-install, with the external PostgreSQL
+# and ZEO servers of the scenarios that use them.
+CI_NAMESPACE ?= plone-ci
 
 .PHONY: help
 help: ## Show this help
@@ -110,6 +113,13 @@ cluster-deps: ## Install what the CI scenarios need in the current kubectl clust
 	@helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --version $(INGRESS_NGINX_CHART_VERSION) \
 		--namespace ingress-nginx --create-namespace --wait \
 		--set controller.service.type=ClusterIP
+	@# The external PostgreSQL and ZEO servers of the external-* scenarios, in
+	@# the namespace of the releases, which reach them by their Service names.
+	@echo -e "$(GREEN)==> Create the external servers in the namespace $(CI_NAMESPACE)$(RESET)"
+	@kubectl create namespace $(CI_NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
+	@kubectl apply --namespace $(CI_NAMESPACE) -f tests/cluster/external-services.yaml
+	@kubectl wait --for=condition=Ready cluster/external-postgresql --namespace $(CI_NAMESPACE) --timeout=300s
+	@kubectl rollout status deployment/external-zeo --namespace $(CI_NAMESPACE) --timeout=300s
 
 .PHONY: test-install
 test-install: chart-deps ## Install the chart once per CI scenario in the current kubectl cluster, and run helm test, as CI does (needs ct, and make cluster-deps)
@@ -117,7 +127,7 @@ test-install: chart-deps ## Install the chart once per CI scenario in the curren
 	@# Helm waits for the Job that creates the Plone site, which takes a few
 	@# minutes.
 	@ct install --all --chart-dirs charts --chart-repos cnpg=$(CNPG_REPO) \
-		--helm-extra-args "--timeout 15m"
+		--namespace $(CI_NAMESPACE) --helm-extra-args "--timeout 15m"
 
 .PHONY: install
 install: ## Install the documentation tools

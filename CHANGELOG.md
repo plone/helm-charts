@@ -35,6 +35,8 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
   [#30](https://github.com/plone/helm-charts/issues/30)
 - The CI installs Traefik with a Gateway, and the ingress-nginx controller, and runs the `helm test` checks through them for each scenario.
   [#29](https://github.com/plone/helm-charts/issues/29)
+- The CI installs three more scenarios: the Classic UI on ZEO with Varnish and Gateway API, an external PostgreSQL server, and an external ZEO server.
+  [#34](https://github.com/plone/helm-charts/issues/34)
 - `site.admin.existingSecret` and `site.admin.passwordKey`.
 - `backend.updateStrategy`, a `RollingUpdate` with `maxSurge: 1` and `maxUnavailable: 0` by default.
 - `varnish.vcl`, a custom VCL rendered with the values of this chart.

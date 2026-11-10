@@ -30,3 +30,5 @@ Combine these values with the ones of any other scenario, for example `--set fro
 With `storage.zeo.address` set, the chart doesn't deploy a ZEO server, and the backend pods connect to the given address.
 The pack CronJob packs the external server with `zeopack`.
 Set `pack.enabled` to `false` if the server is packed elsewhere.
+
+This scenario is tested by [`ci/external-zeo-values.yaml`](../../charts/plone/ci/external-zeo-values.yaml).
