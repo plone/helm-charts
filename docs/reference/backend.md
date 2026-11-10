@@ -41,7 +41,7 @@ It sets these ones on the site Job, see [Site creation](#site-creation):
 | `SITE_DEFAULT_LANGUAGE` | `site.defaultLanguage` | `site.defaultLanguage` isn't empty |
 
 The backend container and the site Job both get the storage variables, which depend on `storage.type`.
-With RelStorage, the chart sets `DBHOST`, `DBPORT`, `DBNAME`, `DBUSER`, `DBPASSWORD`, `RELSTORAGE_DSN`, `RELSTORAGE_KEEP_HISTORY`, and `RELSTORAGE_BLOB_CACHE_SIZE`.
+With RelStorage, the chart sets `RELSTORAGE_DSN` with the host and the port, `PGDATABASE`, `PGUSER`, and `PGPASSWORD` from the secret, which libpq reads for the values that the DSN doesn't have, `PGSSLMODE` when `storage.relstorage.sslmode` is set, `RELSTORAGE_KEEP_HISTORY`, and `RELSTORAGE_BLOB_CACHE_SIZE`.
 With ZEO, it sets `ZEO_ADDRESS` and `ZEO_CLIENT_CACHE_SIZE`.
 See [Storage](storage.md).
 

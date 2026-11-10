@@ -187,7 +187,9 @@ true
 Environment variables that configure the storage of the plone-backend image.
 */}}
 {{- define "plone.storageEnv" -}}
-{{- /* The password can't have ' or \, see docs/how-to/use-external-postgresql.md. */ -}}
+{{- /* The database name, user, and password go to libpq in PGDATABASE, PGUSER,
+and PGPASSWORD, instead of the DSN, where a quote or a backslash would break
+the connection string. */ -}}
 {{- if eq .Values.storage.type "relstorage" -}}
 {{- $r := .Values.storage.relstorage -}}
 {{- $cluster := include "plone.dependencyFullname" (dict "context" . "name" "postgresql" "values" .Values.postgresql) -}}
@@ -198,27 +200,27 @@ Environment variables that configure the storage of the plone-backend image.
 {{- $defaultKeys = dict "database" "dbname" "user" "username" "password" "password" -}}
 {{- end -}}
 {{- $keys := merge (deepCopy ($r.secret.keys | default dict)) $defaultKeys -}}
-- name: DBHOST
-  value: {{ $host | quote }}
-- name: DBPORT
-  value: {{ $r.port | quote }}
-- name: DBNAME
+- name: PGDATABASE
   valueFrom:
     secretKeyRef:
       name: {{ $secret }}
       key: {{ $keys.database }}
-- name: DBUSER
+- name: PGUSER
   valueFrom:
     secretKeyRef:
       name: {{ $secret }}
       key: {{ $keys.user }}
-- name: DBPASSWORD
+- name: PGPASSWORD
   valueFrom:
     secretKeyRef:
       name: {{ $secret }}
       key: {{ $keys.password }}
+{{- with $r.sslmode }}
+- name: PGSSLMODE
+  value: {{ . | quote }}
+{{- end }}
 - name: RELSTORAGE_DSN
-  value: "host='$(DBHOST)' port='$(DBPORT)' dbname='$(DBNAME)' user='$(DBUSER)' password='$(DBPASSWORD)'"
+  value: {{ printf "host='%s' port='%v'" $host $r.port | quote }}
 - name: RELSTORAGE_KEEP_HISTORY
   value: {{ $r.keepHistory | quote }}
 - name: RELSTORAGE_BLOB_CACHE_SIZE
