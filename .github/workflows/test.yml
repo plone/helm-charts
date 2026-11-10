@@ -59,12 +59,13 @@ jobs:
       - name: Install the cluster dependencies
         run: make cluster-deps
 
-      # Installs the chart once per scenario in charts/plone/ci. Helm waits for the
-      # Job that creates the Plone site after the install, which takes a few minutes.
-      # Then helm test runs the checks of templates/test-smoke.yaml through the
-      # routing: the home page, the public URL in the API, the admin password, and
-      # the Varnish cache.
-      - name: Run chart-testing (install)
+      # Installs the chart once per scenario in charts/plone/ci, with
+      # tests/install.sh, in a namespace that enforces the restricted Pod
+      # Security profile. Helm waits for the Job that creates the Plone site
+      # after the install, which takes a few minutes. Then helm test runs the
+      # checks of templates/test-smoke.yaml through the routing: the home page,
+      # the public URL in the API, the admin password, and the Varnish cache.
+      - name: Install each scenario and run helm test
         run: make test-install
 
       # Installs the last published release, creates a page and a file,
