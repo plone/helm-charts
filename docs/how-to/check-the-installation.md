@@ -34,11 +34,24 @@ ok   admin login with the password admin: refused
 The pod `<release>-test` stays after the checks, so that you can read its logs again with `kubectl logs`.
 The next `helm test` replaces it.
 
+`helm uninstall` doesn't remove the pod and its ConfigMap, because they are Helm test hooks.
+Remove them after you uninstall the release:
+
+```shell
+kubectl delete pod,configmap --namespace plone \
+    -l app.kubernetes.io/instance=plone,app.kubernetes.io/component=test
+```
+
 ## Check the routing too
 
 By default, the checks send their requests to the Services of the chart, with the paths that the routing would use, so they don't check the Gateway or the ingress controller.
 To check them too, set `tests.url` to the address of the Gateway or the ingress controller inside the cluster.
 The requests carry the hostname of `routing.hostname` in their `Host` header, as a browser would.
+
+The checks only send plain HTTP, and don't follow redirects.
+Use an address that serves the site over HTTP.
+When the Gateway or the ingress controller redirects HTTP to HTTPS, such as with `routing.https`, the checks stop with a message that names the redirect.
+In that case, leave `tests.url` empty, to check the Services of the chart instead.
 
 For the Traefik of k3s, whose Gateway is set up by [How to enable the Gateway API provider of Traefik on k3s](enable-traefik-gateway-api.md):
 
