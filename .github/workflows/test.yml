@@ -35,6 +35,15 @@ jobs:
       - name: Run chart-testing (lint)
         run: ct lint --all --chart-dirs charts --chart-repos cnpg=https://cloudnative-pg.github.io/charts
 
+      # The unit tests of the templates, in charts/plone/tests.
+      - name: Run the unit tests
+        run: make test-unit
+
+      # The manifests of each scenario, against the schemas of the oldest
+      # supported and the newest Kubernetes versions.
+      - name: Validate the manifests
+        run: make test-manifests
+
       - name: Create kind cluster
         uses: helm/kind-action@v1.15.2
         with:

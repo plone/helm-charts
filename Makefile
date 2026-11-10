@@ -20,9 +20,61 @@ DOCS_VALEFILES = $(shell find $(DOCS_DIR) -type f -name "*.md" -not -path "$(DOC
 # Branch where chart-releaser keeps the index of the Helm repository.
 PAGES_BRANCH ?= gh-pages
 
+CHART_DIR := charts/plone
+# Kubernetes versions to validate the manifests against: the oldest that the
+# chart supports (kubeVersion in Chart.yaml), one in between, and the one of
+# the CI cluster.
+KUBE_VERSIONS ?= 1.29.0 1.33.0 1.37.0
+# The tools run in containers, so that they need no installation.
+HELM_UNITTEST_IMAGE ?= helmunittest/helm-unittest:4.3.0-1.2.1
+KUBECONFORM_IMAGE ?= ghcr.io/yannh/kubeconform:v0.8.0
+# Schemas of the custom resources that the chart creates, such as the Gateway
+# API HTTPRoute.
+KUBECONFORM_CRD_SCHEMAS := https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json
+# Kinds not to validate. The cnpg cluster chart renders an empty
+# spec.postgresql in the Cluster, which the API server prunes, but which the
+# schema refuses.
+KUBECONFORM_SKIP ?= Cluster
+
 .PHONY: help
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+.PHONY: chart-deps
+chart-deps: ## Fetch the dependencies of the chart
+	@echo -e "$(GREEN)==> Fetch the chart dependencies$(RESET)"
+	@helm repo add cnpg https://cloudnative-pg.github.io/charts --force-update > /dev/null
+	@helm dependency build $(CHART_DIR) > /dev/null
+
+.PHONY: test
+test: test-unit test-manifests ## Run the unit tests, and validate the manifests
+
+.PHONY: test-unit
+test-unit: chart-deps ## Run the unit tests of the chart, in charts/plone/tests (helm-unittest)
+	@echo -e "$(GREEN)==> Run the unit tests$(RESET)"
+	@# As the owner of the checkout, so that helm-unittest can create
+	@# tests/__snapshot__: the image runs as uid 1000.
+	@docker run --rm --user "$$(id -u):$$(id -g)" -e HOME=/tmp \
+		-v "$(CURDIR)/$(CHART_DIR):/apps" $(HELM_UNITTEST_IMAGE) .
+	@# The script of the admin-password init container, which helm-unittest
+	@# can't run.
+	@python3 tests/inituser_check.py $(CHART_DIR)
+
+.PHONY: test-manifests
+test-manifests: chart-deps ## Validate the manifests of each CI scenario against the schemas of KUBE_VERSIONS (kubeconform)
+	@echo -e "$(GREEN)==> Validate the manifests$(RESET)"
+	@# make 3.81, on macOS, ignores .SHELLFLAGS: fail explicitly on any error.
+	@set -o pipefail; \
+	for version in $(KUBE_VERSIONS); do \
+		for values in $(CHART_DIR)/ci/*-values.yaml; do \
+			echo "Kubernetes $$version, $$(basename $$values):"; \
+			helm template plone $(CHART_DIR) --kube-version $$version --values $$values \
+				| docker run --rm -i $(KUBECONFORM_IMAGE) -strict -summary \
+					-kubernetes-version $$version -skip '$(KUBECONFORM_SKIP)' \
+					-schema-location default -schema-location '$(KUBECONFORM_CRD_SCHEMAS)' - \
+				|| exit 1; \
+		done; \
+	done
 
 .PHONY: install
 install: ## Install the documentation tools

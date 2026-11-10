@@ -1,0 +1,32 @@
+# The installation notes.
+suite: notes
+templates:
+  - templates/NOTES.txt
+release:
+  name: plone
+  namespace: plone
+set:
+  routing.gateway.name: gw
+  routing.hostname: plone.example.org
+tests:
+  - it: prints the URL and how to read the generated admin password
+    asserts:
+      - matchRegexRaw:
+          pattern: "http://plone.example.org"
+      - matchRegexRaw:
+          pattern: "kubectl get secret --namespace plone plone-admin -o jsonpath='\\{.data.password\\}' \\| base64 -d"
+
+  - it: prints the Secret and key of site.admin.existingSecret
+    set:
+      site.admin.existingSecret: my-admin
+      site.admin.passwordKey: pw
+    asserts:
+      - matchRegexRaw:
+          pattern: "kubectl get secret --namespace plone my-admin -o jsonpath='\\{.data.pw\\}'"
+
+  - it: tells to restart Varnish after a change of the VCL
+    set:
+      varnish.enabled: true
+    asserts:
+      - matchRegexRaw:
+          pattern: "kubectl rollout restart --namespace plone deployment/plone-varnish"

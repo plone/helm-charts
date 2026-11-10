@@ -1,0 +1,204 @@
+# The password of the admin user: the generated Secret, an existing Secret, and
+# the init container that writes the inituser file of Zope, and the Job that
+# sets the password on an existing site.
+suite: admin password
+templates:
+  - templates/admin-job.yaml
+  - templates/admin-secret.yaml
+  - templates/backend-deployment.yaml
+  - templates/site-job.yaml
+release:
+  name: plone
+  namespace: plone
+set:
+  routing.gateway.name: gw
+tests:
+  - it: generates a random password into <release>-admin
+    template: templates/admin-secret.yaml
+    asserts:
+      - isKind:
+          of: Secret
+      - equal:
+          path: metadata.name
+          value: plone-admin
+      - matchRegex:
+          # 32 random letters and digits, base64-encoded: 43 characters and
+          # one of padding.
+          path: data.password
+          pattern: "^[A-Za-z0-9+/]{43}=$"
+
+  - it: keeps the password of the existing Secret on upgrades
+    template: templates/admin-secret.yaml
+    kubernetesProvider:
+      scheme:
+        "v1/Secret":
+          gvr:
+            version: v1
+            resource: secrets
+          namespaced: true
+      objects:
+        - kind: Secret
+          apiVersion: v1
+          metadata:
+            name: plone-admin
+            namespace: plone
+          data:
+            password: a2VwdC1wYXNzd29yZA==
+    asserts:
+      - equal:
+          path: data.password
+          value: a2VwdC1wYXNzd29yZA==
+
+  - it: generates a password when the existing Secret has no password key
+    template: templates/admin-secret.yaml
+    kubernetesProvider:
+      scheme:
+        "v1/Secret":
+          gvr:
+            version: v1
+            resource: secrets
+          namespaced: true
+      objects:
+        - kind: Secret
+          apiVersion: v1
+          metadata:
+            name: plone-admin
+            namespace: plone
+          data:
+            other: a2VwdC1wYXNzd29yZA==
+    asserts:
+      - matchRegex:
+          path: data.password
+          pattern: "^[A-Za-z0-9+/]{43}=$"
+
+  - it: creates no Secret with site.admin.existingSecret
+    template: templates/admin-secret.yaml
+    set:
+      site.admin.existingSecret: my-admin
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: writes inituser from the generated Secret in the backend pods
+    template: templates/backend-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: admin-password
+      - contains:
+          path: spec.template.spec.initContainers[0].env
+          content:
+            name: ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: plone-admin
+                key: password
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: admin
+            mountPath: /app/inituser
+            subPath: inituser
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: admin
+            emptyDir:
+              medium: Memory
+              sizeLimit: 1Mi
+
+  - it: reads the password from site.admin.existingSecret
+    template: templates/backend-deployment.yaml
+    set:
+      site.admin.existingSecret: my-admin
+      site.admin.passwordKey: pw
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].env
+          content:
+            name: ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-admin
+                key: pw
+
+  - it: refuses passwords that inituser can't hold
+    template: templates/backend-deployment.yaml
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: '"" \| \*:\* \| " "\* \| \*" "\)'
+
+  - it: writes inituser in the site Job too, which starts Zope
+    template: templates/site-job.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: admin-password
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: admin
+            mountPath: /app/inituser
+            subPath: inituser
+            readOnly: true
+
+  - it: sets the password with a Job after each install and upgrade, after the site Job
+    template: templates/admin-job.yaml
+    documentIndex: 1
+    asserts:
+      - isKind:
+          of: Job
+      - equal:
+          path: metadata.name
+          value: plone-admin
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-install,post-upgrade
+      - equal:
+          path: metadata.annotations["helm.sh/hook-weight"]
+          value: "5"
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: [run, /scripts/set-admin-password.py]
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: plone-admin
+                key: password
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: scripts
+            configMap:
+              name: plone-admin
+
+  - it: reads the Job password from site.admin.existingSecret
+    template: templates/admin-job.yaml
+    documentIndex: 1
+    set:
+      site.admin.existingSecret: my-admin
+      site.admin.passwordKey: pw
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-admin
+                key: pw
+
+  - it: ships the script of the Job in a ConfigMap
+    template: templates/admin-job.yaml
+    documentIndex: 0
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["set-admin-password.py"]
+          pattern: users\.updateUserPassword

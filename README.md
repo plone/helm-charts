@@ -98,6 +98,20 @@ helm install plone ./charts/plone --values ./charts/plone/ci/default-values.yaml
 The [`charts/plone/ci`](charts/plone/ci) directory has a values file per tested scenario.
 The GitHub Actions workflow lints and installs the chart with each of them, and [`test.sh`](test.sh) does the same in a local cluster.
 
+### Tests
+
+The unit tests of the templates are in [`charts/plone/tests`](charts/plone/tests), written for [helm-unittest](https://github.com/helm-unittest/helm-unittest).
+The tools run in containers, so they need [Helm](https://helm.sh) and Docker, and nothing else:
+
+```shell
+make test-unit       # run the unit tests
+make test-manifests  # validate the manifests of each scenario with kubeconform
+make test            # both
+```
+
+`make test-manifests` validates the manifests against the Kubernetes versions of `KUBE_VERSIONS`, 1.29.0, 1.33.0, and 1.37.0 by default.
+The GitHub Actions workflow runs both targets before it installs the chart.
+
 ### Documentation
 
 The documentation is built with [Sphinx](https://www.sphinx-doc.org) and [MyST](https://myst-parser.readthedocs.io), with the theme of the [Plone documentation](https://6.docs.plone.org/), and checked with [Vale](https://vale.sh).

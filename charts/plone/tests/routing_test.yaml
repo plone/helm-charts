@@ -1,0 +1,140 @@
+# The routing: a Gateway API HTTPRoute, Ingress resources for ingress-nginx, or
+# none, with the Zope virtual host rewrites.
+suite: routing
+templates:
+  - templates/httproute.yaml
+  - templates/ingress.yaml
+  - templates/ingress-api.yaml
+release:
+  name: plone
+  namespace: plone
+set:
+  routing.gateway.name: gw
+  routing.hostname: plone.example.org
+tests:
+  - it: attaches the HTTPRoute to the Gateway
+    template: templates/httproute.yaml
+    set:
+      routing.gateway.namespace: gateways
+      routing.gateway.sectionName: https
+    asserts:
+      - isKind:
+          of: HTTPRoute
+      - equal:
+          path: spec.parentRefs
+          value:
+            - name: gw
+              namespace: gateways
+              sectionName: https
+      - equal:
+          path: spec.hostnames
+          value:
+            - plone.example.org
+
+  - it: uses parentRefs instead of the Gateway name
+    template: templates/httproute.yaml
+    set:
+      routing.gateway.parentRefs:
+        - name: a
+        - name: b
+    asserts:
+      - equal:
+          path: spec.parentRefs
+          value:
+            - name: a
+            - name: b
+
+  - it: rewrites the API of Volto to the backend, the rest goes to the frontend
+    template: templates/httproute.yaml
+    asserts:
+      - equal:
+          path: spec.rules[0].matches[0].path.value
+          value: /++api++
+      - equal:
+          path: spec.rules[0].filters[0].urlRewrite.path.replacePrefixMatch
+          value: /VirtualHostBase/http/plone.example.org:80/Plone/++api++/VirtualHostRoot
+      - equal:
+          path: spec.rules[0].backendRefs[0]
+          value:
+            name: plone-backend
+            port: 8080
+      - equal:
+          path: spec.rules[1].backendRefs[0]
+          value:
+            name: plone-frontend
+            port: 3000
+
+  - it: rewrites everything to the backend with the Classic UI
+    template: templates/httproute.yaml
+    set:
+      frontend.enabled: false
+    asserts:
+      - lengthEqual:
+          path: spec.rules
+          count: 1
+      - equal:
+          path: spec.rules[0].filters[0].urlRewrite.path.replacePrefixMatch
+          value: /VirtualHostBase/http/plone.example.org:80/Plone/VirtualHostRoot
+
+  - it: uses the scheme, port, and site id of the values in the rewrite
+    template: templates/httproute.yaml
+    set:
+      routing.https: true
+      site.id: site
+    asserts:
+      - equal:
+          path: spec.rules[0].filters[0].urlRewrite.path.replacePrefixMatch
+          value: /VirtualHostBase/https/plone.example.org:443/site/++api++/VirtualHostRoot
+
+  - it: creates no Ingress with the gateway routing
+    asserts:
+      - template: templates/ingress.yaml
+        hasDocuments:
+          count: 0
+      - template: templates/ingress-api.yaml
+        hasDocuments:
+          count: 0
+
+  - it: creates the Ingress resources of ingress-nginx for Volto
+    set:
+      routing.type: ingress-nginx
+    asserts:
+      - template: templates/httproute.yaml
+        hasDocuments:
+          count: 0
+      - template: templates/ingress-api.yaml
+        equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+          value: /VirtualHostBase/http/plone.example.org:80/Plone/++api++/VirtualHostRoot$1
+      - template: templates/ingress-api.yaml
+        equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /\+\+api\+\+($|/.*)
+      - template: templates/ingress.yaml
+        equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: plone-frontend
+
+  - it: rewrites everything to the backend with ingress-nginx and the Classic UI
+    set:
+      routing.type: ingress-nginx
+      frontend.enabled: false
+    asserts:
+      - template: templates/ingress-api.yaml
+        hasDocuments:
+          count: 0
+      - template: templates/ingress.yaml
+        equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+          value: /VirtualHostBase/http/plone.example.org:80/Plone/VirtualHostRoot/$1
+
+  - it: creates no routing resources with routing.type none
+    set:
+      routing.type: none
+    asserts:
+      - template: templates/httproute.yaml
+        hasDocuments:
+          count: 0
+      - template: templates/ingress.yaml
+        hasDocuments:
+          count: 0

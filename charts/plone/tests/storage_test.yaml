@@ -1,0 +1,143 @@
+# The storage of the backend: RelStorage on the chart's PostgreSQL cluster or
+# an external server, the ZEO server of the chart, or an external ZEO server.
+suite: storage
+templates:
+  - templates/backend-deployment.yaml
+  - templates/zeo-statefulset.yaml
+  - templates/zeo-service.yaml
+release:
+  name: plone
+  namespace: plone
+set:
+  routing.gateway.name: gw
+tests:
+  - it: uses the PostgreSQL cluster of the chart by default
+    template: templates/backend-deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DBHOST
+            value: plone-postgresql-rw
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DBPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: plone-postgresql-app
+                key: password
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DBNAME
+            valueFrom:
+              secretKeyRef:
+                name: plone-postgresql-app
+                key: dbname
+
+  - it: uses an external PostgreSQL server, with the default keys
+    template: templates/backend-deployment.yaml
+    set:
+      postgresql.enabled: false
+      storage.relstorage.host: db.example.org
+      storage.relstorage.secret.name: db
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DBHOST
+            value: db.example.org
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DBUSER
+            valueFrom:
+              secretKeyRef:
+                name: db
+                key: database-user
+
+  - it: uses the keys of storage.relstorage.secret.keys
+    template: templates/backend-deployment.yaml
+    set:
+      postgresql.enabled: false
+      storage.relstorage.host: db.example.org
+      storage.relstorage.secret.name: db
+      storage.relstorage.secret.keys.password: pass
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DBPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: db
+                key: pass
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DBUSER
+            valueFrom:
+              secretKeyRef:
+                name: db
+                key: database-user
+
+  - it: has no ZEO server with RelStorage
+    template: templates/zeo-statefulset.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: deploys a ZEO server, and points the backend to it
+    set:
+      storage.type: zeo
+      postgresql.enabled: false
+    asserts:
+      - template: templates/zeo-statefulset.yaml
+        isKind:
+          of: StatefulSet
+      - template: templates/zeo-statefulset.yaml
+        equal:
+          path: spec.volumeClaimTemplates[0].spec.resources.requests.storage
+          value: 5Gi
+      - template: templates/zeo-service.yaml
+        equal:
+          path: metadata.name
+          value: plone-zeo
+      - template: templates/backend-deployment.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ZEO_ADDRESS
+            value: plone-zeo:8100
+
+  - it: uses an external ZEO server, without deploying one
+    set:
+      storage.type: zeo
+      postgresql.enabled: false
+      storage.zeo.address: zeo.example.org:8100
+    asserts:
+      - template: templates/zeo-statefulset.yaml
+        hasDocuments:
+          count: 0
+      - template: templates/backend-deployment.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ZEO_ADDRESS
+            value: zeo.example.org:8100
+
+  - it: runs the ZEO server without a volume when persistence is off
+    template: templates/zeo-statefulset.yaml
+    set:
+      storage.type: zeo
+      postgresql.enabled: false
+      storage.zeo.server.persistence.enabled: false
+    asserts:
+      - notExists:
+          path: spec.volumeClaimTemplates
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: data
+            emptyDir: {}
