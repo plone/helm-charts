@@ -34,7 +34,8 @@ home: https://plone.org
 sources:
 - https://github.com/plone/helm-charts/
 maintainers:
-- name: xiru
-- name: jensens
 - name: fabiorauber
-- name: tschorr
+  url: https://github.com/fabiorauber
+- name: ericof
+  email: ericof@plone.org
+  url: https://github.com/ericof
