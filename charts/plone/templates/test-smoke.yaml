@@ -1,0 +1,110 @@
+{{- if .Values.tests.enabled }}
+{{- $fullname := include "plone.fullname" . }}
+{{- $b := .Values.backend }}
+{{- $volto := .Values.frontend.enabled }}
+{{- /* With tests.url, the requests go through the routing; without it, to the
+Services of the chart, with the paths that the routing would use. */}}
+{{- $pageUrl := "" }}
+{{- $apiUrl := "" }}
+{{- if .Values.tests.url }}
+{{- $url := trimSuffix "/" .Values.tests.url }}
+{{- $pageUrl = printf "%s/" $url }}
+{{- $apiUrl = ternary (printf "%s/++api++" $url) $url $volto }}
+{{- else }}
+{{- $apiUrl = printf "http://%s:%s%s" (include "plone.routing.backendService" .) (include "plone.routing.backendPort" .) (include "plone.routing.backendPath" .) }}
+{{- $pageUrl = ternary (printf "http://%s:%s/" (include "plone.routing.frontendService" .) (include "plone.routing.frontendPort" .)) (printf "%s/" $apiUrl) $volto }}
+{{- end }}
+# The checks of helm test, see files/smoke-test.py.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $fullname }}-test
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: test
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-weight: "-1"
+    helm.sh/hook-delete-policy: before-hook-creation
+data:
+  smoke-test.py: |
+    {{- .Files.Get "files/smoke-test.py" | nindent 4 }}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ $fullname }}-test
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: test
+  annotations:
+    helm.sh/hook: test
+    # Kept after it ran, so that its logs can be read.
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  restartPolicy: Never
+  {{- with .Values.imagePullSecrets }}
+  imagePullSecrets:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $b.podSecurityContext }}
+  securityContext:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  containers:
+    - name: smoke-test
+      # The Python of the backend image runs the script.
+      image: "{{ $b.image.repository }}:{{ $b.image.tag | default .Chart.AppVersion }}"
+      imagePullPolicy: {{ $b.image.pullPolicy }}
+      {{- with $b.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      command:
+        - python
+        - /tests/smoke-test.py
+      env:
+        - name: PAGE_URL
+          value: {{ $pageUrl | quote }}
+        - name: API_URL
+          value: {{ $apiUrl | quote }}
+        - name: HOST
+          value: {{ regexReplaceAll "^https?://" (include "plone.url" .) "" | quote }}
+        - name: SITE_URL
+          value: {{ include "plone.url" . | quote }}
+        - name: UI
+          value: {{ ternary "volto" "classic" $volto }}
+        - name: VARNISH
+          value: {{ .Values.varnish.enabled | quote }}
+        - name: TIMEOUT
+          value: {{ .Values.tests.timeout | quote }}
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "plone.admin.secretName" . }}
+              key: {{ include "plone.admin.secretKey" . }}
+      {{- with .Values.tests.resources }}
+      resources:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumeMounts:
+        - name: tests
+          mountPath: /tests
+          readOnly: true
+  volumes:
+    - name: tests
+      configMap:
+        name: {{ $fullname }}-test
+  {{- with $b.nodeSelector }}
+  nodeSelector:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $b.affinity }}
+  affinity:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $b.tolerations }}
+  tolerations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

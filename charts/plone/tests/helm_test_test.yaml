@@ -1,0 +1,155 @@
+# The checks run by helm test: where they send their requests.
+suite: helm test
+templates:
+  - templates/test-smoke.yaml
+release:
+  name: plone
+  namespace: plone
+set:
+  routing.gateway.name: gw
+tests:
+  - it: is a test hook, with the script in a ConfigMap
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: test
+      - isKind:
+          of: ConfigMap
+        documentIndex: 0
+      - matchRegex:
+          path: data["smoke-test.py"]
+          pattern: def check_api
+        documentIndex: 0
+      - isKind:
+          of: Pod
+        documentIndex: 1
+      - equal:
+          path: spec.volumes[0].configMap.name
+          value: plone-test
+        documentIndex: 1
+
+  - it: sends the requests to the frontend and backend Services with Volto
+    documentIndex: 1
+    asserts:
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: PAGE_URL
+            value: http://plone-frontend:3000/
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: API_URL
+            value: http://plone-backend:8080/VirtualHostBase/http/localhost:80/Plone/++api++/VirtualHostRoot
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: UI
+            value: volto
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: VARNISH
+            value: "false"
+
+  - it: sends the requests to Varnish when it is enabled
+    documentIndex: 1
+    set:
+      varnish.enabled: true
+    asserts:
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: PAGE_URL
+            value: http://plone-varnish:6081/
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: API_URL
+            value: http://plone-varnish:6081/VirtualHostBase/http/localhost:80/Plone/++api++/VirtualHostRoot
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: VARNISH
+            value: "true"
+
+  - it: checks the page of the backend with the Classic UI
+    documentIndex: 1
+    set:
+      frontend.enabled: false
+    asserts:
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: PAGE_URL
+            value: http://plone-backend:8080/VirtualHostBase/http/localhost:80/Plone/VirtualHostRoot/
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: UI
+            value: classic
+
+  - it: sends the requests through the routing with tests.url
+    documentIndex: 1
+    set:
+      tests.url: http://traefik.traefik.svc/
+      routing.hostname: plone.example.org
+      routing.https: true
+      routing.port: 8443
+    asserts:
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: PAGE_URL
+            value: http://traefik.traefik.svc/
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: API_URL
+            value: http://traefik.traefik.svc/++api++
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: HOST
+            value: plone.example.org:8443
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: SITE_URL
+            value: https://plone.example.org:8443
+
+  - it: uses the routing URL as the API with the Classic UI
+    documentIndex: 1
+    set:
+      tests.url: http://traefik.traefik.svc
+      frontend.enabled: false
+    asserts:
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: API_URL
+            value: http://traefik.traefik.svc
+
+  - it: reads the admin password of an existing Secret
+    documentIndex: 1
+    set:
+      site.admin.existingSecret: my-admin
+      site.admin.passwordKey: secret
+    asserts:
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-admin
+                key: secret
+
+  - it: is not created with tests.enabled false
+    set:
+      tests.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0

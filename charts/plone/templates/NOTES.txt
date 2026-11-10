@@ -44,3 +44,9 @@ Read it with:
   kubectl get secret --namespace {{ .Release.Namespace }} {{ include "plone.admin.secretName" . }} -o jsonpath='{.data.{{ include "plone.admin.secretKey" . }}}' | base64 -d
 
 See https://plone.github.io/helm-charts/how-to/change-admin-password.html
+{{- if .Values.tests.enabled }}
+
+Once the pods are ready, check the site with:
+
+  helm test {{ .Release.Name }} --namespace {{ .Release.Namespace }} --logs
+{{- end }}

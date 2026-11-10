@@ -125,6 +125,20 @@ pack:
   activeDeadlineSeconds: 82800
   resources: {}
 
+# The checks of helm test: the home page answers, the API returns the public URL
+# of the site, the admin password of the Secret works and "admin" doesn't, and,
+# with Varnish, a repeated request for the home page is a cache hit.
+tests:
+  enabled: true
+  # URL to send the requests to, with the Host header of routing.hostname, such
+  # as the address of the Gateway or the ingress controller inside the cluster,
+  # http://<service>.<namespace>, to check the routing too. Empty sends them to
+  # the Services of this chart, with the paths that the routing would use.
+  url: ""
+  # Seconds to wait for the home page to answer before the checks.
+  timeout: 120
+  resources: {}
+
 # The Plone backend (plone-backend image): the REST API for Volto, or the
 # whole site with the Classic UI.
 backend:

@@ -35,6 +35,11 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
 
 ### Added
 
+- `helm test` checks that the home page answers, that the site has its public URL, that the `admin` user logs in with the password of its Secret and not with `admin`, and, with Varnish, that the home page is cached.
+  Set `tests.url` to the Gateway or the ingress controller to check the routing too.
+  [#30](https://github.com/plone/helm-charts/issues/30)
+- The CI installs Traefik with a Gateway, and the ingress-nginx controller, and runs the `helm test` checks through them for each scenario.
+  [#29](https://github.com/plone/helm-charts/issues/29)
 - `site.admin.existingSecret` and `site.admin.passwordKey`.
 - `backend.updateStrategy`, a `RollingUpdate` with `maxSurge: 1` and `maxUnavailable: 0` by default.
 - `varnish.vcl`, a custom VCL rendered with the values of this chart.

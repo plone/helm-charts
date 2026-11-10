@@ -148,6 +148,13 @@ Size, replicate, and back up the CloudNativePG cluster.
 Schedule the pack job, and keep the history you need for undo.
 :::
 
+:::{grid-item-card} ✅ Check an installation
+:link: check-the-installation
+:link-type: doc
+
+Run the checks of the chart with `helm test`, through the routing if you want.
+:::
+
 ::::
 
 ## Scale and cache
@@ -213,6 +220,7 @@ configure-the-site
 change-admin-password
 configure-postgresql
 pack-the-database
+check-the-installation
 scale-and-high-availability
 cache-with-varnish
 customize-varnish-vcl
