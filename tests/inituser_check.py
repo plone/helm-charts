@@ -36,18 +36,28 @@ def init_script() -> str:
     """
     manifest = subprocess.run(
         [
-            "helm", "template", "plone", CHART,
-            "--kube-version", "1.37.0",
-            "--set", "routing.gateway.name=gw",
-            "--show-only", "templates/backend-deployment.yaml",
+            "helm",
+            "template",
+            "plone",
+            CHART,
+            "--kube-version",
+            "1.37.0",
+            "--set",
+            "routing.gateway.name=gw",
+            "--show-only",
+            "templates/backend-deployment.yaml",
         ],
-        check=True, capture_output=True, text=True,
+        check=True,
+        capture_output=True,
+        text=True,
     ).stdout.splitlines()
-    start = next(i for i, line in enumerate(manifest) if line.strip() == "- name: admin-password")
+    start = next(
+        i for i, line in enumerate(manifest) if line.strip() == "- name: admin-password"
+    )
     block = next(i for i in range(start, len(manifest)) if manifest[i].strip() == "- |")
     indent = len(manifest[block]) - len(manifest[block].lstrip()) + 2
     lines = []
-    for line in manifest[block + 1:]:
+    for line in manifest[block + 1 :]:
         if line.strip() and len(line) - len(line.lstrip()) < indent:
             break
         lines.append(line[indent:])
@@ -65,17 +75,26 @@ def main() -> int:
             if os.path.exists(target):
                 os.remove(target)
             result = subprocess.run(
-                ["/bin/sh", "-c", local], cwd=tmp, capture_output=True, text=True,
+                ["/bin/sh", "-c", local],
+                check=False,
+                cwd=tmp,
+                capture_output=True,
+                text=True,
                 env={"PATH": os.environ["PATH"], "ADMIN_PASSWORD": password},
             )
             if accepted:
-                written = open(target).read() if os.path.exists(target) else None
+                written = None
+                if os.path.exists(target):
+                    with open(target) as inituser:
+                        written = inituser.read()
                 ok = result.returncode == 0 and written == f"admin:{password}\n"
             else:
                 ok = result.returncode != 0 and not os.path.exists(target)
             if os.path.exists(os.path.join(tmp, "pwned")):
                 ok = False
-            print(f"{'ok  ' if ok else 'FAIL'} {password!r}: {'accepted' if accepted else 'refused'}")
+            print(
+                f"{'ok  ' if ok else 'FAIL'} {password!r}: {'accepted' if accepted else 'refused'}"
+            )
             failures += not ok
     print(f"{len(CASES) - failures} of {len(CASES)} passwords handled as expected")
     return 1 if failures else 0
