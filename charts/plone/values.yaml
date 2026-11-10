@@ -8,6 +8,16 @@ nameOverride: ""
 fullnameOverride: ""
 imagePullSecrets: []
 
+# ServiceAccount of the pods of this chart. Plone doesn't use the Kubernetes
+# API, so the token of the ServiceAccount isn't mounted.
+serviceAccount:
+  # Create the ServiceAccount <release>. Without it, the pods use
+  # serviceAccount.name, or the default ServiceAccount of the namespace.
+  create: true
+  name: ""
+  annotations: {}
+  automountServiceAccountToken: false
+
 # The Plone site.
 site:
   # Id of the Plone site object in Zope.
@@ -201,8 +211,22 @@ backend:
     timeoutSeconds: 5
     failureThreshold: 6
   podAnnotations: {}
-  podSecurityContext: {}
-  securityContext: {}
+  # The user of the plone-backend image. fsGroup makes the volumes writable by
+  # it. These defaults comply with the Pod Security restricted profile. They
+  # apply to the site Job, the pack CronJob, and the helm test pod too.
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 500
+    runAsGroup: 500
+    fsGroup: 500
+    fsGroupChangePolicy: OnRootMismatch
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -249,8 +273,19 @@ frontend:
       port: http
     periodSeconds: 10
   podAnnotations: {}
-  podSecurityContext: {}
-  securityContext: {}
+  # The user of the plone-frontend image. These defaults comply with the Pod
+  # Security restricted profile.
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -313,6 +348,27 @@ varnish:
     # templated values with its own values, so the ConfigMap is named after the
     # release only. To add volumes of your own, keep these ones in the lists.
     vclConfigPath: /etc/varnish/plone/default.vcl
+    # The user of the varnish image, with the other settings of the Pod
+    # Security restricted profile, for Varnish and its varnishncsa sidecar.
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 999
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      seccompProfile:
+        type: RuntimeDefault
+    varnishncsa:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        seccompProfile:
+          type: RuntimeDefault
     extraVolumes: |
       - name: plone-vcl
         configMap:

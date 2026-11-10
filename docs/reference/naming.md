@@ -14,6 +14,8 @@ The name of each component is the prefix, followed by the component name.
 | Pack job | `<fullname>-pack` | |
 | Site job | `<fullname>-site` | |
 | Admin password secret | `<fullname>-admin` | |
+| ServiceAccount | `<fullname>` | |
+| `helm test` pod and its ConfigMap | `<fullname>-test` | |
 | HTTPRoute | `<fullname>` | |
 | Ingress, Volto API | `<fullname>-api` | |
 | Ingress, frontend or Classic UI | `<fullname>` | |

@@ -21,6 +21,7 @@ spec:
           labels:
             {{- include "plone.selectorLabels" (dict "context" . "component" "pack") | nindent 12 }}
         spec:
+          {{- include "plone.serviceAccount" . | nindent 10 }}
           {{- with .Values.imagePullSecrets }}
           imagePullSecrets:
             {{- toYaml . | nindent 12 }}

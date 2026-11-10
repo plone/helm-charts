@@ -122,6 +122,9 @@ cluster-deps: ## Install what the CI scenarios need in the current kubectl clust
 	@# the namespace of the releases, which reach them by their Service names.
 	@echo -e "$(GREEN)==> Create the external servers in the namespace $(CI_NAMESPACE)$(RESET)"
 	@kubectl create namespace $(CI_NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
+	@# Every pod of the scenarios must comply with the restricted Pod Security
+	@# profile.
+	@kubectl label namespace $(CI_NAMESPACE) pod-security.kubernetes.io/enforce=restricted --overwrite
 	@kubectl apply --namespace $(CI_NAMESPACE) -f tests/cluster/external-services.yaml
 	@kubectl wait --for=condition=Ready cluster/external-postgresql --namespace $(CI_NAMESPACE) --timeout=300s
 	@kubectl rollout status deployment/external-zeo --namespace $(CI_NAMESPACE) --timeout=300s

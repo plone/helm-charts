@@ -8,6 +8,7 @@ Resources created by the `cnpg` cluster chart and the `varnish-cache` chart are 
 
 | Resource | Created when |
 |---|---|
+| ServiceAccount `<release>` | `serviceAccount.create` is `true` |
 | Deployment `<release>-backend` | always |
 | Service `<release>-backend` | always |
 | PodDisruptionBudget `<release>-backend` | `backend.replicas` is more than 1, and `backend.podDisruptionBudget.enabled` is `true` |
@@ -25,6 +26,7 @@ Resources created by the `cnpg` cluster chart and the `varnish-cache` chart are 
 | Cluster `<release>-postgresql` | `postgresql.enabled` is `true`, from the `cnpg` cluster chart |
 | Deployment `<release>-varnish`, Service `<release>-varnish`, ServiceAccount `<release>-varnish` | `varnish.enabled` is `true`, from the `varnish-cache` chart |
 | ConfigMap `<release>-varnish-vcl` | `varnish.enabled` is `true` |
+| ConfigMap `<release>-test`, Pod `<release>-test` | `tests.enabled` is `true`, as Helm test hooks, created by `helm test` |
 
 The cluster chart also renders a ConfigMap and a test Job for the PostgreSQL cluster.
 The PodDisruptionBudget of PostgreSQL isn't rendered by the chart: the CloudNativePG operator creates it, when `postgresql.cluster.enablePDB` is `true`.

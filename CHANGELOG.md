@@ -20,6 +20,10 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
 
 ### Changed
 
+- The backend, frontend, site Job, pack CronJob, and Varnish pods comply with the `restricted` Pod Security profile by default: they run as the user of their image, without privilege escalation or capabilities, with the `RuntimeDefault` seccomp profile.
+  The backend containers run as the user `plone` (500) of the `plone-backend` image, instead of root: if you use your own image, check that it runs as this user, or set `backend.podSecurityContext` and `backend.securityContext`.
+  The pods use the new ServiceAccount `<release>`, without its token.
+  [#40](https://github.com/plone/helm-charts/issues/40)
 - The `admin` user of the Zope root gets its password from a Secret: `site.admin.existingSecret`, or `<release>-admin`, which the chart generates on install and keeps on upgrades.
   The backend pods and the site Job apply it at each start, while the Zope root has no other user.
   After the upgrade, log in with that password: the installation notes print how to read it.
@@ -44,6 +48,9 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
 - The CI upgrades a release of the last published chart, with a page and a file, to the chart of the pull request, and checks the content and the blob.
   [#32](https://github.com/plone/helm-charts/issues/32)
 - `site.admin.existingSecret` and `site.admin.passwordKey`.
+- `serviceAccount.create`, `serviceAccount.name`, `serviceAccount.annotations`, and `serviceAccount.automountServiceAccountToken`.
+- `frontend.startupProbe`.
+- `tests.enabled`, `tests.url`, `tests.timeout`, and `tests.resources`.
 - `backend.updateStrategy`, a `RollingUpdate` with `maxSurge: 1` and `maxUnavailable: 0` by default.
 - `varnish.vcl`, a custom VCL rendered with the values of this chart.
 
