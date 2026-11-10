@@ -9,6 +9,7 @@ The default installs Plone 6 with Volto, PostgreSQL, and Gateway API.
 
 The chart is in **beta**: its defaults install a minimal site without backups, and some operations, such as backups and upgrades, aren't covered yet.
 See [what isn't covered yet](https://plone.github.io/helm-charts/#beta).
+The [changelog](CHANGELOG.md) lists the changes of each version, and what to do when you upgrade.
 
 ## Documentation
 
