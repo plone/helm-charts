@@ -3,7 +3,10 @@
 This guide shows you how to read, set, and change the password of the `admin` user of the Zope root.
 
 The `plone-backend` image comes with an `admin` user whose password is `admin`.
-The chart replaces that password with one from a Secret: each backend pod, and the Job that creates the site, write it to the `inituser` file of Zope when they start, and Zope applies it.
+The chart replaces that password with one from a Secret:
+
+* the Job `<release>-admin` sets it after each install and upgrade of the release, also on a site that already exists, such as one installed with an earlier version of the chart;
+* on a new database, the backend pods and the Job that creates the site write it to the `inituser` file of Zope, so that the password `admin` never works, even before the site exists.
 
 ## Read the generated password
 
@@ -43,21 +46,21 @@ These tools can't read the Secret already in the cluster, so the chart would gen
 The password must not be empty, contain a colon (`:`), or start or end with a space, because of the format of the `inituser` file.
 Otherwise the pods don't start, and the log of their `admin-password` init container says why.
 
+Installing or upgrading the release with your own Secret replaces the password of the `admin` user, also on an existing site.
+
 ## Change the password
 
 1. Change the password in the Secret, the generated `<release>-admin` or your own.
    The chart keeps a password that you change in `<release>-admin`.
 
-2. Restart the backend pods, which apply the password when they start:
+2. Upgrade the release with the same values, so that the Job `<release>-admin` sets the new password:
 
    ```shell
-   kubectl rollout restart --namespace <namespace> deployment/<release>-backend
+   helm upgrade <release> plone/plone --namespace <namespace> --reuse-values
    ```
 
-## When the password doesn't apply
+A password that you change in the Zope management interface works until the next install or upgrade of the release, when the Job sets the password of the Secret again.
 
-Zope replaces the `admin` user from the `inituser` file only while the Zope root has no other user.
-If you add users to the Zope root, in `/acl_users` of the Zope management interface, the chart no longer sets the password.
-Manage the passwords of the Zope root users there instead, and keep the `admin` user: the Job that creates the site runs as `admin`.
-
-The users of the Plone site itself, in the site's own user folder, don't count, and the chart never changes them.
+The Job only changes the `admin` user of the Zope root.
+It creates it, with the `Manager` role, if it doesn't exist.
+The other users of the Zope root, and the users of the Plone site, in the site's own user folder, are never changed.
