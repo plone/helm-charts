@@ -12,17 +12,6 @@ Values that aren't set by default are marked as not set.
 | `fullnameOverride` | `""` | Overrides the prefix of the resource names, which is the release name by default. |
 | `imagePullSecrets` | `[]` | Pull secrets of all the pods. |
 
-## `global`
-
-The VCL of Varnish only reads the global values, see [Varnish](varnish.md#the-services-in-global-values).
-With `varnish.enabled`, the chart fails if they don't match the values they mirror.
-
-| Key | Default | Description |
-|---|---|---|
-| `global.plone.fullnameOverride` | `""` | Must match `fullnameOverride`. |
-| `global.plone.backendPort` | `8080` | Must match `backend.service.port`. |
-| `global.plone.frontendPort` | `3000` | Must match `frontend.service.port`. |
-
 ## `site`
 
 | Key | Default | Description |
@@ -31,6 +20,8 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `site.create` | `true` | Creates the site, if it doesn't exist yet, with a Job that runs after each install and upgrade. Its type follows `frontend.enabled`. |
 | `site.profiles` | `""` | Add-on profiles to apply when creating the site, comma separated. |
 | `site.defaultLanguage` | `""` | Default language of the site, such as `en` or `pt-br`. |
+| `site.admin.existingSecret` | `""` | Secret with the password of the `admin` user of the Zope root. Empty generates a random password into the Secret `<release>-admin`, kept on upgrades. See [How to change the admin password](../how-to/change-admin-password.md). |
+| `site.admin.passwordKey` | `"password"` | Key of the password in `site.admin.existingSecret`. |
 
 ## `storage`
 
@@ -95,9 +86,12 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `backend.image.tag` | `""` | Tag of the backend image. Empty uses the `appVersion` of the chart. |
 | `backend.image.pullPolicy` | `"IfNotPresent"` | Pull policy of the backend image. |
 | `backend.replicas` | `1` | Number of backend pods. |
+| `backend.updateStrategy` | `{type: RollingUpdate, rollingUpdate: {maxSurge: 1, maxUnavailable: 0}}` | Strategy of the backend Deployment. The default starts a new pod before it stops an old one. |
 | `backend.podDisruptionBudget.enabled` | `true` | Creates a PodDisruptionBudget, when there is more than one replica. |
 | `backend.podDisruptionBudget.minAvailable` | `"50%"` | Minimum number of available pods. |
 | `backend.podDisruptionBudget.maxUnavailable` | not set | Maximum number of unavailable pods, as an alternative to `minAvailable`. |
+| `backend.preStopSleepSeconds` | `5` | Seconds that a stopping pod sleeps before it gets `SIGTERM`, while it leaves the endpoints of its Service. `0` disables it. |
+| `backend.terminationGracePeriodSeconds` | `30` | Seconds for the sleep and the shutdown. Must be longer than `backend.preStopSleepSeconds`. |
 | `backend.zodbCacheSize` | `50000` | Size of the ZODB object cache, in objects. |
 | `backend.env` | `[]` | Extra environment variables of the backend, see the [`plone-backend` image documentation](https://6.docs.plone.org/install/containers/images/backend.html). |
 | `backend.service.type` | `"ClusterIP"` | Type of the backend service. |
@@ -125,6 +119,8 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `frontend.podDisruptionBudget.enabled` | `true` | Creates a PodDisruptionBudget, when there is more than one replica. |
 | `frontend.podDisruptionBudget.minAvailable` | `"50%"` | Minimum number of available pods. |
 | `frontend.podDisruptionBudget.maxUnavailable` | not set | Maximum number of unavailable pods, as an alternative to `minAvailable`. |
+| `frontend.preStopSleepSeconds` | `5` | Seconds that a stopping pod sleeps before it gets `SIGTERM`, while it leaves the endpoints of its Service. `0` disables it. |
+| `frontend.terminationGracePeriodSeconds` | `30` | Seconds for the sleep and the shutdown. Must be longer than `frontend.preStopSleepSeconds`. |
 | `frontend.env` | `[]` | Extra environment variables of the frontend, see the [`plone-frontend` image documentation](https://6.docs.plone.org/install/containers/images/frontend.html). |
 | `frontend.service.type` | `"ClusterIP"` | Type of the frontend service. |
 | `frontend.service.port` | `3000` | Port of the frontend service. |
@@ -161,14 +157,17 @@ The chart accepts all the other values of that chart under `varnish` too, see it
 | Key | Default | Description |
 |---|---|---|
 | `varnish.enabled` | `false` | Installs Varnish in front of the site. |
-| `varnish.ploneFrontend` | `true` | Whether the default VCL sends requests to the Volto frontend. It must match `frontend.enabled`. Set it to `false` for the Classic UI. |
+| `varnish.vcl` | `""` | VCL of Varnish, rendered as a template with the values of this chart. Empty uses the default VCL. A change restarts Varnish. See [Varnish](varnish.md#the-vcl). |
 | `varnish.server.replicas` | `1` | Number of Varnish pods. |
 | `varnish.server.pdb.enabled` | `false` | Creates a PodDisruptionBudget for Varnish. |
 | `varnish.server.pdb.minAvailable` | `"50%"` | Minimum number of available Varnish pods. |
 | `varnish.server.service.type` | `"ClusterIP"` | Type of the Varnish service. |
 | `varnish.server.service.http.port` | `6081` | Port of the Varnish service. |
 | `varnish.server.affinity` | a preference for pod anti-affinity by node | Affinity of the Varnish pods. See [Varnish](varnish.md#affinity). |
-| `varnish.server.vclConfig` | the default VCL | VCL of Varnish, rendered as a template. See [Varnish](varnish.md#default-vcl). |
+| `varnish.server.vclConfigPath` | `"/etc/varnish/plone/default.vcl"` | The VCL file that Varnish reads, from the ConfigMap `<release>-varnish-vcl`. |
+| `varnish.server.extraVolumes` | the `plone-vcl` volume | Mounts the ConfigMap `<release>-varnish-vcl`. Keep it when you add volumes. |
+| `varnish.server.extraVolumeMounts` | the `plone-vcl` mount, at `/etc/varnish/plone` | Keep it when you add mounts. |
+| `varnish.server.podAnnotations` | the `checksum/plone-vcl` annotation, as a string | Restarts Varnish when `varnish.vcl` changes. Keep it when you add annotations. See [Varnish](varnish.md#restart-after-a-change). |
 
 ## `routing`
 
@@ -203,7 +202,7 @@ The chart fails to install with an explanation when the values don't make sense 
 
 * `storage.type` must be `relstorage` or `zeo`.
 * `routing.type` must be `gateway`, `ingress-nginx`, or `none`.
-* With `varnish.enabled`, `varnish.ploneFrontend` must match `frontend.enabled`.
+* With `varnish.enabled`, the VCL is set in `varnish.vcl`: `varnish.server.vclConfig` must be empty, and `varnish.server.vclConfigs` must not set the file of `varnish.server.vclConfigPath`.
 * With `routing.type: gateway`, `routing.gateway.name` or `routing.gateway.parentRefs` must be set.
 * With `postgresql.enabled` set to `false` and `storage.type: relstorage`, `storage.relstorage.host` and `storage.relstorage.secret.name` must be set.
 * With `storage.type: zeo`, `postgresql.enabled` must be `false`.

@@ -11,7 +11,8 @@ Its maintainers know the database, the failover, and the backups better than thi
 The `cluster` chart is the way the CloudNativePG project describes a cluster, so the chart doesn't need its own templates for one.
 
 The `varnish-cache` chart is maintained by Varnish Software, the company behind Varnish.
-The chart uses its Deployment, Service, and VCL handling, and only adds the defaults that Plone needs.
+The chart uses its Deployment and Service, and only adds the defaults that Plone needs.
+It renders the VCL itself, because the `varnish-cache` chart renders templates with its own values, and the VCL needs the names and ports of the Services of this chart.
 
 Depending on these charts means the chart does less of the work of maintaining them.
 It also means the chart has to follow their conventions, for the values and for the names of their resources.

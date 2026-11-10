@@ -34,6 +34,6 @@ To change what Varnish caches, see [How to customize the Varnish VCL](customize-
 For the default caching behavior, see [Varnish](../reference/varnish.md).
 
 Varnish can be added to any other scenario in the same way, with `--set varnish.enabled=true`.
-With the Classic UI, also set `--set varnish.ploneFrontend=false`, see [How to cache the site with Varnish](cache-with-varnish.md).
+With the Classic UI, see [How to cache the site with Varnish](cache-with-varnish.md#use-varnish-with-the-classic-ui).
 
 This scenario, with ingress-nginx routing, is tested by [`ci/varnish-ingress-nginx-values.yaml`](../../charts/plone/ci/varnish-ingress-nginx-values.yaml).

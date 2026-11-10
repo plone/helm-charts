@@ -8,19 +8,6 @@ nameOverride: ""
 fullnameOverride: ""
 imagePullSecrets: []
 
-global:
-  # What the VCL of Varnish needs to know about the Services of this chart. The
-  # VCL is rendered by the varnish-cache chart, which only shares the global
-  # values with this chart. With varnish.enabled, the chart fails if these don't
-  # match the values they mirror.
-  plone:
-    # Must match fullnameOverride.
-    fullnameOverride: ""
-    # Must match backend.service.port.
-    backendPort: 8080
-    # Must match frontend.service.port.
-    frontendPort: 3000
-
 # The Plone site.
 site:
   # Id of the Plone site object in Zope.
@@ -33,6 +20,20 @@ site:
   profiles: ""
   # Default language of the site, such as "en" or "pt-br".
   defaultLanguage: ""
+  # Password of the admin user of the Zope root. The plone-backend image comes
+  # with an admin user whose password is "admin". The Job <release>-admin
+  # replaces it with the password of this Secret after each install and
+  # upgrade, and the backend pods when they start on a new database, before the
+  # site exists.
+  admin:
+    # Secret with the password, created beforehand. Leave it empty to have the
+    # chart generate a random password into the Secret <release>-admin, which it
+    # keeps on upgrades. Set it with helm template and GitOps tools such as
+    # Argo CD and Flux, which can't read the existing Secret, and would generate
+    # a new password each time.
+    existingSecret: ""
+    # Key of the password in existingSecret.
+    passwordKey: password
 
 # Storage of the Plone database (ZODB).
 storage:
@@ -133,11 +134,26 @@ backend:
     tag: ""
     pullPolicy: IfNotPresent
   replicas: 1
+  # Strategy of the Deployment. The default starts a new pod, and waits for it
+  # to be ready, before it stops an old one, so that a rollout doesn't
+  # interrupt the site, even with one replica.
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   # Only created with more than one replica.
   podDisruptionBudget:
     enabled: true
     minAvailable: 50%
     # maxUnavailable:
+  # When a pod stops, it first sleeps for preStopSleepSeconds, so that it
+  # leaves the endpoints of its Service, and Varnish and the routing stop
+  # sending it requests, before it gets SIGTERM. 0 disables the sleep.
+  # terminationGracePeriodSeconds covers the sleep and the shutdown, and must
+  # be longer than the sleep.
+  preStopSleepSeconds: 5
+  terminationGracePeriodSeconds: 30
   # Size of the ZODB object cache, in objects.
   zodbCacheSize: 50000
   # Extra environment variables, see
@@ -195,6 +211,13 @@ frontend:
     enabled: true
     minAvailable: 50%
     # maxUnavailable:
+  # When a pod stops, it first sleeps for preStopSleepSeconds, so that it
+  # leaves the endpoints of its Service, and Varnish and the routing stop
+  # sending it requests, before it gets SIGTERM. 0 disables the sleep.
+  # terminationGracePeriodSeconds covers the sleep and the shutdown, and must
+  # be longer than the sleep.
+  preStopSleepSeconds: 5
+  terminationGracePeriodSeconds: 30
   # Extra environment variables, see
   # https://6.docs.plone.org/install/containers/images/frontend.html
   env: []
@@ -244,12 +267,21 @@ postgresql:
 # See https://github.com/varnish/helm-varnish-cache for all options.
 varnish:
   enabled: false
-  # Whether the default VCL sends requests to the Volto frontend. It must match
-  # frontend.enabled: set it to false for the Classic UI. The VCL is rendered
-  # by varnish-cache, which can't read frontend.enabled itself.
-  ploneFrontend: true
+  # VCL of Varnish, rendered as a template with the values of this chart, into
+  # the ConfigMap <release>-varnish-vcl. Empty uses the default VCL of the chart,
+  # which sends the requests to the backend and frontend Services (see the
+  # plone.varnish.defaultVcl template). Varnish reads the VCL when it starts:
+  # a change of this value restarts it (see server.podAnnotations), a change of
+  # the values that the VCL reads needs kubectl rollout restart.
+  vcl: ""
   server:
     replicas: 1
+    # Restarts Varnish when varnish.vcl changes: varnish-cache renders this
+    # string with its own values, where varnish.vcl is .Values.vcl. It hashes
+    # the text of varnish.vcl, not the rendered VCL. Keep it a string, and keep
+    # this line if you set annotations of your own.
+    podAnnotations: |
+      checksum/plone-vcl: {{ .Values.vcl | sha256sum }}
     # With a single replica, a PodDisruptionBudget would block node drains.
     # Enable it when running more replicas.
     pdb:
@@ -273,47 +305,19 @@ varnish:
                   app.kubernetes.io/name: {{ include "varnish-cache.name" . }}
                   app.kubernetes.io/instance: {{ .Release.Name }}
               topologyKey: kubernetes.io/hostname
-    # VCL of Varnish, rendered as a template by the varnish-cache chart, which
-    # restarts the Varnish pods when it changes. Varnish receives all the
-    # requests of the site, and sends them to the backend and frontend
-    # Services, which balance the connections between their pods.
-    # Rendered with the values of varnish-cache, so the Services come from
-    # global.plone and the plone.vcl.fullname template.
-    vclConfig: |
-      vcl 4.1;
-
-      # The Plone backend: the API requests with Volto, all requests with the
-      # Classic UI.
-      backend plone {
-          .host = "{{ include "plone.vcl.fullname" . }}-backend";
-          .port = "{{ .Values.global.plone.backendPort }}";
-      }
-      {{- if .Values.ploneFrontend }}
-
-      # The Volto frontend: the pages and static assets of the site.
-      backend volto {
-          .host = "{{ include "plone.vcl.fullname" . }}-frontend";
-          .port = "{{ .Values.global.plone.frontendPort }}";
-      }
-      {{- end }}
-
-      sub vcl_recv {
-          {{- if .Values.ploneFrontend }}
-          # The routing rewrites the API requests to Zope virtual host paths.
-          if (req.url ~ "^/VirtualHostBase/") {
-              set req.backend_hint = plone;
-          } else {
-              set req.backend_hint = volto;
-              # The static assets of Volto don't depend on cookies, which
-              # would prevent caching them.
-              if (req.url ~ "^/static/") {
-                  unset req.http.Cookie;
-              }
-          }
-          {{- else }}
-          set req.backend_hint = plone;
-          {{- end }}
-      }
+    # Varnish reads the VCL of varnish.vcl from the ConfigMap
+    # <release>-varnish-vcl of this chart. The varnish-cache chart renders its
+    # templated values with its own values, so the ConfigMap is named after the
+    # release only. To add volumes of your own, keep these ones in the lists.
+    vclConfigPath: /etc/varnish/plone/default.vcl
+    extraVolumes: |
+      - name: plone-vcl
+        configMap:
+          name: {{ .Release.Name }}-varnish-vcl
+    extraVolumeMounts: |
+      - name: plone-vcl
+        mountPath: /etc/varnish/plone
+        readOnly: true
 
 # Routing of the requests to Plone.
 # With the Volto frontend:

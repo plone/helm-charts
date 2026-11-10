@@ -9,10 +9,12 @@ The name of each component is the prefix, followed by the component name.
 | Component | Name | Port |
 |---|---|---|
 | Backend | `<fullname>-backend` | 8080, named `http` |
-| Backend director, headless | `<fullname>-backend-director` | 8080 |
 | Frontend | `<fullname>-frontend` | 3000, named `http` |
 | ZEO server | `<fullname>-zeo` | 8100, named `zeo` |
 | Pack job | `<fullname>-pack` | |
+| Site job | `<fullname>-site` | |
+| Admin password secret | `<fullname>-admin` | |
+| Admin password Job and its ConfigMap | `<fullname>-admin` | |
 | HTTPRoute | `<fullname>` | |
 | Ingress, Volto API | `<fullname>-api` | |
 | Ingress, frontend or Classic UI | `<fullname>` | |
@@ -20,12 +22,14 @@ The name of each component is the prefix, followed by the component name.
 | PostgreSQL read-write service | `<fullname>-postgresql-rw` | 5432 |
 | PostgreSQL credentials secret | `<fullname>-postgresql-app` | |
 | Varnish | `<fullname>-varnish` | 6081 |
+| Varnish VCL | `<release>-varnish-vcl` | |
 
 The names of the PostgreSQL and Varnish resources follow the conventions of their charts.
 When the release name already contains the name of the dependency, the resources use the release name alone, so that the name isn't repeated.
 Otherwise, the name is the release name followed by the dependency name, as in `<release>-postgresql`.
+The ConfigMap of the Varnish VCL is named after the release name only, even with `fullnameOverride`, because the `varnish-cache` chart, which mounts it, doesn't know the values of this chart.
 
-The prefix of the names of the chart resources, the release name or `fullnameOverride`, is cut at 44 characters, so that `<prefix>-backend` fits the 52 characters of a StatefulSet name, whose pods have a label with the name and a hash.
+The prefix of the names of the chart resources, the release name or `fullnameOverride`, is cut at 44 characters, so that the component names fit the 52 characters of a StatefulSet name, such as the one of the ZEO server, whose pods have a label with the name and a hash.
 
 ## Labels
 
@@ -38,7 +42,7 @@ The resources carry these labels:
 | `app.kubernetes.io/instance` | the release name |
 | `app.kubernetes.io/version` | the `appVersion` of the chart |
 | `app.kubernetes.io/managed-by` | `Helm` |
-| `app.kubernetes.io/component` | the component: `backend`, `frontend`, `zeo`, or `pack` |
+| `app.kubernetes.io/component` | the component: `backend`, `frontend`, `zeo`, `pack`, `site`, or `admin` |
 
 The selector labels of a component are `app.kubernetes.io/name`, `app.kubernetes.io/instance`, and `app.kubernetes.io/component`.
 

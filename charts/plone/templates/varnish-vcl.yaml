@@ -1,0 +1,19 @@
+{{- if .Values.varnish.enabled }}
+# VCL of Varnish: varnish.vcl, or the default VCL of the chart. The Varnish pods
+# mount it through varnish.server.extraVolumes, which the varnish-cache chart
+# renders with its own values: the name only depends on the release.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-varnish-vcl
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: varnish
+data:
+  default.vcl: |
+    {{- if .Values.varnish.vcl }}
+    {{- tpl .Values.varnish.vcl . | nindent 4 }}
+    {{- else }}
+    {{- include "plone.varnish.defaultVcl" . | nindent 4 }}
+    {{- end }}
+{{- end }}

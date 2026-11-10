@@ -8,10 +8,11 @@ Resources created by the `cnpg` cluster chart and the `varnish-cache` chart are 
 
 | Resource | Created when |
 |---|---|
-| StatefulSet `<release>-backend` | always |
+| Deployment `<release>-backend` | always |
 | Service `<release>-backend` | always |
-| Service `<release>-backend-director` | always |
 | PodDisruptionBudget `<release>-backend` | `backend.replicas` is more than 1, and `backend.podDisruptionBudget.enabled` is `true` |
+| Secret `<release>-admin` | `site.admin.existingSecret` is empty |
+| Job and ConfigMap `<release>-admin` | always; the Job as a Helm hook after each install and upgrade, which sets the password of the `admin` user |
 | Deployment `<release>-frontend` | `frontend.enabled` is `true` |
 | Service `<release>-frontend` | `frontend.enabled` is `true` |
 | PodDisruptionBudget `<release>-frontend` | `frontend.enabled` is `true`, `frontend.replicas` is more than 1, and `frontend.podDisruptionBudget.enabled` is `true` |
@@ -23,7 +24,8 @@ Resources created by the `cnpg` cluster chart and the `varnish-cache` chart are 
 | Ingress `<release>-api` | `routing.type` is `ingress-nginx`, and `frontend.enabled` is `true` |
 | Ingress `<release>` | `routing.type` is `ingress-nginx` |
 | Cluster `<release>-postgresql` | `postgresql.enabled` is `true`, from the `cnpg` cluster chart |
-| Deployment `<release>-varnish`, Service `<release>-varnish`, ServiceAccount `<release>-varnish`, ConfigMap `<release>-varnish-vcl` | `varnish.enabled` is `true`, from the `varnish-cache` chart |
+| Deployment `<release>-varnish`, Service `<release>-varnish`, ServiceAccount `<release>-varnish` | `varnish.enabled` is `true`, from the `varnish-cache` chart |
+| ConfigMap `<release>-varnish-vcl` | `varnish.enabled` is `true` |
 
 The cluster chart also renders a ConfigMap and a test Job for the PostgreSQL cluster.
 The PodDisruptionBudget of PostgreSQL isn't rendered by the chart: the CloudNativePG operator creates it, when `postgresql.cluster.enablePDB` is `true`.
@@ -33,9 +35,10 @@ The PodDisruptionBudget of Varnish comes from the `varnish-cache` chart, when `v
 
 | Resource | Default | Classic UI with ZEO | Volto with Varnish and ingress-nginx | External PostgreSQL, no routing |
 |---|:---:|:---:|:---:|:---:|
-| StatefulSet `<release>-backend` | yes | yes | yes | yes |
+| Deployment `<release>-backend` | yes | yes | yes | yes |
 | Service `<release>-backend` | yes | yes | yes | yes |
-| Service `<release>-backend-director` | yes | yes | yes | yes |
+| Secret `<release>-admin` | yes | yes | yes | yes |
+| Job and ConfigMap `<release>-admin` | yes | yes | yes | yes |
 | Deployment and Service `<release>-frontend` | yes | no | yes | yes |
 | StatefulSet and Service `<release>-zeo` | no | yes | no | no |
 | CronJob `<release>-pack` | yes | yes | yes | yes |

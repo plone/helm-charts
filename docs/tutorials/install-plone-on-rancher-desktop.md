@@ -85,7 +85,7 @@ Press Control-C to stop watching.
 To follow the creation of the site, open the log of the backend in another terminal:
 
 ```shell
-kubectl logs --namespace plone plone-backend-0 --follow
+kubectl logs --namespace plone deployment/plone-backend --follow
 ```
 
 ## Open the site
@@ -93,10 +93,17 @@ kubectl logs --namespace plone plone-backend-0 --follow
 Open http://localhost in your browser.
 You see the Volto frontend of your new Plone site.
 
-## Change the admin password
+## Log in
 
-The `admin` user still has its default password.
-Change it before you use the site for anything else, by following [How to change the admin password](../how-to/change-admin-password.md).
+The chart generated a random password for the `admin` user, into the Secret `plone-admin`.
+Read it:
+
+```shell
+kubectl get secret --namespace plone plone-admin -o jsonpath='{.data.password}' | base64 -d
+```
+
+Log in to the site as `admin`, with this password.
+To set a password of your own, see [How to change the admin password](../how-to/change-admin-password.md).
 
 ## Clean up
 

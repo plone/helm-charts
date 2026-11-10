@@ -2,7 +2,7 @@
 {{- $fullname := include "plone.fullname" . }}
 {{- $b := .Values.backend }}
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: {{ $fullname }}-backend
   labels:
@@ -10,7 +10,10 @@ metadata:
     app.kubernetes.io/component: backend
 spec:
   replicas: {{ $b.replicas }}
-  serviceName: {{ $fullname }}-backend-director
+  {{- with $b.updateStrategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "plone.selectorLabels" (dict "context" . "component" "backend") | nindent 6 }}
@@ -31,6 +34,9 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- include "plone.terminationGracePeriod" $b | nindent 6 }}
+      initContainers:
+        {{- include "plone.admin.initContainer" . | nindent 8 }}
       containers:
         - name: backend
           image: "{{ $b.image.repository }}:{{ $b.image.tag | default .Chart.AppVersion }}"
@@ -62,15 +68,19 @@ spec:
           livenessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- include "plone.preStop" $b | nindent 10 }}
           resources:
             {{- toYaml $b.resources | nindent 12 }}
           volumeMounts:
             # Client home, blob cache, and ZEO client cache.
             - name: data
               mountPath: /data
+            # Admin password, see plone.admin.initContainer.
+            {{- include "plone.admin.volumeMount" . | nindent 12 }}
       volumes:
         - name: data
           emptyDir: {}
+        {{- include "plone.admin.volume" . | nindent 8 }}
       {{- with $b.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
