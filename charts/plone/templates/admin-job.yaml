@@ -1,0 +1,95 @@
+{{- $fullname := include "plone.fullname" . }}
+{{- $b := .Values.backend }}
+# The script of the Job below, see files/set-admin-password.py.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $fullname }}-admin
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admin
+data:
+  set-admin-password.py: |
+    {{- .Files.Get "files/set-admin-password.py" | nindent 4 }}
+---
+# Sets the password of the admin user of the Zope root from the Secret, after
+# each install and upgrade, and after the site Job. The inituser file of the
+# backend pods only applies before a Plone site exists: creating the site
+# replaces the user folder of the Zope root with one that ignores it.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $fullname }}-admin
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admin
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    # After the site Job, whose weight is 0.
+    helm.sh/hook-weight: "5"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 6
+  template:
+    metadata:
+      labels:
+        {{- include "plone.selectorLabels" (dict "context" . "component" "admin") | nindent 8 }}
+    spec:
+      {{- include "plone.serviceAccount" . | nindent 6 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $b.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      restartPolicy: Never
+      containers:
+        - name: admin
+          image: "{{ $b.image.repository }}:{{ $b.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ $b.image.pullPolicy }}
+          {{- with $b.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          # zconsole run, with the configuration of the storage.
+          args:
+            - run
+            - /scripts/set-admin-password.py
+          env:
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "plone.admin.secretName" . }}
+                  key: {{ include "plone.admin.secretKey" . }}
+            {{- include "plone.storageEnv" . | nindent 12 }}
+            {{- with $b.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml $b.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: scripts
+          configMap:
+            name: {{ $fullname }}-admin
+      {{- with $b.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $b.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $b.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
