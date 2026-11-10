@@ -131,7 +131,7 @@ Set the site id, the add-on profiles, and the default language.
 :link: change-admin-password
 :link-type: doc
 
-Replace the default password of the `admin` user.
+Read, set, or change the password of the `admin` user.
 :::
 
 :::{grid-item-card} 🐘 Configure the PostgreSQL cluster

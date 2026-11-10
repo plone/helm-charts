@@ -47,7 +47,13 @@ It is organized by the [Diátaxis](https://diataxis.fr) framework:
    A Job creates the Plone site after the install, which takes a few minutes, and `helm install` waits for it.
    Then open http://localhost:3000.
 
-Then [change the password of the `admin` user](docs/how-to/change-admin-password.md).
+Log in as `admin`, with the password that the chart generated:
+
+```shell
+kubectl get secret --namespace plone plone-admin -o jsonpath='{.data.password}' | base64 -d
+```
+
+To set a password of your own, see [How to change the admin password](docs/how-to/change-admin-password.md).
 To serve the site through a route instead, see [Gateway API](#gateway-api), or follow the [tutorial](docs/tutorials/install-plone-on-rancher-desktop.md).
 
 ## Gateway API

@@ -31,6 +31,8 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `site.create` | `true` | Creates the site, if it doesn't exist yet, with a Job that runs after each install and upgrade. Its type follows `frontend.enabled`. |
 | `site.profiles` | `""` | Add-on profiles to apply when creating the site, comma separated. |
 | `site.defaultLanguage` | `""` | Default language of the site, such as `en` or `pt-br`. |
+| `site.admin.existingSecret` | `""` | Secret with the password of the `admin` user of the Zope root. Empty generates a random password into the Secret `<release>-admin`, kept on upgrades. See [How to change the admin password](../how-to/change-admin-password.md). |
+| `site.admin.passwordKey` | `"password"` | Key of the password in `site.admin.existingSecret`. |
 
 ## `storage`
 

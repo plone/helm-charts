@@ -11,6 +11,7 @@ It serves the REST API for the Volto frontend, or the whole site with the Classi
 | Service | `<release>-backend`, port 8080, port name `http` | always |
 | Headless service | `<release>-backend-director`, port 8080 | always |
 | PodDisruptionBudget | `<release>-backend` | `backend.replicas` is more than 1, and `backend.podDisruptionBudget.enabled` is `true` |
+| Secret | `<release>-admin`, key `password` | `site.admin.existingSecret` is empty |
 
 The headless service is the governing service that StatefulSets require.
 It gives each pod a stable DNS name, `<release>-backend-<n>.<release>-backend-director`.
@@ -64,6 +65,20 @@ With `site.create` set to `true` (default), the chart creates the Job `<release>
 
 The backend pods only serve the site, and don't go through the site creation of the `plone-backend` image, which isn't meant for production.
 `site.profiles` and `site.defaultLanguage` only apply when the site is created.
+
+## Admin password
+
+The backend pods and the site Job set the password of the `admin` user of the Zope root, from the Secret `site.admin.existingSecret`, or the Secret `<release>-admin` that the chart generates.
+
+| Setting | Value |
+|---|---|
+| Init container | `admin-password`, with the backend image, writes `admin:<password>` to the `admin` volume |
+| `admin` volume | `emptyDir` in memory, mounted at `/app/inituser`, the `inituser` file of Zope |
+| Generated password | 32 random letters and digits, kept on upgrades |
+| Password rules | not empty, no colon, no space at the start or the end; the init container fails otherwise |
+
+At each start, while the Zope root has no other user, Zope replaces the `admin` user with the one of `inituser`.
+See [How to change the admin password](../how-to/change-admin-password.md).
 
 ## Volume
 

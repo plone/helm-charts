@@ -31,6 +31,8 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      initContainers:
+        {{- include "plone.admin.initContainer" . | nindent 8 }}
       containers:
         - name: backend
           image: "{{ $b.image.repository }}:{{ $b.image.tag | default .Chart.AppVersion }}"
@@ -68,9 +70,12 @@ spec:
             # Client home, blob cache, and ZEO client cache.
             - name: data
               mountPath: /data
+            # Admin password, see plone.admin.initContainer.
+            {{- include "plone.admin.volumeMount" . | nindent 12 }}
       volumes:
         - name: data
           emptyDir: {}
+        {{- include "plone.admin.volume" . | nindent 8 }}
       {{- with $b.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

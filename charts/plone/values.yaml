@@ -33,6 +33,19 @@ site:
   profiles: ""
   # Default language of the site, such as "en" or "pt-br".
   defaultLanguage: ""
+  # Password of the admin user of the Zope root. The plone-backend image comes
+  # with an admin user whose password is "admin". The backend pods and the site
+  # Job replace it with the password of this Secret each time they start, as
+  # long as the Zope root has no other user.
+  admin:
+    # Secret with the password, created beforehand. Leave it empty to have the
+    # chart generate a random password into the Secret <release>-admin, which it
+    # keeps on upgrades. Set it with helm template and GitOps tools such as
+    # Argo CD and Flux, which can't read the existing Secret, and would generate
+    # a new password each time.
+    existingSecret: ""
+    # Key of the password in existingSecret.
+    passwordKey: password
 
 # Storage of the Plone database (ZODB).
 storage:

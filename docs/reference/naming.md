@@ -13,6 +13,8 @@ The name of each component is the prefix, followed by the component name.
 | Frontend | `<fullname>-frontend` | 3000, named `http` |
 | ZEO server | `<fullname>-zeo` | 8100, named `zeo` |
 | Pack job | `<fullname>-pack` | |
+| Site job | `<fullname>-site` | |
+| Admin password secret | `<fullname>-admin` | |
 | HTTPRoute | `<fullname>` | |
 | Ingress, Volto API | `<fullname>-api` | |
 | Ingress, frontend or Classic UI | `<fullname>` | |
@@ -38,7 +40,7 @@ The resources carry these labels:
 | `app.kubernetes.io/instance` | the release name |
 | `app.kubernetes.io/version` | the `appVersion` of the chart |
 | `app.kubernetes.io/managed-by` | `Helm` |
-| `app.kubernetes.io/component` | the component: `backend`, `frontend`, `zeo`, or `pack` |
+| `app.kubernetes.io/component` | the component: `backend`, `frontend`, `zeo`, `pack`, `site`, or `admin` |
 
 The selector labels of a component are `app.kubernetes.io/name`, `app.kubernetes.io/instance`, and `app.kubernetes.io/component`.
 

@@ -102,6 +102,74 @@ Validate the combination of values.
 {{- end }}
 
 {{/*
+Secret and key of the password of the admin user of the Zope root:
+site.admin.existingSecret, or the Secret that the chart generates.
+*/}}
+{{- define "plone.admin.secretName" -}}
+{{- .Values.site.admin.existingSecret | default (printf "%s-admin" (include "plone.fullname" .)) -}}
+{{- end }}
+
+{{- define "plone.admin.secretKey" -}}
+{{- ternary .Values.site.admin.passwordKey "password" (not (empty .Values.site.admin.existingSecret)) -}}
+{{- end }}
+
+{{/*
+Init container that writes the inituser file of Zope, with the admin password
+of the Secret. At each start, while the Zope root has no other user, Zope
+replaces the admin user with the one of /app/inituser. Without this, every new
+pod would restore the password "admin" of the inituser file of the image.
+Zope splits the line on colons and strips spaces, so the password can't have a
+colon, or start or end with a space.
+*/}}
+{{- define "plone.admin.initContainer" -}}
+{{- $b := .Values.backend -}}
+- name: admin-password
+  image: "{{ $b.image.repository }}:{{ $b.image.tag | default .Chart.AppVersion }}"
+  imagePullPolicy: {{ $b.image.pullPolicy }}
+  {{- with $b.securityContext }}
+  securityContext:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  command:
+    - /bin/sh
+    - -c
+    - |
+      case "$ADMIN_PASSWORD" in
+        "" | *:* | " "* | *" ")
+          echo "The admin password in the Secret {{ include "plone.admin.secretName" . }} must not be empty, have a colon (:), or start or end with a space." >&2
+          exit 1 ;;
+      esac
+      printf 'admin:%s\n' "$ADMIN_PASSWORD" > /admin/inituser
+  env:
+    - name: ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "plone.admin.secretName" . }}
+          key: {{ include "plone.admin.secretKey" . }}
+  volumeMounts:
+    - name: admin
+      mountPath: /admin
+{{- end }}
+
+{{/*
+Volume and mount of the inituser file written by plone.admin.initContainer. The
+volume is in memory, so that the password isn't written to the node's disk.
+*/}}
+{{- define "plone.admin.volume" -}}
+- name: admin
+  emptyDir:
+    medium: Memory
+    sizeLimit: 1Mi
+{{- end }}
+
+{{- define "plone.admin.volumeMount" -}}
+- name: admin
+  mountPath: /app/inituser
+  subPath: inituser
+  readOnly: true
+{{- end }}
+
+{{/*
 Whether this chart deploys the ZEO server.
 */}}
 {{- define "plone.zeo.enabled" -}}
