@@ -20,6 +20,9 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
 
 ### Changed
 
+- Plone 6.2.3: the `appVersion` of the chart, and so the default tag of the backend image, is `6.2.3`.
+  The backend reference explains how the images follow the chart, and how to pin an image by its digest.
+  [#27](https://github.com/plone/helm-charts/issues/27)
 - The backend, frontend, site Job, pack CronJob, and Varnish pods comply with the `restricted` Pod Security profile by default: they run as the user of their image, without privilege escalation or capabilities, with the `RuntimeDefault` seccomp profile.
   The backend containers run as the user `plone` (500) of the `plone-backend` image, instead of root: if you use your own image, check that it runs as this user, or set `backend.podSecurityContext` and `backend.securityContext`.
   The pods use the new ServiceAccount `<release>`, without its token.

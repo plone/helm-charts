@@ -20,8 +20,26 @@ See [Why the backend is a Deployment](../explanation/architecture.md#why-the-bac
 | Value | Default |
 |---|---|
 | `backend.image.repository` | `docker.io/plone/plone-backend` |
-| `backend.image.tag` | the `appVersion` of the chart, `6.2.2` |
+| `backend.image.tag` | the `appVersion` of the chart, `6.2.3` |
 | `backend.image.pullPolicy` | `IfNotPresent` |
+
+### Image versions
+
+A release of the chart sets its `appVersion` to the latest release of Plone at the time, and the backend uses the image with that tag, unless `backend.image.tag` is set.
+So upgrading the chart upgrades Plone, and you can stay on a version of Plone by setting `backend.image.tag`.
+The frontend and ZEO images have their own tags, in `frontend.image.tag` and `storage.zeo.server.image.tag`.
+
+The Plone images are rebuilt with the same tag, for example to update their base image.
+With `pullPolicy: IfNotPresent`, a node keeps the image it pulled first, so two nodes can run different builds of the same tag.
+To run exactly one build, add its digest to the tag, which Kubernetes then uses instead of the tag:
+
+```yaml
+backend:
+  image:
+    tag: "6.2.3@sha256:a930828ea46b3ff134e3df1fb17d11a0ac61bf4fddef8df4f486a806acbe8b34"
+```
+
+To get the digest of a tag, run `docker buildx imagetools inspect docker.io/plone/plone-backend:6.2.3`.
 
 ## Environment variables
 
