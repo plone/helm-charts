@@ -69,7 +69,7 @@ jobs:
         run: |
           helm repo add traefik https://traefik.github.io/charts
           helm upgrade --install traefik traefik/traefik --version 42.3.2 --namespace traefik --create-namespace --wait \
-            --set service.type=ClusterIP \
+            --set service.spec.type=ClusterIP \
             --set providers.kubernetesGateway.enabled=true \
             --set gateway.listeners.web.namespacePolicy.from=All
           kubectl wait --for=create gateway/traefik-gateway --namespace traefik --timeout=120s
