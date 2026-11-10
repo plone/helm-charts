@@ -1,0 +1,122 @@
+# The ServiceAccount, and the security contexts of the pods.
+suite: security
+templates:
+  - templates/serviceaccount.yaml
+  - templates/backend-deployment.yaml
+  - templates/frontend-deployment.yaml
+  - templates/zeo-statefulset.yaml
+  - templates/site-job.yaml
+  - templates/pack.yaml
+  - templates/test-smoke.yaml
+release:
+  name: plone
+  namespace: plone
+set:
+  routing.gateway.name: gw
+tests:
+  - it: creates a ServiceAccount without its token
+    template: templates/serviceaccount.yaml
+    asserts:
+      - isKind:
+          of: ServiceAccount
+      - equal:
+          path: metadata.name
+          value: plone
+      - equal:
+          path: automountServiceAccountToken
+          value: false
+
+  - it: runs the backend pods with it, without its token
+    template: templates/backend-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: plone
+      - equal:
+          path: spec.template.spec.automountServiceAccountToken
+          value: false
+
+  - it: runs the ZEO, site and pack pods with it
+    set:
+      storage.type: zeo
+      postgresql.enabled: false
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: plone
+        template: templates/zeo-statefulset.yaml
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: plone
+        template: templates/site-job.yaml
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.serviceAccountName
+          value: plone
+        template: templates/pack.yaml
+
+  - it: runs the test pod with it
+    template: templates/test-smoke.yaml
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: spec.serviceAccountName
+          value: plone
+
+  - it: uses an existing ServiceAccount with serviceAccount.create false
+    set:
+      serviceAccount.create: false
+      serviceAccount.name: plone-sa
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/serviceaccount.yaml
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: plone-sa
+        template: templates/backend-deployment.yaml
+
+  - it: uses the default ServiceAccount without a name
+    template: templates/backend-deployment.yaml
+    set:
+      serviceAccount.create: false
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: default
+
+  - it: runs the backend as the plone user, with the restricted settings
+    template: templates/backend-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 500
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.securityContext.seccompProfile.type
+          value: RuntimeDefault
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation
+          value: false
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.capabilities.drop
+          value:
+            - ALL
+      - equal:
+          path: spec.template.spec.initContainers[0].securityContext.allowPrivilegeEscalation
+          value: false
+
+  - it: runs the frontend as the node user, with the restricted settings
+    template: templates/frontend-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 1000
+      - equal:
+          path: spec.template.spec.securityContext.seccompProfile.type
+          value: RuntimeDefault
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.capabilities.drop
+          value:
+            - ALL

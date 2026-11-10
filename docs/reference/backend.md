@@ -55,9 +55,12 @@ The `backend.env` list adds more variables to both, after the ones above.
 
 | Probe | Request | Period | Timeout | Failure threshold |
 |---|---|---|---|---|
-| Startup | `GET /` on `http` | 10 seconds | 15 seconds | 60, so up to 10 minutes for the first start |
-| Readiness | `GET /` on `http` | 10 seconds | 15 seconds | 3 |
-| Liveness | `GET /` on `http` | 10 seconds | 15 seconds | 3 |
+| Startup | `GET /ok` on `http` | 10 seconds | 5 seconds | 60, so up to 10 minutes for the first start |
+| Readiness | `GET /ok` on `http` | 10 seconds | 5 seconds | 3 |
+| Liveness | TCP connection to `http` | 10 seconds | 5 seconds | 6 |
+
+`/ok` is the health check of the `plone-backend` image: a view of the Zope root that returns `OK` without rendering a page, so it stays cheap on a busy site.
+The liveness probe restarts a pod only when Zope no longer accepts connections, as a busy pod, or one waiting for a slow database, can be slow to answer HTTP requests.
 
 ## Site creation
 

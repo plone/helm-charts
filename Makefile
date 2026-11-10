@@ -125,17 +125,19 @@ cluster-deps: ## Install what the CI scenarios need in the current kubectl clust
 	@# the namespace of the releases, which reach them by their Service names.
 	@echo -e "$(GREEN)==> Create the external servers in the namespace $(CI_NAMESPACE)$(RESET)"
 	@kubectl create namespace $(CI_NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
+	@# Every pod of the scenarios must comply with the restricted Pod Security
+	@# profile.
+	@kubectl label namespace $(CI_NAMESPACE) pod-security.kubernetes.io/enforce=restricted --overwrite
 	@kubectl apply --namespace $(CI_NAMESPACE) -f tests/cluster/external-services.yaml
 	@kubectl wait --for=condition=Ready cluster/external-postgresql --namespace $(CI_NAMESPACE) --timeout=300s
 	@kubectl rollout status deployment/external-zeo --namespace $(CI_NAMESPACE) --timeout=300s
 
 .PHONY: test-install
-test-install: chart-deps ## Install the chart once per CI scenario in the current kubectl cluster, and run helm test, as CI does (needs ct, and make cluster-deps)
+test-install: chart-deps ## Install the chart once per CI scenario in the current kubectl cluster, and run helm test, as CI does (needs make cluster-deps)
 	@echo -e "$(GREEN)==> Install the chart and run helm test$(RESET)"
-	@# Helm waits for the Job that creates the Plone site, which takes a few
-	@# minutes.
-	@ct install --all --chart-dirs charts --chart-repos cnpg=$(CNPG_REPO) \
-		--namespace $(CI_NAMESPACE) --helm-extra-args "--timeout 15m"
+	@# Not ct install: its helm test also runs the ping test of the
+	@# CloudNativePG cluster chart, which the restricted profile refuses.
+	@CI_NAMESPACE="$(CI_NAMESPACE)" bash tests/install.sh
 
 .PHONY: test-upgrade
 test-upgrade: chart-deps ## Install the last published release, create content, upgrade to this chart, and check the content (needs make cluster-deps)

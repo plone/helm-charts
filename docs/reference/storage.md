@@ -82,7 +82,8 @@ With `pack.enabled` set to `true` (default), the chart creates the CronJob `<rel
 
 | Setting | Value |
 |---|---|
-| Schedule | `pack.schedule`, default `45 9 * * *` |
+| Schedule | `pack.schedule`, default `15 3 * * *`, every night at 03:15 |
+| Time zone | `pack.timeZone`, default the time zone of the Kubernetes controller manager, usually UTC |
 | Arguments | `pack -d <pack.days>`, default `7` days of history |
 | Retries | `pack.backoffLimit`, default `1` |
 | Deadline | `pack.activeDeadlineSeconds`, default `82800`, 23 hours |
@@ -90,7 +91,8 @@ With `pack.enabled` set to `true` (default), the chart creates the CronJob `<rel
 | Image | the backend image |
 | Concurrency | `Forbid`, so that two packs don't run at the same time |
 
-The job uses the storage variables of the backend.
+The job uses the storage variables of the backend, and its `backend.env`, followed by `pack.env`.
+It runs on the nodes of `pack.nodeSelector`, `pack.tolerations`, and `pack.affinity`, or of the backend when they are empty, so that it reaches the database as the backend does.
 Packing removes the object revisions older than `pack.days`, so the undo of older changes is no longer possible.
 Set `pack.enabled` to `false` to turn it off, for example when an external server is packed elsewhere.
 For how to change the job, see [How to pack the database](../how-to/pack-the-database.md).

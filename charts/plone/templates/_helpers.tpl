@@ -180,6 +180,27 @@ volume is in memory, so that the password isn't written to the node's disk.
 {{- end }}
 
 {{/*
+Name of the ServiceAccount of the pods: serviceAccount.name, or the fullname
+when the chart creates it, or the default ServiceAccount of the namespace.
+*/}}
+{{- define "plone.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+{{- .Values.serviceAccount.name | default (include "plone.fullname" .) -}}
+{{- else -}}
+{{- .Values.serviceAccount.name | default "default" -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+ServiceAccount fields of the pod specs. Plone doesn't use the Kubernetes API,
+so the token isn't mounted by default.
+*/}}
+{{- define "plone.serviceAccount" -}}
+serviceAccountName: {{ include "plone.serviceAccountName" . }}
+automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+{{- end }}
+
+{{/*
 Whether this chart deploys the ZEO server.
 */}}
 {{- define "plone.zeo.enabled" -}}

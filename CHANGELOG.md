@@ -23,6 +23,10 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
 
 ### Changed
 
+- The backend, frontend, site Job, pack CronJob, and Varnish pods comply with the `restricted` Pod Security profile by default: they run as the user of their image, without privilege escalation or capabilities, with the `RuntimeDefault` seccomp profile.
+  The backend containers run as the user `plone` (500) of the `plone-backend` image, instead of root: if you use your own image, check that it runs as this user, or set `backend.podSecurityContext` and `backend.securityContext`.
+  The pods use the new ServiceAccount `<release>`, without its token.
+  [#40](https://github.com/plone/helm-charts/issues/40)
 - The `admin` user of the Zope root gets its password from a Secret: `site.admin.existingSecret`, or `<release>-admin`, which the chart generates on install and keeps on upgrades.
   The Job `<release>-admin` sets it after each install and upgrade, also on a site created by an earlier version of the chart, and creates the `admin` user if it is missing.
   On a new database, the backend pods and the site Job also write it to the `inituser` file of Zope, so that the password `admin` never works.
@@ -32,6 +36,10 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
 - The backend and frontend pods sleep for 5 seconds before they stop, so that they leave the endpoints of their Service first, and the requests already sent to them don't fail.
 - The chart is marked as beta, and the documentation lists what it doesn't cover yet.
   [#21](https://github.com/plone/helm-charts/issues/21)
+- The startup and readiness probes of the backend request `/ok`, the health check of the `plone-backend` image, which returns `OK` without rendering a page, instead of `/`.
+  The liveness probe opens a TCP connection, so that a slow database or a busy pod doesn't restart the backend pods.
+  The frontend has a startup probe.
+  [#39](https://github.com/plone/helm-charts/issues/39)
 
 ### Added
 
@@ -45,6 +53,10 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
 - The CI upgrades a release of the last published chart, with a page and a file, to the chart of the pull request, and checks the content and the blob.
   [#32](https://github.com/plone/helm-charts/issues/32)
 - `site.admin.existingSecret` and `site.admin.passwordKey`.
+- `serviceAccount.create`, `serviceAccount.name`, `serviceAccount.annotations`, and `serviceAccount.automountServiceAccountToken`.
+- `frontend.startupProbe`.
+- `tests.enabled`, `tests.url`, `tests.timeout`, and `tests.resources`.
+- `pack.timeZone`, `pack.env`, `pack.nodeSelector`, `pack.tolerations`, and `pack.affinity`.
 - `backend.updateStrategy`, a `RollingUpdate` with `maxSurge: 1` and `maxUnavailable: 0` by default.
 - `varnish.vcl`, a custom VCL rendered with the values of this chart.
 - `backend.preStopSleepSeconds`, `backend.terminationGracePeriodSeconds`, `frontend.preStopSleepSeconds` and `frontend.terminationGracePeriodSeconds`.
@@ -52,6 +64,10 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
 
 ### Fixed
 
+- The pack CronJob runs with the environment variables of `backend.env`, and on the nodes of the backend, so that it can reach the database where the backend can.
+  It runs at 03:15 every night instead of 09:45, and `pack.timeZone` sets the time zone of its schedule.
+  Set `pack.schedule` to keep the previous time.
+  [#41](https://github.com/plone/helm-charts/issues/41)
 - The backend reference documented the site variables on the backend container, and as `SITE`; they are on the site Job, and the site id is `SITE_ID`.
   [#22](https://github.com/plone/helm-charts/issues/22)
 - The Gateway validation message and the installation notes link to the published documentation.
