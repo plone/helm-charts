@@ -50,6 +50,8 @@ CI_NAMESPACE ?= plone-ci
 UPGRADE_FROM ?=
 UPGRADE_VALUES ?= $(CHART_DIR)/ci/default-values.yaml
 UPGRADE_NAMESPACE ?= plone-upgrade
+# make check-version: the branch to compare the version of the chart with.
+BASE ?= origin/main
 
 .PHONY: help
 help: ## Show this help
@@ -138,6 +140,11 @@ test-install: chart-deps ## Install the chart once per CI scenario in the curren
 	@# Not ct install: its helm test also runs the ping test of the
 	@# CloudNativePG cluster chart, which the restricted profile refuses.
 	@CI_NAMESPACE="$(CI_NAMESPACE)" bash tests/install.sh
+
+.PHONY: check-version
+check-version: ## Fail if the chart changed since BASE (origin/main by default) without a higher version
+	@echo -e "$(GREEN)==> Check the version of the chart$(RESET)"
+	@bash tests/check_version_bump.sh $(BASE)
 
 .PHONY: test-upgrade
 test-upgrade: chart-deps ## Install the last published release, create content, upgrade to this chart, and check the content (needs make cluster-deps)

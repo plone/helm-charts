@@ -1,0 +1,44 @@
+name: Bug report
+description: The chart doesn't install, or doesn't work as documented.
+labels:
+  - "01 type: bug"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. For a security issue, use the [Plone security report](https://plone.org/security/report) instead.
+  - type: input
+    id: chart-version
+    attributes:
+      label: Chart version
+      description: "`helm list` shows it, such as plone-0.4.0."
+    validations:
+      required: true
+  - type: input
+    id: kubernetes
+    attributes:
+      label: Kubernetes
+      description: The Kubernetes version and distribution, such as 1.33 on k3s, or EKS.
+    validations:
+      required: true
+  - type: textarea
+    id: values
+    attributes:
+      label: Values
+      description: The values you set, without passwords or other secrets.
+      render: yaml
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: The error, and the output of `kubectl get pods,jobs,httproute,ingress -n <namespace>` or `kubectl describe` of the failing resource.
+      render: text

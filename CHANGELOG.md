@@ -20,16 +20,20 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
   A change of `varnish.vcl` restarts Varnish, with the annotation `checksum/plone-vcl` of the default `varnish.server.podAnnotations`: keep it if you set annotations of your own.
   After a change of the values that the VCL reads, such as `frontend.enabled` or `fullnameOverride`, restart Varnish with `kubectl rollout restart deployment/<release>-varnish`.
   [#45](https://github.com/plone/helm-charts/issues/45)
+- The backend, frontend, site Job, pack CronJob, and Varnish pods comply with the `restricted` Pod Security profile by default: they run as the user of their image, without privilege escalation or capabilities, with the `RuntimeDefault` seccomp profile.
+  The backend containers run as the user `plone` (500) of the `plone-backend` image, instead of root: if you use your own image, check that it runs as this user, or set `backend.podSecurityContext` and `backend.securityContext`.
+  The pods use the new ServiceAccount `<release>`, without its token.
+  [#40](https://github.com/plone/helm-charts/issues/40)
+- The chart validates its values with a JSON schema: an upgrade fails on a key that the chart doesn't have, such as a misspelled one, which was ignored before.
+  Fix or remove it, as the error message says.
+  [#36](https://github.com/plone/helm-charts/issues/36)
+- The backend no longer gets `DBHOST`, `DBPORT`, `DBNAME`, `DBUSER`, and `DBPASSWORD`: if your `backend.env` refers to them, use `PGDATABASE`, `PGUSER`, and `PGPASSWORD`, see the fix of [#44](https://github.com/plone/helm-charts/issues/44) below.
 
 ### Changed
 
 - Plone 6.2.3: the `appVersion` of the chart, and so the default tag of the backend image, is `6.2.3`.
   The backend reference explains how the images follow the chart, and how to pin an image by its digest.
   [#27](https://github.com/plone/helm-charts/issues/27)
-- The backend, frontend, site Job, pack CronJob, and Varnish pods comply with the `restricted` Pod Security profile by default: they run as the user of their image, without privilege escalation or capabilities, with the `RuntimeDefault` seccomp profile.
-  The backend containers run as the user `plone` (500) of the `plone-backend` image, instead of root: if you use your own image, check that it runs as this user, or set `backend.podSecurityContext` and `backend.securityContext`.
-  The pods use the new ServiceAccount `<release>`, without its token.
-  [#40](https://github.com/plone/helm-charts/issues/40)
 - The `admin` user of the Zope root gets its password from a Secret: `site.admin.existingSecret`, or `<release>-admin`, which the chart generates on install and keeps on upgrades.
   The Job `<release>-admin` sets it after each install and upgrade, also on a site created by an earlier version of the chart, and creates the `admin` user if it is missing.
   On a new database, the backend pods and the site Job also write it to the `inituser` file of Zope, so that the password `admin` never works.
@@ -39,6 +43,8 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
 - The backend and frontend pods sleep for 5 seconds before they stop, so that they leave the endpoints of their Service first, and the requests already sent to them don't fail.
 - The chart is marked as beta, and the documentation lists what it doesn't cover yet.
   [#21](https://github.com/plone/helm-charts/issues/21)
+- The maintainers in `Chart.yaml` are the active ones, fabiorauber and ericof, with links to their GitHub profiles.
+  [#24](https://github.com/plone/helm-charts/issues/24)
 - The startup and readiness probes of the backend request `/ok`, the health check of the `plone-backend` image, which returns `OK` without rendering a page, instead of `/`.
   The liveness probe opens a TCP connection, so that a slow database or a busy pod doesn't restart the backend pods.
   The frontend has a startup probe.
@@ -72,11 +78,11 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
 
 ### Fixed
 
+- The documentation warns that `helm uninstall` deletes the PostgreSQL cluster of the release, with its volumes and the content of the site, and the upgrade test of the CI checks it.
+  [#20](https://github.com/plone/helm-charts/issues/20)
 - A database name, user name, or password with a single quote or a backslash no longer breaks the connection to PostgreSQL.
   The backend gets them in `PGDATABASE`, `PGUSER`, and `PGPASSWORD`, which the PostgreSQL client reads, instead of in `RELSTORAGE_DSN`, which keeps the host and the port.
-  The variables `DBHOST`, `DBPORT`, `DBNAME`, `DBUSER`, and `DBPASSWORD` are removed: if your `backend.env` refers to them, use the new ones.
   [#44](https://github.com/plone/helm-charts/issues/44)
-
 - The pack CronJob runs with the environment variables of `backend.env`, and on the nodes of the backend, so that it can reach the database where the backend can.
   It runs at 03:15 every night instead of 09:45, and `pack.timeZone` sets the time zone of its schedule.
   Set `pack.schedule` to keep the previous time.

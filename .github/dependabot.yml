@@ -1,4 +1,17 @@
 version: 2
+
+# Dependabot reaches only the hosts declared here, even public ones: without
+# them, its proxy refused the CloudNativePG index with 403, and the Docker Hub
+# registry of the varnish-cache chart, and of the images in values.yaml.
+registries:
+  cloudnative-pg:
+    type: helm-registry
+    url: https://cloudnative-pg.github.io/charts
+  # OCI Helm charts and container images: helm-registry doesn't support OCI.
+  docker-hub:
+    type: docker-registry
+    url: https://registry-1.docker.io
+
 updates:
 
   - package-ecosystem: "github-actions"
@@ -13,6 +26,9 @@ updates:
   # Helm chart dependencies (cluster from cnpg, varnish-cache from OCI) in Chart.yaml
   - package-ecosystem: "helm"
     directory: "/charts/plone"
+    registries:
+      - cloudnative-pg
+      - docker-hub
     schedule:
       interval: "weekly"
     groups:
