@@ -111,12 +111,12 @@ make test            # both
 
 `make test-manifests` validates the manifests against the Kubernetes versions of `KUBE_VERSIONS`, 1.29.0, 1.33.0, and 1.37.0 by default.
 
-The other targets need [chart-testing](https://github.com/helm/chart-testing) (`ct`), and the install ones a cluster, such as one created with [kind](https://kind.sigs.k8s.io), as the current `kubectl` context:
+`make lint` needs [chart-testing](https://github.com/helm/chart-testing) (`ct`), and the install targets a cluster, such as one created with [kind](https://kind.sigs.k8s.io), as the current `kubectl` context:
 
 ```shell
 make lint           # lint the chart once per scenario
 make cluster-deps   # install CloudNativePG, the Gateway API CRDs, Traefik with a Gateway, and ingress-nginx
-make test-install   # install the chart once per scenario, and run helm test
+make test-install   # install the chart once per scenario, in a restricted namespace, and run helm test
 make test-upgrade   # upgrade from the last published release, and check the content
 ```
 
