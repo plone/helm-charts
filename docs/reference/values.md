@@ -78,6 +78,17 @@ Values that aren't set by default are marked as not set.
 | `pack.activeDeadlineSeconds` | `82800` | Stops a pack that runs for longer, 23 hours by default. Keep it below the schedule interval. |
 | `pack.resources` | `{}` | Resources of the pack job. |
 
+## `tests`
+
+The checks run by `helm test`, see [How to check an installation with `helm test`](../how-to/check-the-installation.md).
+
+| Key | Default | Description |
+|---|---|---|
+| `tests.enabled` | `true` | Creates the test pod and its ConfigMap, run by `helm test`. |
+| `tests.url` | `""` | URL to send the requests to, such as the address of the Gateway or the ingress controller inside the cluster, to check the routing too. Empty sends them to the Services of the chart. |
+| `tests.timeout` | `120` | Seconds to wait for the home page to answer before the checks. |
+| `tests.resources` | `{}` | Resources of the test pod. |
+
 ## `backend`
 
 | Key | Default | Description |
