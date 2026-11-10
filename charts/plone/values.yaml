@@ -123,7 +123,11 @@ storage:
 # objects. Uses zodbpack with RelStorage and zeopack with ZEO.
 pack:
   enabled: true
-  schedule: "45 9 * * *"
+  # Every night at 03:15, in the time zone of pack.timeZone.
+  schedule: "15 3 * * *"
+  # Time zone of the schedule, such as "Europe/Berlin". Empty uses the time
+  # zone of the Kubernetes controller manager, usually UTC.
+  timeZone: ""
   # Keep the history of the last days, so that undo works for them. 0 removes
   # all of the history.
   days: 7
@@ -133,6 +137,14 @@ pack:
   # stuck pack doesn't block the next one. Keep it below the schedule interval.
   activeDeadlineSeconds: 82800
   resources: {}
+  # Extra environment variables, after the ones of backend.env, which the
+  # pack job uses too.
+  env: []
+  # Where the pack pods run. Empty uses the ones of the backend, so that the
+  # pack runs where the backend can reach the database.
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
 
 # The checks of helm test: the home page answers, the API returns the public URL
 # of the site, the admin password of the Secret works and "admin" doesn't, and,

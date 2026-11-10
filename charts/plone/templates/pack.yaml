@@ -9,6 +9,9 @@ metadata:
     app.kubernetes.io/component: pack
 spec:
   schedule: {{ .Values.pack.schedule | quote }}
+  {{- with .Values.pack.timeZone }}
+  timeZone: {{ . | quote }}
+  {{- end }}
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
@@ -46,6 +49,24 @@ spec:
                 - {{ .Values.pack.days | quote }}
               env:
                 {{- include "plone.storageEnv" . | nindent 16 }}
+                {{- with $b.env }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
+                {{- with .Values.pack.env }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
               resources:
                 {{- toYaml .Values.pack.resources | nindent 16 }}
+          {{- with .Values.pack.nodeSelector | default $b.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.pack.affinity | default $b.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.pack.tolerations | default $b.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 {{- end }}

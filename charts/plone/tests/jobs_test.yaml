@@ -75,7 +75,7 @@ tests:
           of: CronJob
       - equal:
           path: spec.schedule
-          value: 45 9 * * *
+          value: 15 3 * * *
       - equal:
           path: spec.concurrencyPolicy
           value: Forbid
@@ -93,3 +93,61 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+
+  - it: packs with the env and the placement of the backend
+    template: templates/pack.yaml
+    set:
+      backend.env:
+        - name: FROM_BACKEND
+          value: "1"
+      pack.env:
+        - name: FROM_PACK
+          value: "1"
+      backend.nodeSelector:
+        pool: plone
+      backend.tolerations:
+        - key: plone
+          operator: Exists
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: FROM_BACKEND
+            value: "1"
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: FROM_PACK
+            value: "1"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.nodeSelector
+          value:
+            pool: plone
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.tolerations[0].key
+          value: plone
+
+  - it: replaces the placement of the backend with the one of pack
+    template: templates/pack.yaml
+    set:
+      backend.nodeSelector:
+        pool: plone
+      pack.nodeSelector:
+        pool: batch
+      pack.timeZone: Europe/Berlin
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.nodeSelector
+          value:
+            pool: batch
+      - equal:
+          path: spec.timeZone
+          value: Europe/Berlin
+
+  - it: leaves the time zone to the cluster by default
+    template: templates/pack.yaml
+    asserts:
+      - notExists:
+          path: spec.timeZone
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.nodeSelector

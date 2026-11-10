@@ -76,11 +76,16 @@ Values that aren't set by default are marked as not set.
 | Key | Default | Description |
 |---|---|---|
 | `pack.enabled` | `true` | Creates the CronJob that packs the database. |
-| `pack.schedule` | `"45 9 * * *"` | Cron schedule of the pack job. |
+| `pack.schedule` | `"15 3 * * *"` | Cron schedule of the pack job, every night at 03:15. |
+| `pack.timeZone` | `""` | Time zone of the schedule, such as `Europe/Berlin`. Empty uses the time zone of the Kubernetes controller manager, usually UTC. |
 | `pack.days` | `7` | Keeps the history of the last days, so that undo works for them. `0` removes all of the history. |
 | `pack.backoffLimit` | `1` | Retries of a failed pack, until the next schedule. |
 | `pack.activeDeadlineSeconds` | `82800` | Stops a pack that runs for longer, 23 hours by default. Keep it below the schedule interval. |
 | `pack.resources` | `{}` | Resources of the pack job. |
+| `pack.env` | `[]` | Extra environment variables of the pack job, after the ones of `backend.env`. |
+| `pack.nodeSelector` | `{}` | Node selector of the pack pods. Empty uses `backend.nodeSelector`. |
+| `pack.tolerations` | `[]` | Tolerations of the pack pods. Empty uses `backend.tolerations`. |
+| `pack.affinity` | `{}` | Affinity of the pack pods. Empty uses `backend.affinity`. |
 
 ## `tests`
 

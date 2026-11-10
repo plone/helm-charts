@@ -51,11 +51,16 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
 - `serviceAccount.create`, `serviceAccount.name`, `serviceAccount.annotations`, and `serviceAccount.automountServiceAccountToken`.
 - `frontend.startupProbe`.
 - `tests.enabled`, `tests.url`, `tests.timeout`, and `tests.resources`.
+- `pack.timeZone`, `pack.env`, `pack.nodeSelector`, `pack.tolerations`, and `pack.affinity`.
 - `backend.updateStrategy`, a `RollingUpdate` with `maxSurge: 1` and `maxUnavailable: 0` by default.
 - `varnish.vcl`, a custom VCL rendered with the values of this chart.
 
 ### Fixed
 
+- The pack CronJob runs with the environment variables of `backend.env`, and on the nodes of the backend, so that it can reach the database where the backend can.
+  It runs at 03:15 every night instead of 09:45, and `pack.timeZone` sets the time zone of its schedule.
+  Set `pack.schedule` to keep the previous time.
+  [#41](https://github.com/plone/helm-charts/issues/41)
 - The backend reference documented the site variables on the backend container, and as `SITE`; they are on the site Job, and the site id is `SITE_ID`.
   [#22](https://github.com/plone/helm-charts/issues/22)
 - The Gateway validation message and the installation notes link to the published documentation.
