@@ -49,6 +49,28 @@ tests:
           path: data.password
           value: a2VwdC1wYXNzd29yZA==
 
+  - it: generates a password when the existing Secret has no password key
+    template: templates/admin-secret.yaml
+    kubernetesProvider:
+      scheme:
+        "v1/Secret":
+          gvr:
+            version: v1
+            resource: secrets
+          namespaced: true
+      objects:
+        - kind: Secret
+          apiVersion: v1
+          metadata:
+            name: plone-admin
+            namespace: plone
+          data:
+            other: a2VwdC1wYXNzd29yZA==
+    asserts:
+      - matchRegex:
+          path: data.password
+          pattern: "^[A-Za-z0-9+/]{43}=$"
+
   - it: creates no Secret with site.admin.existingSecret
     template: templates/admin-secret.yaml
     set:

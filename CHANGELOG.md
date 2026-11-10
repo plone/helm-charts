@@ -10,12 +10,15 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
 - The backend is a Deployment instead of a StatefulSet, so that a rollout starts the new pod before it stops the old one, without interrupting a site with one backend pod.
   `helm upgrade` replaces the StatefulSet `<release>-backend` with a Deployment of the same name, and removes the Service `<release>-backend-director`.
   The backend pods are now named `<release>-backend-<hash>-<id>` instead of `<release>-backend-<n>`: update the scripts that use the old names, such as `kubectl logs <release>-backend-0`, to use `deployment/<release>-backend`.
+  A rollout needs room for one more backend pod, and one more database connection.
+  For an upgrade that asks you to stop all the clients first, set `backend.updateStrategy` to `{type: Recreate}`.
   [#37](https://github.com/plone/helm-charts/issues/37)
 - The chart renders the VCL of Varnish itself, into the ConfigMap `<release>-varnish-vcl`, with its own values.
   `global.plone` and `varnish.ploneFrontend` are removed: delete them from your values.
   A custom VCL moves from `varnish.server.vclConfig` to `varnish.vcl`, where it is rendered with the values of this chart: replace `plone.vcl.fullname` with `plone.fullname`, `.Values.global.plone.backendPort` with `.Values.backend.service.port`, `.Values.global.plone.frontendPort` with `.Values.frontend.service.port`, and `.Values.ploneFrontend` with `.Values.frontend.enabled`.
   The chart fails with an explanation while `varnish.server.vclConfig` is set.
-  After a later change of the VCL, restart Varnish with `kubectl rollout restart deployment/<release>-varnish`.
+  A change of `varnish.vcl` restarts Varnish, with the annotation `checksum/plone-vcl` of the default `varnish.server.podAnnotations`: keep it if you set annotations of your own.
+  After a change of the values that the VCL reads, such as `frontend.enabled` or `fullnameOverride`, restart Varnish with `kubectl rollout restart deployment/<release>-varnish`.
   [#45](https://github.com/plone/helm-charts/issues/45)
 - The backend, frontend, site Job, pack CronJob, and Varnish pods comply with the `restricted` Pod Security profile by default: they run as the user of their image, without privilege escalation or capabilities, with the `RuntimeDefault` seccomp profile.
   The backend containers run as the user `plone` (500) of the `plone-backend` image, instead of root: if you use your own image, check that it runs as this user, or set `backend.podSecurityContext` and `backend.securityContext`.
@@ -37,6 +40,7 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
   After the upgrade, log in with that password: the installation notes print how to read it.
   A password changed in the Zope management interface lasts until the next install or upgrade.
   [#18](https://github.com/plone/helm-charts/issues/18)
+- The backend and frontend pods sleep for 5 seconds before they stop, so that they leave the endpoints of their Service first, and the requests already sent to them don't fail.
 - The chart is marked as beta, and the documentation lists what it doesn't cover yet.
   [#21](https://github.com/plone/helm-charts/issues/21)
 - The maintainers in `Chart.yaml` are the active ones, fabiorauber and ericof, with links to their GitHub profiles.
@@ -69,6 +73,8 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
 - `storage.relstorage.sslmode`, the SSL mode of the connection to PostgreSQL.
 - `backend.updateStrategy`, a `RollingUpdate` with `maxSurge: 1` and `maxUnavailable: 0` by default.
 - `varnish.vcl`, a custom VCL rendered with the values of this chart.
+- `backend.preStopSleepSeconds`, `backend.terminationGracePeriodSeconds`, `frontend.preStopSleepSeconds` and `frontend.terminationGracePeriodSeconds`.
+- `varnish.server.podAnnotations`, with the annotation that restarts Varnish when `varnish.vcl` changes.
 
 ### Fixed
 

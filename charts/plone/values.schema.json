@@ -294,6 +294,14 @@
         "replicas": {
           "type": "integer"
         },
+        "preStopSleepSeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "terminationGracePeriodSeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
         "updateStrategy": {
           "type": "object"
         },
@@ -397,6 +405,14 @@
         },
         "replicas": {
           "type": "integer"
+        },
+        "preStopSleepSeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "terminationGracePeriodSeconds": {
+          "type": "integer",
+          "minimum": 0
         },
         "podDisruptionBudget": {
           "type": "object",

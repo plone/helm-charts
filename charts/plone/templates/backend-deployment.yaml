@@ -35,6 +35,7 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- include "plone.terminationGracePeriod" $b | nindent 6 }}
       initContainers:
         {{- include "plone.admin.initContainer" . | nindent 8 }}
       containers:
@@ -68,6 +69,7 @@ spec:
           livenessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- include "plone.preStop" $b | nindent 10 }}
           resources:
             {{- toYaml $b.resources | nindent 12 }}
           volumeMounts:

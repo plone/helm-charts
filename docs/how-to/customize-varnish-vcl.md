@@ -34,14 +34,15 @@ It can use the templates of the chart, such as `plone.fullname`, and all its val
 
 ## Apply the change
 
-1. Run `helm upgrade` with the values file.
-   The chart updates the ConfigMap `<release>-varnish-vcl`.
+Run `helm upgrade` with the values file.
+The chart updates the ConfigMap `<release>-varnish-vcl`, and the change of `varnish.vcl` rolls out the Varnish pods, which read the new VCL when they start.
 
-2. Restart Varnish, which reads the VCL when it starts:
+When you only change values that your VCL reads, and not `varnish.vcl` itself, Varnish keeps the VCL that it read when it started.
+Restart it:
 
-   ```shell
-   kubectl rollout restart --namespace <namespace> deployment/<release>-varnish
-   ```
+```shell
+kubectl rollout restart --namespace <namespace> deployment/<release>-varnish
+```
 
 For the other options of the `varnish-cache` chart, set them under `varnish`.
 See its [documentation](https://github.com/varnish/helm-varnish).
