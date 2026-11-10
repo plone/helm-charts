@@ -1,7 +1,9 @@
 # The password of the admin user: the generated Secret, an existing Secret, and
-# the init container that writes the inituser file of Zope.
+# the init container that writes the inituser file of Zope, and the Job that
+# sets the password on an existing site.
 suite: admin password
 templates:
+  - templates/admin-job.yaml
   - templates/admin-secret.yaml
   - templates/backend-deployment.yaml
   - templates/site-job.yaml
@@ -119,3 +121,62 @@ tests:
             mountPath: /app/inituser
             subPath: inituser
             readOnly: true
+
+  - it: sets the password with a Job after each install and upgrade, after the site Job
+    template: templates/admin-job.yaml
+    documentIndex: 1
+    asserts:
+      - isKind:
+          of: Job
+      - equal:
+          path: metadata.name
+          value: plone-admin
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-install,post-upgrade
+      - equal:
+          path: metadata.annotations["helm.sh/hook-weight"]
+          value: "5"
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: [run, /scripts/set-admin-password.py]
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: plone-admin
+                key: password
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: scripts
+            configMap:
+              name: plone-admin
+
+  - it: reads the Job password from site.admin.existingSecret
+    template: templates/admin-job.yaml
+    documentIndex: 1
+    set:
+      site.admin.existingSecret: my-admin
+      site.admin.passwordKey: pw
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-admin
+                key: pw
+
+  - it: ships the script of the Job in a ConfigMap
+    template: templates/admin-job.yaml
+    documentIndex: 0
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["set-admin-password.py"]
+          pattern: users\.updateUserPassword
