@@ -116,6 +116,8 @@ The checks run by `helm test`, see [How to check an installation with `helm test
 | `backend.podDisruptionBudget.enabled` | `true` | Creates a PodDisruptionBudget, when there is more than one replica. |
 | `backend.podDisruptionBudget.minAvailable` | `"50%"` | Minimum number of available pods. |
 | `backend.podDisruptionBudget.maxUnavailable` | not set | Maximum number of unavailable pods, as an alternative to `minAvailable`. |
+| `backend.preStopSleepSeconds` | `5` | Seconds that a stopping pod sleeps before it gets `SIGTERM`, while it leaves the endpoints of its Service. `0` disables it. |
+| `backend.terminationGracePeriodSeconds` | `30` | Seconds for the sleep and the shutdown. Must be longer than `backend.preStopSleepSeconds`. |
 | `backend.zodbCacheSize` | `50000` | Size of the ZODB object cache, in objects. |
 | `backend.env` | `[]` | Extra environment variables of the backend, see the [`plone-backend` image documentation](https://6.docs.plone.org/install/containers/images/backend.html). |
 | `backend.service.type` | `"ClusterIP"` | Type of the backend service. |
@@ -143,6 +145,8 @@ The checks run by `helm test`, see [How to check an installation with `helm test
 | `frontend.podDisruptionBudget.enabled` | `true` | Creates a PodDisruptionBudget, when there is more than one replica. |
 | `frontend.podDisruptionBudget.minAvailable` | `"50%"` | Minimum number of available pods. |
 | `frontend.podDisruptionBudget.maxUnavailable` | not set | Maximum number of unavailable pods, as an alternative to `minAvailable`. |
+| `frontend.preStopSleepSeconds` | `5` | Seconds that a stopping pod sleeps before it gets `SIGTERM`, while it leaves the endpoints of its Service. `0` disables it. |
+| `frontend.terminationGracePeriodSeconds` | `30` | Seconds for the sleep and the shutdown. Must be longer than `frontend.preStopSleepSeconds`. |
 | `frontend.env` | `[]` | Extra environment variables of the frontend, see the [`plone-frontend` image documentation](https://6.docs.plone.org/install/containers/images/frontend.html). |
 | `frontend.service.type` | `"ClusterIP"` | Type of the frontend service. |
 | `frontend.service.port` | `3000` | Port of the frontend service. |
@@ -180,7 +184,7 @@ The chart accepts all the other values of that chart under `varnish` too, see it
 | Key | Default | Description |
 |---|---|---|
 | `varnish.enabled` | `false` | Installs Varnish in front of the site. |
-| `varnish.vcl` | `""` | VCL of Varnish, rendered as a template with the values of this chart. Empty uses the default VCL. Restart Varnish after a change. See [Varnish](varnish.md#the-vcl). |
+| `varnish.vcl` | `""` | VCL of Varnish, rendered as a template with the values of this chart. Empty uses the default VCL. A change restarts Varnish. See [Varnish](varnish.md#the-vcl). |
 | `varnish.server.replicas` | `1` | Number of Varnish pods. |
 | `varnish.server.pdb.enabled` | `false` | Creates a PodDisruptionBudget for Varnish. |
 | `varnish.server.pdb.minAvailable` | `"50%"` | Minimum number of available Varnish pods. |
@@ -192,6 +196,7 @@ The chart accepts all the other values of that chart under `varnish` too, see it
 | `varnish.server.extraVolumeMounts` | the `plone-vcl` mount, at `/etc/varnish/plone` | Keep it when you add mounts. |
 | `varnish.server.securityContext` | `{runAsNonRoot: true, runAsUser: 999, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}, seccompProfile: {type: RuntimeDefault}}` | Security context of the Varnish container. The defaults comply with the Pod Security `restricted` profile. |
 | `varnish.server.varnishncsa.securityContext` | `{runAsNonRoot: true, runAsUser: 999, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}, seccompProfile: {type: RuntimeDefault}}` | Security context of the `varnishncsa` sidecar, which logs the requests. |
+| `varnish.server.podAnnotations` | the `checksum/plone-vcl` annotation, as a string | Restarts Varnish when `varnish.vcl` changes. Keep it when you add annotations. See [Varnish](varnish.md#restart-after-a-change). |
 
 ## `routing`
 
