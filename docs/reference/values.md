@@ -3,6 +3,11 @@
 This page describes the values of the chart.
 The defaults are the ones of [`charts/plone/values.yaml`](../../charts/plone/values.yaml), written as YAML.
 Values that aren't set by default are marked as not set.
+The documentation CI checks that this page has a row for every value, with its default.
+
+The chart has a [JSON schema of its values](../../charts/plone/values.schema.json), which Helm checks before it renders the chart.
+It refuses keys that the chart doesn't have, such as `backend.replica` instead of `backend.replicas`, and values of the wrong type.
+Under `postgresql` and `varnish`, only the keys of this page are checked: the other ones belong to the `cluster` and `varnish-cache` charts.
 
 ## Top-level values
 
@@ -185,6 +190,8 @@ The chart accepts all the other values of that chart under `varnish` too, see it
 | `varnish.server.vclConfigPath` | `"/etc/varnish/plone/default.vcl"` | The VCL file that Varnish reads, from the ConfigMap `<release>-varnish-vcl`. |
 | `varnish.server.extraVolumes` | the `plone-vcl` volume | Mounts the ConfigMap `<release>-varnish-vcl`. Keep it when you add volumes. |
 | `varnish.server.extraVolumeMounts` | the `plone-vcl` mount, at `/etc/varnish/plone` | Keep it when you add mounts. |
+| `varnish.server.securityContext` | `{runAsNonRoot: true, runAsUser: 999, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}, seccompProfile: {type: RuntimeDefault}}` | Security context of the Varnish container. The defaults comply with the Pod Security `restricted` profile. |
+| `varnish.server.varnishncsa.securityContext` | `{runAsNonRoot: true, runAsUser: 999, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}, seccompProfile: {type: RuntimeDefault}}` | Security context of the `varnishncsa` sidecar, which logs the requests. |
 
 ## `routing`
 

@@ -50,6 +50,10 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
   [#34](https://github.com/plone/helm-charts/issues/34)
 - The CI upgrades a release of the last published chart, with a page and a file, to the chart of the pull request, and checks the content and the blob.
   [#32](https://github.com/plone/helm-charts/issues/32)
+- A JSON schema of the values, `values.schema.json`.
+  Helm refuses keys that the chart doesn't have, such as a misspelled `backend.replica`, which was ignored before, and values of the wrong type.
+  The documentation CI checks that the values reference has every value, with its default.
+  [#36](https://github.com/plone/helm-charts/issues/36)
 - `site.admin.existingSecret` and `site.admin.passwordKey`.
 - `serviceAccount.create`, `serviceAccount.name`, `serviceAccount.annotations`, and `serviceAccount.automountServiceAccountToken`.
 - `frontend.startupProbe`.

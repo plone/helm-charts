@@ -160,6 +160,11 @@ docs-site: docs ## Build the GitHub Pages site: the documentation and the index 
 	@git show FETCH_HEAD:index.yaml > "$(DOCS_BUILDDIR)/html/index.yaml"
 	@grep -q '^apiVersion: v1' "$(DOCS_BUILDDIR)/html/index.yaml"
 
+.PHONY: docs-values
+docs-values: ## Check that docs/reference/values.md documents every value of the chart, with its default
+	@echo -e "$(GREEN)==> Check the values reference$(RESET)"
+	@$(UV) run --group docs python tests/check_values_reference.py
+
 .PHONY: docs-livehtml
 docs-livehtml: ## Rebuild the documentation on changes, with live reload in the browser
 	@$(UV) run --group docs sphinx-autobuild --ignore "*.swp" --port 8050 \

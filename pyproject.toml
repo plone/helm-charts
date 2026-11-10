@@ -10,6 +10,7 @@ docs = [
     "linkify-it-py>=2.0.3",
     "myst-parser>=4.0.0",
     "plone-sphinx-theme>=1.4.3",
+    "pyyaml>=6.0.3",
     "sphinx>=8.0.0",
     "sphinx-autobuild>=2024.10.3",
     "sphinx-copybutton>=0.5.2",
