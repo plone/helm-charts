@@ -135,12 +135,11 @@ cluster-deps: ## Install what the CI scenarios need in the current kubectl clust
 	@kubectl rollout status deployment/external-zeo --namespace $(CI_NAMESPACE) --timeout=300s
 
 .PHONY: test-install
-test-install: chart-deps ## Install the chart once per CI scenario in the current kubectl cluster, and run helm test, as CI does (needs ct, and make cluster-deps)
+test-install: chart-deps ## Install the chart once per CI scenario in the current kubectl cluster, and run helm test, as CI does (needs make cluster-deps)
 	@echo -e "$(GREEN)==> Install the chart and run helm test$(RESET)"
-	@# Helm waits for the Job that creates the Plone site, which takes a few
-	@# minutes.
-	@ct install --all --chart-dirs charts --chart-repos cnpg=$(CNPG_REPO) \
-		--namespace $(CI_NAMESPACE) --helm-extra-args "--timeout 15m"
+	@# Not ct install: its helm test also runs the ping test of the
+	@# CloudNativePG cluster chart, which the restricted profile refuses.
+	@CI_NAMESPACE="$(CI_NAMESPACE)" bash tests/install.sh
 
 .PHONY: check-version
 check-version: ## Fail if the chart changed since BASE (origin/main by default) without a higher version
