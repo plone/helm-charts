@@ -96,7 +96,7 @@ helm install plone ./charts/plone --values ./charts/plone/ci/default-values.yaml
 ```
 
 The [`charts/plone/ci`](charts/plone/ci) directory has a values file per tested scenario.
-The GitHub Actions workflow lints and installs the chart with each of them, and [`test.sh`](test.sh) does the same in a local cluster.
+The GitHub Actions workflow lints and installs the chart with each of them, and `make test-install` does the same in a local cluster.
 
 ### Tests
 
@@ -110,7 +110,17 @@ make test            # both
 ```
 
 `make test-manifests` validates the manifests against the Kubernetes versions of `KUBE_VERSIONS`, 1.29.0, 1.33.0, and 1.37.0 by default.
-The GitHub Actions workflow runs both targets before it installs the chart.
+
+The other targets need [chart-testing](https://github.com/helm/chart-testing) (`ct`), and the install ones a cluster, such as one created with [kind](https://kind.sigs.k8s.io), as the current `kubectl` context:
+
+```shell
+make lint           # lint the chart once per scenario
+make cluster-deps   # install CloudNativePG, the Gateway API CRDs, Traefik with a Gateway, and ingress-nginx
+make test-install   # install the chart once per scenario, and run helm test
+make test-upgrade   # upgrade from the last published release, and check the content
+```
+
+The GitHub Actions workflow runs the same targets, in this order, on a kind cluster, with `make test-unit` and `make test-manifests` before it creates the cluster.
 
 ### Documentation
 

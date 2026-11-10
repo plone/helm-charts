@@ -3,7 +3,7 @@ frontend:
   enabled: false
 routing:
   gateway:
-    # The Gateway of Traefik, installed by the CI workflow.
+    # The Gateway of Traefik, installed by make cluster-deps.
     name: traefik-gateway
     namespace: traefik
 # helm test sends its requests through Traefik.
