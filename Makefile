@@ -56,6 +56,9 @@ test-unit: chart-deps ## Run the unit tests of the chart, in charts/plone/tests 
 	@# tests/__snapshot__: the image runs as uid 1000.
 	@docker run --rm --user "$$(id -u):$$(id -g)" -e HOME=/tmp \
 		-v "$(CURDIR)/$(CHART_DIR):/apps" $(HELM_UNITTEST_IMAGE) .
+	@# The script of the admin-password init container, which helm-unittest
+	@# can't run.
+	@python3 tests/inituser_check.py $(CHART_DIR)
 
 .PHONY: test-manifests
 test-manifests: chart-deps ## Validate the manifests of each CI scenario against the schemas of KUBE_VERSIONS (kubeconform)
