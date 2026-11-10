@@ -49,6 +49,10 @@ spec:
             - name: http
               containerPort: 3000
               protocol: TCP
+          {{- with $f.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with $f.readinessProbe }}
           readinessProbe:
             {{- toYaml . | nindent 12 }}

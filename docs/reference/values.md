@@ -106,9 +106,9 @@ The checks run by `helm test`, see [How to check an installation with `helm test
 | `backend.service.type` | `"ClusterIP"` | Type of the backend service. |
 | `backend.service.port` | `8080` | Port of the backend service. |
 | `backend.resources` | `{requests: {cpu: "100m", memory: "300Mi"}}` | Resources of the backend pods. |
-| `backend.startupProbe` | `{httpGet: {path: "/", port: "http"}, periodSeconds: 10, timeoutSeconds: 15, failureThreshold: 60}` | Startup probe. It allows up to 10 minutes for the first start, during which the database is initialized. |
-| `backend.readinessProbe` | `{httpGet: {path: "/", port: "http"}, periodSeconds: 10, timeoutSeconds: 15, failureThreshold: 3}` | Readiness probe. |
-| `backend.livenessProbe` | `{httpGet: {path: "/", port: "http"}, periodSeconds: 10, timeoutSeconds: 15, failureThreshold: 3}` | Liveness probe. |
+| `backend.startupProbe` | `{httpGet: {path: "/ok", port: "http"}, periodSeconds: 10, timeoutSeconds: 5, failureThreshold: 60}` | Startup probe. It allows up to 10 minutes for the first start, during which the database is initialized. |
+| `backend.readinessProbe` | `{httpGet: {path: "/ok", port: "http"}, periodSeconds: 10, timeoutSeconds: 5, failureThreshold: 3}` | Readiness probe. `/ok` returns `OK` without rendering a page. |
+| `backend.livenessProbe` | `{tcpSocket: {port: "http"}, periodSeconds: 10, timeoutSeconds: 5, failureThreshold: 6}` | Liveness probe: a TCP connection, so that a busy pod isn't restarted. |
 | `backend.podAnnotations` | `{}` | Annotations of the backend pods. |
 | `backend.podSecurityContext` | `{}` | Pod security context of the backend pods. |
 | `backend.securityContext` | `{}` | Security context of the backend container. |
@@ -132,6 +132,7 @@ The checks run by `helm test`, see [How to check an installation with `helm test
 | `frontend.service.type` | `"ClusterIP"` | Type of the frontend service. |
 | `frontend.service.port` | `3000` | Port of the frontend service. |
 | `frontend.resources` | `{requests: {cpu: "50m", memory: "200Mi"}}` | Resources of the frontend pods. |
+| `frontend.startupProbe` | `{httpGet: {path: "/ok", port: "http"}, periodSeconds: 5, failureThreshold: 60}` | Startup probe. It allows up to 5 minutes for the first start. |
 | `frontend.readinessProbe` | `{httpGet: {path: "/ok", port: "http"}, periodSeconds: 10}` | Readiness probe. |
 | `frontend.livenessProbe` | `{httpGet: {path: "/ok", port: "http"}, periodSeconds: 10}` | Liveness probe. |
 | `frontend.podAnnotations` | `{}` | Annotations of the frontend pods. |

@@ -27,6 +27,10 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
   [#18](https://github.com/plone/helm-charts/issues/18)
 - The chart is marked as beta, and the documentation lists what it doesn't cover yet.
   [#21](https://github.com/plone/helm-charts/issues/21)
+- The startup and readiness probes of the backend request `/ok`, the health check of the `plone-backend` image, which returns `OK` without rendering a page, instead of `/`.
+  The liveness probe opens a TCP connection, so that a slow database or a busy pod doesn't restart the backend pods.
+  The frontend has a startup probe.
+  [#39](https://github.com/plone/helm-charts/issues/39)
 
 ### Added
 

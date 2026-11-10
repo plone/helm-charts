@@ -174,28 +174,32 @@ backend:
     requests:
       cpu: 100m
       memory: 300Mi
+  # /ok is the health check of the plone-backend image: a view of the Zope
+  # root that returns "OK" without rendering a page, so that it stays cheap on a
+  # busy site.
   # The first start is slow, while the database is initialized.
   startupProbe:
     httpGet:
-      path: /
+      path: /ok
       port: http
     periodSeconds: 10
-    timeoutSeconds: 15
+    timeoutSeconds: 5
     failureThreshold: 60
   readinessProbe:
     httpGet:
-      path: /
+      path: /ok
       port: http
     periodSeconds: 10
-    timeoutSeconds: 15
+    timeoutSeconds: 5
     failureThreshold: 3
+  # Restarts a pod only when Zope no longer accepts connections, as a busy
+  # pod is slow to answer HTTP requests.
   livenessProbe:
-    httpGet:
-      path: /
+    tcpSocket:
       port: http
     periodSeconds: 10
-    timeoutSeconds: 15
-    failureThreshold: 3
+    timeoutSeconds: 5
+    failureThreshold: 6
   podAnnotations: {}
   podSecurityContext: {}
   securityContext: {}
@@ -227,6 +231,13 @@ frontend:
     requests:
       cpu: 50m
       memory: 200Mi
+  # Up to 5 minutes for the first start, before the other probes begin.
+  startupProbe:
+    httpGet:
+      path: /ok
+      port: http
+    periodSeconds: 5
+    failureThreshold: 60
   readinessProbe:
     httpGet:
       path: /ok
