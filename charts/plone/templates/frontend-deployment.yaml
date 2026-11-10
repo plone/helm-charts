@@ -27,6 +27,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- include "plone.terminationGracePeriod" $f | nindent 6 }}
       {{- with $f.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -62,6 +63,7 @@ spec:
           livenessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- include "plone.preStop" $f | nindent 10 }}
           resources:
             {{- toYaml $f.resources | nindent 12 }}
       {{- with $f.nodeSelector }}
