@@ -55,9 +55,32 @@ The `backend.env` list adds more variables to both, after the ones above.
 
 | Probe | Request | Period | Timeout | Failure threshold |
 |---|---|---|---|---|
-| Startup | `GET /` on `http` | 10 seconds | 15 seconds | 60, so up to 10 minutes for the first start |
-| Readiness | `GET /` on `http` | 10 seconds | 15 seconds | 3 |
-| Liveness | `GET /` on `http` | 10 seconds | 15 seconds | 3 |
+| Startup | `GET /ok` on `http` | 10 seconds | 5 seconds | 60, so up to 10 minutes for the first start |
+| Readiness | `GET /ok` on `http` | 10 seconds | 5 seconds | 3 |
+| Liveness | TCP connection to `http` | 10 seconds | 5 seconds | 6 |
+
+`/ok` is the health check of the `plone-backend` image: a view of the Zope root that returns `OK` without rendering a page, so it stays cheap on a busy site.
+The liveness probe restarts a pod only when Zope no longer accepts connections, as a busy pod, or one waiting for a slow database, can be slow to answer HTTP requests.
+While the database is stopped or doesn't answer, `/ok` fails or times out, but the pod recovers by itself within seconds once the database is back: restarting it would only add a cold cache to the wait.
+
+What the TCP probe doesn't catch is a pod whose worker threads are all stuck for a reason inside the pod, such as a deadlock, or an add-on that calls an external service without a timeout.
+Zope still accepts connections, so the pod stays up and keeps failing its readiness probe, until someone restarts it.
+To restart such a pod, probe `/ok` instead:
+
+```yaml
+backend:
+  livenessProbe:
+    tcpSocket: null  # removes the default TCP check: a probe has one handler
+    httpGet:
+      path: /ok
+      port: http
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 10  # about 5 minutes without a free worker
+```
+
+The cost: during a database outage longer than about 5 minutes, this restarts the backend pods, and the site comes back more slowly once the database does, as the new pods wait for it and then start with a cold cache.
+The `plone-backend` image runs 2 worker threads, so two slow requests also keep `/ok` waiting.
 
 ## Site creation
 

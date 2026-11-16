@@ -101,6 +101,21 @@ tests:
       - hasDocuments:
           count: 0
 
+  - it: checks /ok for startup and readiness, and a TCP connection for liveness
+    template: templates/backend-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.httpGet.path
+          value: /ok
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /ok
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.tcpSocket.port
+          value: http
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet
+
   - it: sleeps before it stops, within the grace period
     template: templates/backend-deployment.yaml
     asserts:

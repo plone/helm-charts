@@ -33,10 +33,11 @@ The `frontend.env` list adds more variables, see the [`plone-frontend` image doc
 
 ## Probes
 
-| Probe | Request | Period |
-|---|---|---|
-| Readiness | `GET /ok` on `http` | 10 seconds |
-| Liveness | `GET /ok` on `http` | 10 seconds |
+| Probe | Request | Period | Failure threshold |
+|---|---|---|---|
+| Startup | `GET /ok` on `http` | 5 seconds | 60, so up to 5 minutes for the first start |
+| Readiness | `GET /ok` on `http` | 10 seconds | 3 |
+| Liveness | `GET /ok` on `http` | 10 seconds | 3 |
 
 ## Values
 

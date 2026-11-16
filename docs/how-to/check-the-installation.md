@@ -42,6 +42,17 @@ kubectl delete pod,configmap --namespace plone \
     -l app.kubernetes.io/instance=plone,app.kubernetes.io/component=test
 ```
 
+## Run the checks in a restricted namespace
+
+With `postgresql.enabled`, the `cluster` chart of CloudNativePG adds its own test to the release, the Job `<release>-postgresql-ping-test`.
+Its pod runs as root, to install `psql`, so a namespace that enforces the `restricted` [Pod Security Standard](https://kubernetes.io/docs/concepts/security/pod-security-standards/) refuses it, and `helm test` waits for it until it times out.
+The pods of this chart comply with the `restricted` profile, and its checks already reach the database through the site.
+In such a namespace, skip the ping test:
+
+```shell
+helm test plone --namespace plone --logs --filter '!name=plone-postgresql-ping-test'
+```
+
 ## Check the routing too
 
 By default, the checks send their requests to the Services of the chart, with the paths that the routing would use, so they don't check the Gateway or the ingress controller.

@@ -43,6 +43,7 @@ metadata:
     helm.sh/hook-delete-policy: before-hook-creation
 spec:
   restartPolicy: Never
+  {{- include "plone.serviceAccount" . | nindent 2 }}
   {{- with .Values.imagePullSecrets }}
   imagePullSecrets:
     {{- toYaml . | nindent 4 }}

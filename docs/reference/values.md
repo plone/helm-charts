@@ -11,6 +11,10 @@ Values that aren't set by default are marked as not set.
 | `nameOverride` | `""` | Overrides the chart name in the labels of the resources. |
 | `fullnameOverride` | `""` | Overrides the prefix of the resource names, which is the release name by default. |
 | `imagePullSecrets` | `[]` | Pull secrets of all the pods. |
+| `serviceAccount.create` | `true` | Creates the ServiceAccount `<release>` for the pods of the chart. |
+| `serviceAccount.name` | `""` | Name of the ServiceAccount. Defaults to `<release>` when the chart creates it, and to the `default` ServiceAccount of the namespace otherwise. |
+| `serviceAccount.annotations` | `{}` | Annotations of the ServiceAccount. |
+| `serviceAccount.automountServiceAccountToken` | `false` | Mounts the token of the ServiceAccount in the pods. Plone doesn't use the Kubernetes API. |
 
 ## `site`
 
@@ -72,11 +76,16 @@ Values that aren't set by default are marked as not set.
 | Key | Default | Description |
 |---|---|---|
 | `pack.enabled` | `true` | Creates the CronJob that packs the database. |
-| `pack.schedule` | `"45 9 * * *"` | Cron schedule of the pack job. |
+| `pack.schedule` | `"15 3 * * *"` | Cron schedule of the pack job, every night at 03:15. |
+| `pack.timeZone` | `""` | Time zone of the schedule, such as `Europe/Berlin`. Empty uses the time zone of the Kubernetes controller manager, usually UTC. |
 | `pack.days` | `7` | Keeps the history of the last days, so that undo works for them. `0` removes all of the history. |
 | `pack.backoffLimit` | `1` | Retries of a failed pack, until the next schedule. |
 | `pack.activeDeadlineSeconds` | `82800` | Stops a pack that runs for longer, 23 hours by default. Keep it below the schedule interval. |
 | `pack.resources` | `{}` | Resources of the pack job. |
+| `pack.env` | `[]` | Extra environment variables of the pack job, after the ones of `backend.env`. |
+| `pack.nodeSelector` | `{}` | Node selector of the pack pods. Empty uses `backend.nodeSelector`. |
+| `pack.tolerations` | `[]` | Tolerations of the pack pods. Empty uses `backend.tolerations`. |
+| `pack.affinity` | `{}` | Affinity of the pack pods. Empty uses `backend.affinity`. |
 
 ## `tests`
 
@@ -108,12 +117,12 @@ The checks run by `helm test`, see [How to check an installation with `helm test
 | `backend.service.type` | `"ClusterIP"` | Type of the backend service. |
 | `backend.service.port` | `8080` | Port of the backend service. |
 | `backend.resources` | `{requests: {cpu: "100m", memory: "300Mi"}}` | Resources of the backend pods. |
-| `backend.startupProbe` | `{httpGet: {path: "/", port: "http"}, periodSeconds: 10, timeoutSeconds: 15, failureThreshold: 60}` | Startup probe. It allows up to 10 minutes for the first start, during which the database is initialized. |
-| `backend.readinessProbe` | `{httpGet: {path: "/", port: "http"}, periodSeconds: 10, timeoutSeconds: 15, failureThreshold: 3}` | Readiness probe. |
-| `backend.livenessProbe` | `{httpGet: {path: "/", port: "http"}, periodSeconds: 10, timeoutSeconds: 15, failureThreshold: 3}` | Liveness probe. |
+| `backend.startupProbe` | `{httpGet: {path: "/ok", port: "http"}, periodSeconds: 10, timeoutSeconds: 5, failureThreshold: 60}` | Startup probe. It allows up to 10 minutes for the first start, during which the database is initialized. |
+| `backend.readinessProbe` | `{httpGet: {path: "/ok", port: "http"}, periodSeconds: 10, timeoutSeconds: 5, failureThreshold: 3}` | Readiness probe. `/ok` returns `OK` without rendering a page. |
+| `backend.livenessProbe` | `{tcpSocket: {port: "http"}, periodSeconds: 10, timeoutSeconds: 5, failureThreshold: 6}` | Liveness probe: a TCP connection, so that a busy pod isn't restarted. |
 | `backend.podAnnotations` | `{}` | Annotations of the backend pods. |
-| `backend.podSecurityContext` | `{}` | Pod security context of the backend pods. |
-| `backend.securityContext` | `{}` | Security context of the backend container. |
+| `backend.podSecurityContext` | `{runAsNonRoot: true, runAsUser: 500, runAsGroup: 500, fsGroup: 500, fsGroupChangePolicy: OnRootMismatch, seccompProfile: {type: RuntimeDefault}}` | Pod security context of the backend pods, the site Job, the pack CronJob, and the `helm test` pod. The defaults comply with the Pod Security `restricted` profile. |
+| `backend.securityContext` | `{allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}` | Security context of their containers. |
 | `backend.nodeSelector` | `{}` | Node selector of the backend pods. |
 | `backend.tolerations` | `[]` | Tolerations of the backend pods. |
 | `backend.affinity` | `{}` | Affinity of the backend pods. |
@@ -136,11 +145,12 @@ The checks run by `helm test`, see [How to check an installation with `helm test
 | `frontend.service.type` | `"ClusterIP"` | Type of the frontend service. |
 | `frontend.service.port` | `3000` | Port of the frontend service. |
 | `frontend.resources` | `{requests: {cpu: "50m", memory: "200Mi"}}` | Resources of the frontend pods. |
+| `frontend.startupProbe` | `{httpGet: {path: "/ok", port: "http"}, periodSeconds: 5, failureThreshold: 60}` | Startup probe. It allows up to 5 minutes for the first start. |
 | `frontend.readinessProbe` | `{httpGet: {path: "/ok", port: "http"}, periodSeconds: 10}` | Readiness probe. |
 | `frontend.livenessProbe` | `{httpGet: {path: "/ok", port: "http"}, periodSeconds: 10}` | Liveness probe. |
 | `frontend.podAnnotations` | `{}` | Annotations of the frontend pods. |
-| `frontend.podSecurityContext` | `{}` | Pod security context of the frontend pods. |
-| `frontend.securityContext` | `{}` | Security context of the frontend container. |
+| `frontend.podSecurityContext` | `{runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, seccompProfile: {type: RuntimeDefault}}` | Pod security context of the frontend pods. The defaults comply with the Pod Security `restricted` profile. |
+| `frontend.securityContext` | `{allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}` | Security context of the frontend container. |
 | `frontend.nodeSelector` | `{}` | Node selector of the frontend pods. |
 | `frontend.tolerations` | `[]` | Tolerations of the frontend pods. |
 | `frontend.affinity` | `{}` | Affinity of the frontend pods. |
