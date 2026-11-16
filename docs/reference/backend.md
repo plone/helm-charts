@@ -7,13 +7,17 @@ It serves the REST API for the Volto frontend, or the whole site with the Classi
 
 | Resource | Name | Created when |
 |---|---|---|
-| StatefulSet | `<release>-backend` | always |
+| Deployment | `<release>-backend` | always |
 | Service | `<release>-backend`, port 8080, port name `http` | always |
-| Headless service | `<release>-backend-director`, port 8080 | always |
 | PodDisruptionBudget | `<release>-backend` | `backend.replicas` is more than 1, and `backend.podDisruptionBudget.enabled` is `true` |
+| Secret | `<release>-admin`, key `password` | `site.admin.existingSecret` is empty |
 
-The headless service is the governing service that StatefulSets require.
-It gives each pod a stable DNS name, `<release>-backend-<n>.<release>-backend-director`.
+A rollout starts a new pod, and waits for it to be ready, before it stops an old one: `backend.updateStrategy` is a `RollingUpdate` with `maxSurge: 1` and `maxUnavailable: 0`.
+See [Why the backend is a Deployment](../explanation/architecture.md#why-the-backend-is-a-deployment), and [What a rolling update costs](../explanation/architecture.md#what-a-rolling-update-costs) for when to use `Recreate` instead.
+
+A stopping pod sleeps for `backend.preStopSleepSeconds`, 5 seconds, before it gets `SIGTERM`, with a `preStop` hook that runs `sleep`.
+`backend.terminationGracePeriodSeconds`, 30 seconds, must be longer, or the chart fails.
+See [Stopping a pod without failing requests](../explanation/architecture.md#stopping-a-pod-without-failing-requests).
 
 ## Image
 
@@ -64,6 +68,23 @@ With `site.create` set to `true` (default), the chart creates the Job `<release>
 
 The backend pods only serve the site, and don't go through the site creation of the `plone-backend` image, which isn't meant for production.
 `site.profiles` and `site.defaultLanguage` only apply when the site is created.
+
+## Admin password
+
+The chart sets the password of the `admin` user of the Zope root, from the Secret `site.admin.existingSecret`, or the Secret `<release>-admin` that the chart generates.
+
+| Setting | Value |
+|---|---|
+| Job | `<release>-admin`, a Helm hook after each install and upgrade, after the site Job, runs `files/set-admin-password.py` from the ConfigMap `<release>-admin` |
+| Init container | `admin-password`, with the backend image, writes `admin:<password>` to the `admin` volume, in the backend pods and the site Job |
+| `admin` volume | `emptyDir` in memory, mounted at `/app/inituser`, the `inituser` file of Zope |
+| Generated password | 32 random letters and digits, kept on upgrades |
+| Password rules | not empty, no colon, no space at the start or the end; the init container fails otherwise |
+
+At each start, while the Zope root has its own user folder, Zope replaces the `admin` user with the one of `inituser`, so that a new database never accepts the password `admin`.
+Creating a Plone site replaces that user folder with a PluggableAuthService, which ignores `inituser`.
+From then on, the Job sets the password, in the `users` plugin of the Zope root: it creates the `admin` user if it doesn't exist, and doesn't change the other users.
+See [How to change the admin password](../how-to/change-admin-password.md).
 
 ## Volume
 
