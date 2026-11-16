@@ -135,7 +135,7 @@ cluster-deps: ## Install what the CI scenarios need in the current kubectl clust
 	@kubectl rollout status deployment/external-zeo --namespace $(CI_NAMESPACE) --timeout=300s
 
 .PHONY: test-install
-test-install: chart-deps ## Install the chart once per CI scenario in the current kubectl cluster, and run helm test, as CI does (needs make cluster-deps)
+test-install: chart-deps ## Install the chart once per CI scenario in the current kubectl cluster, run helm test and the pack CronJob, as CI does (needs make cluster-deps)
 	@echo -e "$(GREEN)==> Install the chart and run helm test$(RESET)"
 	@# Not ct install: its helm test also runs the ping test of the
 	@# CloudNativePG cluster chart, which the restricted profile refuses.
