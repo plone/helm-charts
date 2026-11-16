@@ -130,12 +130,27 @@ tests:
           path: spec.template.spec.initContainers[0].command[2]
           pattern: '"" \| \*:\* \| " "\* \| \*" "\)'
 
+  - it: gives the init container fixed resources, for namespaces with a ResourceQuota
+    template: templates/backend-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].resources
+          value:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 32Mi
+
   - it: writes inituser in the site Job too, which starts Zope
     template: templates/site-job.yaml
     asserts:
       - equal:
           path: spec.template.spec.initContainers[0].name
           value: admin-password
+      - exists:
+          path: spec.template.spec.initContainers[0].resources.limits.memory
       - contains:
           path: spec.template.spec.containers[0].volumeMounts
           content:
