@@ -150,6 +150,17 @@ can't have a colon, or start or end with a space.
           exit 1 ;;
       esac
       printf 'admin:%s\n' "$ADMIN_PASSWORD" > /admin/inituser
+  # Small, fixed resources: the container only runs the shell above. Without
+  # them, a namespace whose ResourceQuota requires requests or limits would
+  # reject the pod. They don't add to the requests of the pod, which are the
+  # larger of its init containers and the sum of its containers.
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 100m
+      memory: 32Mi
   env:
     - name: ADMIN_PASSWORD
       valueFrom:
