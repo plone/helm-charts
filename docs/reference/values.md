@@ -41,6 +41,7 @@ Values that aren't set by default are marked as not set.
 | `storage.relstorage.port` | `5432` | PostgreSQL port. |
 | `storage.relstorage.secret.name` | `""` | Secret with the database name, user name, and password. Defaults to `<release>-postgresql-app` with `postgresql.enabled`, and is required without it. |
 | `storage.relstorage.secret.keys` | `{}` | Keys of the database name (`database`), user name (`user`), and password (`password`) in the secret. Not set by default, see [Storage](storage.md#relstorage). |
+| `storage.relstorage.sslmode` | `""` | SSL mode of the connection, such as `require` or `verify-full`, see the [libpq documentation](https://www.postgresql.org/docs/current/libpq-ssl.html). Empty uses the default of libpq, `prefer`. |
 | `storage.relstorage.keepHistory` | `true` | Keeps the history of the objects, needed for undo. |
 | `storage.relstorage.blobCacheSize` | `"100mb"` | Size of the blob cache of each backend pod. |
 

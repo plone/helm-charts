@@ -161,12 +161,12 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].env[2].name
-          value: DBHOST
+          value: PGDATABASE
       - equal:
-          path: spec.template.spec.containers[0].env[9].name
+          path: spec.template.spec.containers[0].env[7].name
           value: RELSTORAGE_BLOB_CACHE_SIZE
       - equal:
-          path: spec.template.spec.containers[0].env[10]
+          path: spec.template.spec.containers[0].env[8]
           value:
             name: EXTRA
             value: "1"

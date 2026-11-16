@@ -17,12 +17,12 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: DBHOST
-            value: plone-postgresql-rw
+            name: RELSTORAGE_DSN
+            value: host='plone-postgresql-rw' port='5432'
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: DBPASSWORD
+            name: PGPASSWORD
             valueFrom:
               secretKeyRef:
                 name: plone-postgresql-app
@@ -30,7 +30,7 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: DBNAME
+            name: PGDATABASE
             valueFrom:
               secretKeyRef:
                 name: plone-postgresql-app
@@ -46,12 +46,12 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: DBHOST
-            value: db.example.org
+            name: RELSTORAGE_DSN
+            value: host='db.example.org' port='5432'
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: DBUSER
+            name: PGUSER
             valueFrom:
               secretKeyRef:
                 name: db
@@ -68,7 +68,7 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: DBPASSWORD
+            name: PGPASSWORD
             valueFrom:
               secretKeyRef:
                 name: db
@@ -76,11 +76,34 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: DBUSER
+            name: PGUSER
             valueFrom:
               secretKeyRef:
                 name: db
                 key: database-user
+
+  - it: passes sslmode to libpq only when it is set
+    template: templates/backend-deployment.yaml
+    set:
+      storage.relstorage.sslmode: verify-full
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PGSSLMODE
+            value: verify-full
+
+  - it: keeps the credentials out of the DSN
+    template: templates/backend-deployment.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PGSSLMODE
+          any: true
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name == "RELSTORAGE_DSN")].value
+          pattern: password|user|dbname
 
   - it: has no ZEO server with RelStorage
     template: templates/zeo-statefulset.yaml
