@@ -5,6 +5,9 @@ postgresql:
   enabled: false
 routing:
   gateway:
-    # The CI cluster has the Gateway API CRDs but no Gateway: the route is
-    # created, and stays unattached.
-    name: ci
+    # The Gateway of Traefik, installed by the CI workflow.
+    name: traefik-gateway
+    namespace: traefik
+# helm test sends its requests through Traefik.
+tests:
+  url: http://traefik.traefik.svc.cluster.local

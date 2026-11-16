@@ -6,3 +6,7 @@ varnish:
   enabled: true
 routing:
   type: ingress-nginx
+# helm test sends its requests through the ingress-nginx controller, installed by
+# the CI workflow.
+tests:
+  url: http://ingress-nginx-controller.ingress-nginx.svc.cluster.local

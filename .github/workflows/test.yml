@@ -61,7 +61,32 @@ jobs:
       - name: Install Gateway API CRDs
         run: kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.7.0/standard-install.yaml
 
+      # Traefik serves the HTTPRoute of the gateway scenarios, with the Gateway
+      # traefik-gateway of its chart, as in docs/how-to/enable-traefik-gateway-api.md.
+      # A ClusterIP Service, as kind has no load balancer: helm test reaches it
+      # from inside the cluster.
+      - name: Install Traefik with its Gateway
+        run: |
+          helm repo add traefik https://traefik.github.io/charts
+          helm upgrade --install traefik traefik/traefik --version 42.3.2 --namespace traefik --create-namespace --wait \
+            --set service.spec.type=ClusterIP \
+            --set providers.kubernetesGateway.enabled=true \
+            --set gateway.listeners.web.namespacePolicy.from=All
+          kubectl wait --for=create gateway/traefik-gateway --namespace traefik --timeout=120s
+          kubectl wait --for=condition=Programmed gateway/traefik-gateway --namespace traefik --timeout=120s
+
+      # The ingress-nginx controller serves the Ingress resources of the
+      # varnish-ingress-nginx scenario.
+      - name: Install the ingress-nginx controller
+        run: |
+          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+          helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --version 4.15.1 --namespace ingress-nginx --create-namespace --wait \
+            --set controller.service.type=ClusterIP
+
       # Installs the chart once per scenario in charts/plone/ci. Helm waits for the
       # Job that creates the Plone site after the install, which takes a few minutes.
+      # Then helm test runs the checks of templates/test-smoke.yaml through the
+      # routing: the home page, the public URL in the API, the admin password, and
+      # the Varnish cache.
       - name: Run chart-testing (install)
         run: ct install --all --chart-dirs charts --chart-repos cnpg=https://cloudnative-pg.github.io/charts --helm-extra-args "--timeout 15m"
