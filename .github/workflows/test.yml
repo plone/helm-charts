@@ -52,7 +52,7 @@ jobs:
       - name: Install Gateway API CRDs
         run: kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.7.0/standard-install.yaml
 
-      # Installs the chart once per scenario in charts/plone/ci. The backend creates
-      # the Plone site on its first start, which takes a few minutes.
+      # Installs the chart once per scenario in charts/plone/ci. Helm waits for the
+      # Job that creates the Plone site after the install, which takes a few minutes.
       - name: Run chart-testing (install)
         run: ct install --all --chart-dirs charts --chart-repos cnpg=https://cloudnative-pg.github.io/charts --helm-extra-args "--timeout 15m"

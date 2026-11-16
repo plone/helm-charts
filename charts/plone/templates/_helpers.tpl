@@ -74,7 +74,7 @@ Validate the combination of values.
 {{- end -}}
 {{- end -}}
 {{- if and (eq .Values.routing.type "gateway") (not .Values.routing.gateway.name) (empty .Values.routing.gateway.parentRefs) -}}
-{{- fail "routing.gateway.name is required with routing.type gateway: set it to the Gateway that serves the site (see https://github.com/plone/helm-charts#gateway-api), or set routing.type to none" -}}
+{{- fail "routing.gateway.name is required with routing.type gateway: set it to the Gateway that serves the site (see https://plone.github.io/helm-charts/how-to/attach-to-gateway.html), or set routing.type to none" -}}
 {{- end -}}
 {{- if eq .Values.storage.type "relstorage" -}}
 {{- if and (not .Values.postgresql.enabled) (or (not .Values.storage.relstorage.host) (not .Values.storage.relstorage.secret.name)) -}}
