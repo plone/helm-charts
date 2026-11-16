@@ -3,28 +3,63 @@
 # the chart, create content, upgrade the release to the chart of this checkout,
 # then check the content, and run helm test.
 #
+# The published chart is installed with the values file of its own release, at
+# the tag plone-<version>: the values of this checkout may have keys that its
+# schema refuses.
+#
 # Settings, from the environment:
-#   UPGRADE_FROM       version of the published chart to upgrade from; empty
-#                      for the latest one
-#   UPGRADE_VALUES     values file of both installs
-#   UPGRADE_NAMESPACE  namespace of the release, deleted at the end
+#   UPGRADE_FROM         version of the published chart to upgrade from; empty
+#                        for the latest one
+#   UPGRADE_VALUES       values file of the upgrade, as a path in this
+#                        repository; the install of the published chart reads
+#                        the same path at its release tag
+#   UPGRADE_FROM_VALUES  values file of the install of the published chart,
+#                        instead of the one at its release tag
+#   UPGRADE_NAMESPACE    namespace of the release, deleted at the end
 set -euo pipefail
 
 repo=https://plone.github.io/helm-charts
+sources=https://raw.githubusercontent.com/plone/helm-charts
 chart=charts/plone
 release=upgrade
 namespace=${UPGRADE_NAMESPACE:-plone-upgrade}
 values=${UPGRADE_VALUES:-$chart/ci/default-values.yaml}
-version_args=()
-if [ -n "${UPGRADE_FROM:-}" ]; then
-    version_args=(--version "$UPGRADE_FROM")
-fi
+values=${values#./}
+from_values=${UPGRADE_FROM_VALUES:-}
+tmp=$(mktemp -d)
 
 cleanup() {
+    rm -rf "$tmp"
     helm uninstall "$release" --namespace "$namespace" --wait > /dev/null 2>&1 || true
     kubectl delete namespace "$namespace" --ignore-not-found --wait=false
 }
 trap cleanup EXIT
+
+# The version to upgrade from, resolved before the install, so that the values
+# file comes from the same release as the chart.
+from=${UPGRADE_FROM:-}
+if [ -z "$from" ]; then
+    from=$(helm show chart plone --repo "$repo" | sed -n 's/^version: *//p')
+    if [ -z "$from" ]; then
+        echo "Couldn't find the latest version of the chart plone in $repo." >&2
+        exit 1
+    fi
+fi
+
+if [ -z "$from_values" ]; then
+    case "$values" in
+        /*)
+            echo "UPGRADE_VALUES must be a path in this repository, to read it at the tag plone-$from; set UPGRADE_FROM_VALUES for the install of $from." >&2
+            exit 1 ;;
+    esac
+    from_values=$tmp/from-values.yaml
+    url=$sources/plone-$from/$values
+    if ! curl -fsSL "$url" -o "$from_values"; then
+        echo "The release plone-$from has no $values ($url)." >&2
+        echo "Set UPGRADE_FROM_VALUES to a values file for the chart $from." >&2
+        exit 1
+    fi
+fi
 
 # The password of the admin user: the one of the Secret of the chart, or the
 # password "admin" of the image, for the releases that didn't set it.
@@ -44,16 +79,16 @@ content() {
         python - "$1" "${password:-admin}" < tests/upgrade_content.py
 }
 
-echo "==> Install the published chart ${UPGRADE_FROM:-(latest)}"
-helm install "$release" plone --repo "$repo" "${version_args[@]}" \
+echo "==> Install the published chart $from, with the values of ${UPGRADE_FROM_VALUES:-plone-$from/$values}"
+helm install "$release" plone --repo "$repo" --version "$from" \
     --namespace "$namespace" --create-namespace \
-    --values "$values" --wait --timeout 15m
+    --values "$from_values" --wait --timeout 15m
 helm list --namespace "$namespace"
 
 echo "==> Create content"
 content create
 
-echo "==> Upgrade to the chart of this checkout"
+echo "==> Upgrade to the chart of this checkout, with the values of $values"
 helm upgrade "$release" "$chart" --namespace "$namespace" \
     --values "$values" --wait --timeout 15m
 helm list --namespace "$namespace"

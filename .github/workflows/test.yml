@@ -72,6 +72,7 @@ jobs:
       # after the install, which takes a few minutes. Then helm test runs the
       # checks of templates/test-smoke.yaml through the routing: the home page,
       # the public URL in the API, the admin password, and the Varnish cache.
+      # Last, it runs the pack CronJob once.
       - name: Install each scenario and run helm test
         run: make test-install
 

@@ -1,6 +1,7 @@
 #!/bin/bash
 # Install test, run by make test-install: install the chart of this checkout once
-# per CI scenario, charts/plone/ci/*-values.yaml, run helm test, and uninstall it.
+# per CI scenario, charts/plone/ci/*-values.yaml, run helm test, run the pack
+# CronJob once, and uninstall it.
 #
 # The namespace enforces the restricted Pod Security profile, so every pod of the
 # chart must comply. helm test skips the ping test of the CloudNativePG cluster
@@ -36,6 +37,36 @@ uninstall() {
         -l "app.kubernetes.io/instance=$release" --ignore-not-found --wait=false > /dev/null
 }
 
+# Run the pack CronJob once, as its schedule never comes during CI: zodbpack
+# with RelStorage and zeopack with ZEO, in the restricted namespace. Fails when
+# the Job fails, or doesn't finish within 10 minutes. The Job belongs to the
+# CronJob, so uninstalling the release removes it.
+pack() {
+    local job=$release-pack-ci complete failed
+    if ! kubectl get cronjob "$release-pack" --namespace "$namespace" > /dev/null 2>&1; then
+        echo "No CronJob $release-pack: skipped"
+        return 0
+    fi
+    kubectl create job "$job" --from="cronjob/$release-pack" --namespace "$namespace"
+    for _ in $(seq 120); do
+        complete=$(kubectl get job "$job" --namespace "$namespace" \
+            -o jsonpath='{.status.conditions[?(@.type=="Complete")].status}')
+        failed=$(kubectl get job "$job" --namespace "$namespace" \
+            -o jsonpath='{.status.conditions[?(@.type=="Failed")].status}')
+        if [ "$complete" = True ] || [ "$failed" = True ]; then
+            kubectl logs --namespace "$namespace" "job/$job" --tail=40 || true
+            if [ "$failed" = True ]; then
+                echo "The Job $job failed"
+                return 1
+            fi
+            return 0
+        fi
+        sleep 5
+    done
+    echo "The Job $job didn't finish within 10 minutes"
+    return 1
+}
+
 on_exit() {
     status=$?
     if [ "$status" -ne 0 ]; then
@@ -56,8 +87,10 @@ for values in "${scenarios[@]}"; do
     echo "==> $scenario: helm test"
     helm test "$release" --namespace "$namespace" --logs --timeout 10m \
         --filter "!name=$release-postgresql-ping-test"
+    echo "==> $scenario: run the pack CronJob once"
+    pack
     echo "==> $scenario: uninstall"
     uninstall
     release=""
 done
-echo "==> ${#scenarios[@]} scenarios installed and tested"
+echo "==> ${#scenarios[@]} scenarios installed, tested and packed"

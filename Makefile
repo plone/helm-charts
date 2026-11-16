@@ -46,9 +46,11 @@ INGRESS_NGINX_CHART_VERSION ?= 4.15.1
 # and ZEO servers of the scenarios that use them.
 CI_NAMESPACE ?= plone-ci
 # make test-upgrade: the published version to upgrade from, the latest when
-# empty, and the values of both installs.
+# empty, and the values of the upgrade. The install of the published version
+# reads UPGRADE_VALUES at its release tag, or UPGRADE_FROM_VALUES when set.
 UPGRADE_FROM ?=
 UPGRADE_VALUES ?= $(CHART_DIR)/ci/default-values.yaml
+UPGRADE_FROM_VALUES ?=
 UPGRADE_NAMESPACE ?= plone-upgrade
 # make check-version: the branch to compare the version of the chart with.
 BASE ?= origin/main
@@ -135,7 +137,7 @@ cluster-deps: ## Install what the CI scenarios need in the current kubectl clust
 	@kubectl rollout status deployment/external-zeo --namespace $(CI_NAMESPACE) --timeout=300s
 
 .PHONY: test-install
-test-install: chart-deps ## Install the chart once per CI scenario in the current kubectl cluster, and run helm test, as CI does (needs make cluster-deps)
+test-install: chart-deps ## Install the chart once per CI scenario in the current kubectl cluster, run helm test and the pack CronJob, as CI does (needs make cluster-deps)
 	@echo -e "$(GREEN)==> Install the chart and run helm test$(RESET)"
 	@# Not ct install: its helm test also runs the ping test of the
 	@# CloudNativePG cluster chart, which the restricted profile refuses.
@@ -149,7 +151,8 @@ check-version: ## Fail if the chart changed since BASE (origin/main by default) 
 .PHONY: test-upgrade
 test-upgrade: chart-deps ## Install the last published release, create content, upgrade to this chart, and check the content (needs make cluster-deps)
 	@echo -e "$(GREEN)==> Test the upgrade from the published chart$(RESET)"
-	@UPGRADE_FROM="$(UPGRADE_FROM)" UPGRADE_VALUES="$(UPGRADE_VALUES)" UPGRADE_NAMESPACE="$(UPGRADE_NAMESPACE)" \
+	@UPGRADE_FROM="$(UPGRADE_FROM)" UPGRADE_VALUES="$(UPGRADE_VALUES)" UPGRADE_FROM_VALUES="$(UPGRADE_FROM_VALUES)" \
+		UPGRADE_NAMESPACE="$(UPGRADE_NAMESPACE)" \
 		bash tests/upgrade.sh
 
 .PHONY: install
