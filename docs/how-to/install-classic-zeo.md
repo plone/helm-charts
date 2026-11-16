@@ -30,3 +30,5 @@ All requests go from the Gateway to the backend pods, rewritten to the Zope virt
 
 This combines [Classic UI with PostgreSQL](install-classic-postgresql.md) and [Volto with ZEO](install-volto-zeo.md).
 See them for the details.
+
+This scenario, with Varnish, is tested by [`ci/classic-zeo-varnish-values.yaml`](../../charts/plone/ci/classic-zeo-varnish-values.yaml).

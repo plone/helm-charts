@@ -1,5 +1,4 @@
 *.tgz
-diagrams
 charts/*/charts/
 *.swp
 ct
