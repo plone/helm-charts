@@ -1,0 +1,126 @@
+# Varnish: the VCL rendered by this chart, and the routing through Varnish.
+suite: varnish
+templates:
+  - templates/varnish-vcl.yaml
+  - templates/httproute.yaml
+  - templates/ingress.yaml
+  - templates/ingress-api.yaml
+release:
+  name: plone
+  namespace: plone
+set:
+  routing.gateway.name: gw
+  varnish.enabled: true
+tests:
+  - it: has no VCL without Varnish
+    template: templates/varnish-vcl.yaml
+    set:
+      varnish.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders the default VCL with the frontend
+    template: templates/varnish-vcl.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: plone-varnish-vcl
+      - matchRegex:
+          path: data["default.vcl"]
+          pattern: 'backend plone \{\s+\.host = "plone-backend";\s+\.port = "8080";'
+      - matchRegex:
+          path: data["default.vcl"]
+          pattern: 'backend volto \{\s+\.host = "plone-frontend";\s+\.port = "3000";'
+
+  - it: sends everything to the backend with the Classic UI
+    template: templates/varnish-vcl.yaml
+    set:
+      frontend.enabled: false
+    asserts:
+      - notMatchRegex:
+          path: data["default.vcl"]
+          pattern: backend volto
+      - matchRegex:
+          path: data["default.vcl"]
+          pattern: 'sub vcl_recv \{\s+set req.backend_hint = plone;\s+\}'
+
+  - it: follows fullnameOverride and the Service ports
+    template: templates/varnish-vcl.yaml
+    set:
+      fullnameOverride: web
+      backend.service.port: 80
+      frontend.service.port: 81
+    asserts:
+      - matchRegex:
+          path: data["default.vcl"]
+          pattern: '\.host = "web-backend";\s+\.port = "80";'
+      - matchRegex:
+          path: data["default.vcl"]
+          pattern: '\.host = "web-frontend";\s+\.port = "81";'
+      # Named after the release, which is all the varnish-cache chart knows.
+      - equal:
+          path: metadata.name
+          value: plone-varnish-vcl
+
+  - it: renders varnish.vcl with the values of this chart
+    template: templates/varnish-vcl.yaml
+    set:
+      varnish.vcl: |
+        vcl 4.1;
+        # {{ include "plone.fullname" . }} {{ .Values.routing.hostname }}
+    asserts:
+      - equal:
+          path: data["default.vcl"]
+          value: |
+            vcl 4.1;
+            # plone localhost
+
+  - it: routes the requests through Varnish
+    template: templates/httproute.yaml
+    asserts:
+      - equal:
+          path: spec.rules[0].backendRefs[0]
+          value:
+            name: plone-varnish
+            port: 6081
+      - equal:
+          path: spec.rules[1].backendRefs[0]
+          value:
+            name: plone-varnish
+            port: 6081
+
+  - it: routes all the requests through Varnish with the Classic UI
+    template: templates/httproute.yaml
+    set:
+      frontend.enabled: false
+    asserts:
+      - lengthEqual:
+          path: spec.rules
+          count: 1
+      - equal:
+          path: spec.rules[0].backendRefs[0]
+          value:
+            name: plone-varnish
+            port: 6081
+
+  - it: routes the Ingress resources of ingress-nginx through Varnish
+    set:
+      routing.type: ingress-nginx
+      routing.hostname: plone.example.org
+    asserts:
+      - template: templates/ingress.yaml
+        equal:
+          path: spec.rules[0].http.paths[0].backend.service
+          value:
+            name: plone-varnish
+            port:
+              number: 6081
+      - template: templates/ingress-api.yaml
+        equal:
+          path: spec.rules[0].http.paths[0].backend.service
+          value:
+            name: plone-varnish
+            port:
+              number: 6081
+

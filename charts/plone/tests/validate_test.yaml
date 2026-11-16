@@ -1,0 +1,117 @@
+# The value combinations that plone.validate refuses. The validation runs in the
+# backend Deployment, so the tests render that template.
+suite: validation
+templates:
+  - templates/backend-deployment.yaml
+release:
+  name: plone
+  namespace: plone
+set:
+  routing.gateway.name: gw
+tests:
+  - it: accepts the defaults with a Gateway
+    asserts:
+      - isKind:
+          of: Deployment
+
+  - it: refuses an unknown storage type
+    set:
+      storage.type: mysql
+    asserts:
+      - failedTemplate:
+          errorPattern: 'storage.type must be one of relstorage, zeo, got "mysql"'
+
+  - it: refuses an unknown routing type
+    set:
+      routing.type: traefik
+    asserts:
+      - failedTemplate:
+          errorPattern: 'routing.type must be one of gateway, ingress-nginx, none, got "traefik"'
+
+  - it: requires a Gateway with the gateway routing
+    set:
+      routing.gateway.name: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: "routing.gateway.name is required with routing.type gateway.*attach-to-gateway.html"
+
+  - it: accepts parentRefs instead of a Gateway name
+    set:
+      routing.gateway.name: ""
+      routing.gateway.parentRefs:
+        - name: other
+    asserts:
+      - isKind:
+          of: Deployment
+
+  - it: doesn't need a Gateway without routing
+    set:
+      routing.gateway.name: ""
+      routing.type: none
+    asserts:
+      - isKind:
+          of: Deployment
+
+  - it: requires the host and secret of an external PostgreSQL server
+    set:
+      postgresql.enabled: false
+      storage.relstorage.host: db.example.org
+    asserts:
+      - failedTemplate:
+          errorPattern: "storage.relstorage.host and storage.relstorage.secret.name are required with postgresql.enabled false"
+
+  - it: refuses the PostgreSQL cluster with ZEO
+    set:
+      storage.type: zeo
+    asserts:
+      - failedTemplate:
+          errorPattern: "storage.type zeo doesn't use PostgreSQL: set postgresql.enabled to false"
+
+  - it: refuses the VCL in varnish.server.vclConfig
+    set:
+      varnish.enabled: true
+      varnish.server.vclConfig: "vcl 4.1;"
+    asserts:
+      - failedTemplate:
+          errorPattern: "Set the VCL of Varnish with varnish.vcl"
+
+  - it: refuses the default VCL file in varnish.server.vclConfigs
+    set:
+      varnish.enabled: true
+      varnish.server.vclConfigs:
+        default.vcl: "vcl 4.1;"
+    asserts:
+      - failedTemplate:
+          errorPattern: "Set the VCL of Varnish with varnish.vcl"
+
+  - it: accepts another file in varnish.server.vclConfigs
+    set:
+      varnish.enabled: true
+      varnish.server.vclConfigs:
+        extra.vcl: "vcl 4.1;"
+    asserts:
+      - isKind:
+          of: Deployment
+
+  - it: requires the host of an external PostgreSQL server, also with its secret
+    set:
+      postgresql.enabled: false
+      storage.relstorage.secret.name: db
+    asserts:
+      - failedTemplate:
+          errorPattern: "storage.relstorage.host and storage.relstorage.secret.name are required with postgresql.enabled false"
+
+  - it: requires a grace period longer than the preStop sleep
+    set:
+      frontend.preStopSleepSeconds: 30
+    asserts:
+      - failedTemplate:
+          errorPattern: "frontend.terminationGracePeriodSeconds must be longer than frontend.preStopSleepSeconds, which it includes"
+
+  - it: accepts any grace period without the preStop sleep
+    set:
+      backend.preStopSleepSeconds: 0
+      backend.terminationGracePeriodSeconds: 0
+    asserts:
+      - isKind:
+          of: Deployment
