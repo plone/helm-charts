@@ -76,6 +76,9 @@ linkcheck_ignore = [
     # Anchors on GitHub are generated client-side.
     r"https://github\.com/.*#.*",
 ]
+# External sites fail now and then: retry before reporting a broken link.
+linkcheck_retries = 3
+linkcheck_timeout = 30
 
 # -- HTML output ------------------------------------------------------------
 

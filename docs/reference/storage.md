@@ -28,6 +28,15 @@ The chart connects the backend to `<release>-postgresql-rw`, with the credential
 The secret has the keys `dbname`, `username`, and `password`.
 All the options of the cluster chart are under the `postgresql` key, see [Values](values.md#postgresql).
 
+### Uninstalling
+
+`helm uninstall` deletes the Cluster `<release>-postgresql`, because it is a resource of the release.
+Its volumes belong to it, so Kubernetes deletes them too, with the database, and the content of the site: there is no way to get them back.
+The CI of the chart checks this after its upgrade test.
+
+Before you uninstall a release whose content you want to keep, back up the database, for example with the [backups of CloudNativePG](https://cloudnative-pg.io/documentation/current/backup/).
+An external server, and the volume of the ZEO server, are kept.
+
 ### External server
 
 With `postgresql.enabled` set to `false`, the chart doesn't create a cluster.

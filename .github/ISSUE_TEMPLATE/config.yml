@@ -1,0 +1,13 @@
+# The templates of this directory replace the ones of the Plone organization:
+# its contact links are repeated here.
+blank_issues_enabled: true
+contact_links:
+  - name: Get support
+    url: https://community.plone.org/
+    about: Get support for Plone in the Community Forum.
+  - name: Chat
+    url: https://discord.gg/zFY3EBbjaj
+    about: Chat on Discord.
+  - name: Report a security issue
+    url: https://plone.org/security/report
+    about: Report a security issue.

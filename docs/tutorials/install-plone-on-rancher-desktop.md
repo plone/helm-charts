@@ -107,7 +107,8 @@ To set a password of your own, see [How to change the admin password](../how-to/
 
 ## Clean up
 
-When you finish, remove the release and its namespace:
+When you finish, remove the release and its namespace.
+This deletes the PostgreSQL cluster, with the content of the site:
 
 ```shell
 helm uninstall plone --namespace plone

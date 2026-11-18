@@ -34,6 +34,13 @@ jobs:
       # The steps run the make targets that run the same checks locally, see
       # the Tests section of the README.
 
+      # Merging to main publishes the version of Chart.yaml, unless it is
+      # published already: a pull request to main that changes the chart must
+      # increase it. The pull requests stacked on another branch don't.
+      - name: Check the version of the chart
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        run: make check-version BASE=origin/main
+
       # Lints the chart once per scenario in charts/plone/ci.
       - name: Run chart-testing (lint)
         run: make lint

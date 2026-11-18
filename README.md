@@ -86,6 +86,7 @@ See [How to migrate from the previous charts](docs/how-to/migrate-from-previous-
 
 ## Development
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute, and what a change includes.
 The chart is in [`charts/plone`](charts/plone).
 To install it from a checkout of this repository, add the repository of the CloudNativePG `cluster` chart, and fetch the dependencies:
 
