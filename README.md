@@ -131,6 +131,7 @@ The tools are installed with [uv](https://docs.astral.sh/uv/):
 make docs           # build the HTML in docs/_build/html, warnings are errors
 make docs-livehtml  # rebuild on changes, at http://localhost:8050
 make docs-vale      # check the style and spelling
+make docs-values    # check that the values reference documents every value, with its default
 make docs-linkcheck # check the external links
 ```
 
