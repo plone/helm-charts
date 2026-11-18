@@ -6,11 +6,15 @@ Run by ``make docs-values``. It fails when:
   its parents;
 * a row of the reference names a key that ``values.yaml`` doesn't have,
   unless its default is "not set", for keys that are only commented out;
+* a row has the default "not set", but ``values.yaml`` sets the key;
+* ``values.schema.json`` refuses a key that the reference documents, such
+  as one that is only commented out in ``values.yaml``;
 * the default of a row, when written as YAML in backticks, differs from the
   value in ``values.yaml``. A default written in words, such as "a
   preference for pod anti-affinity by node", isn't compared.
 """
 
+import json
 import pathlib
 import re
 import sys
@@ -20,6 +24,7 @@ import yaml
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 VALUES = ROOT / "charts/plone/values.yaml"
 REFERENCE = ROOT / "docs/reference/values.md"
+SCHEMA = ROOT / "charts/plone/values.schema.json"
 ROW = re.compile(r"^\| `(?P<key>[A-Za-z0-9_.]+)` \| (?P<default>.*?) \| .* \|$")
 MISSING = object()
 
@@ -49,8 +54,26 @@ def lookup(values: dict, path: str) -> object:
     return value
 
 
+def accepted(schema: dict, path: str) -> bool:
+    """Return whether the schema accepts a key at a dotted path.
+
+    It follows ``properties``, and accepts the keys under a section that
+    doesn't refuse additional properties, such as a Kubernetes object.
+    """
+    for part in path.split("."):
+        properties = schema.get("properties", {})
+        if part in properties:
+            schema = properties[part]
+        elif schema.get("additionalProperties") is False:
+            return False
+        else:
+            return True
+    return True
+
+
 def main() -> int:
     values = yaml.safe_load(VALUES.read_text())
+    schema = json.loads(SCHEMA.read_text())
     rows = {}
     for line in REFERENCE.read_text().splitlines():
         match = ROW.match(line)
@@ -64,10 +87,15 @@ def main() -> int:
             errors.append(f"{leaf}: not documented")
 
     for key, default in rows.items():
+        if not accepted(schema, key):
+            errors.append(f"{key}: documented, but values.schema.json refuses it")
         value = lookup(values, key)
         if value is MISSING:
             if default != "not set":
                 errors.append(f"{key}: documented, but not in values.yaml")
+            continue
+        if default == "not set":
+            errors.append(f"{key}: documented as not set, values.yaml has {value!r}")
             continue
         literal = re.fullmatch(r"`([^`]*)`", default)
         if literal is None:

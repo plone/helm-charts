@@ -50,6 +50,12 @@ tests:
     asserts:
       - notFailedTemplate: {}
 
+  - it: accepts the enabled value of a parent chart's condition
+    set:
+      enabled: true
+    asserts:
+      - notFailedTemplate: {}
+
   - it: requires a Gateway with the gateway routing
     set:
       routing.gateway.name: ""

@@ -4,6 +4,10 @@
   "description": "See docs/reference/values.md. The postgresql and varnish sections also take the values of the cnpg cluster and varnish-cache charts.",
   "type": "object",
   "properties": {
+    "enabled": {
+      "type": "boolean",
+      "description": "Not used by this chart. A parent chart that has this one as a dependency with a condition, such as plone.enabled, passes it."
+    },
     "nameOverride": {
       "type": "string"
     },
