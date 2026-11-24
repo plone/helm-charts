@@ -32,6 +32,7 @@ See [Stopping a pod without failing requests](../explanation/architecture.md#sto
 A release of the chart sets its `appVersion` to the latest release of Plone at the time, and the backend uses the image with that tag, unless `backend.image.tag` is set.
 So upgrading the chart upgrades Plone, and you can stay on a version of Plone by setting `backend.image.tag`.
 The frontend and ZEO images have their own tags, in `frontend.image.tag` and `storage.zeo.server.image.tag`.
+The three tags accept a string or a number, but quote a tag that looks like a number: YAML reads `6.10` as `6.1`, see [Quote tags that look like numbers](../how-to/use-custom-images.md#quote-tags-that-look-like-numbers).
 
 The Plone images are rebuilt with the same tag, for example to update their base image.
 With `pullPolicy: IfNotPresent`, a node keeps the image it pulled first, so two nodes can run different builds of the same tag.
