@@ -151,7 +151,7 @@
                       "type": "string"
                     },
                     "tag": {
-                      "type": "string"
+                      "type": ["string", "number"]
                     },
                     "pullPolicy": {
                       "type": "string",
@@ -282,7 +282,7 @@
               "type": "string"
             },
             "tag": {
-              "type": "string"
+              "type": ["string", "number"]
             },
             "pullPolicy": {
               "type": "string",
@@ -394,7 +394,7 @@
               "type": "string"
             },
             "tag": {
-              "type": "string"
+              "type": ["string", "number"]
             },
             "pullPolicy": {
               "type": "string",
