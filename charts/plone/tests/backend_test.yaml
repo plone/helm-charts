@@ -35,6 +35,15 @@ tests:
           path: spec.template.spec.containers[0].image
           value: docker.io/plone/plone-backend:6.9.9
 
+  - it: accepts a numeric image tag, as --set passes it
+    template: templates/backend-deployment.yaml
+    set:
+      backend.image.tag: 6.2
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: docker.io/plone/plone-backend:6.2
+
   - it: sets the size of the ZODB cache, the storage, then backend.env
     template: templates/backend-deployment.yaml
     set:

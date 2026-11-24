@@ -1,7 +1,7 @@
 {{- if include "plone.zeo.enabled" . }}
 {{- $fullname := include "plone.fullname" . }}
 {{- $z := .Values.storage.zeo.server }}
-{{- $image := printf "%s:%s" $z.image.repository $z.image.tag }}
+{{- $image := printf "%s:%s" $z.image.repository (toString $z.image.tag) }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:

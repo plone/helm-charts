@@ -21,6 +21,15 @@ tests:
             name: RAZZLE_INTERNAL_API_PATH
             value: http://plone-backend:8080/Plone
 
+  - it: accepts a numeric image tag, as --set passes it
+    template: templates/frontend-deployment.yaml
+    set:
+      frontend.image.tag: 18
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ":18$"
+
   - it: has no frontend with the Classic UI
     set:
       frontend.enabled: false

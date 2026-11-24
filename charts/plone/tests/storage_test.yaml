@@ -111,6 +111,17 @@ tests:
       - hasDocuments:
           count: 0
 
+  - it: accepts a numeric image tag for the ZEO server, as --set passes it
+    template: templates/zeo-statefulset.yaml
+    set:
+      storage.type: zeo
+      postgresql.enabled: false
+      storage.zeo.server.image.tag: 6
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ":6$"
+
   - it: deploys a ZEO server, and points the backend to it
     set:
       storage.type: zeo
