@@ -111,10 +111,13 @@ cluster-deps: ## Install what the CI scenarios need in the current kubectl clust
 	@# A ClusterIP Service, as kind has no load balancer: helm test reaches it
 	@# from inside the cluster.
 	@echo -e "$(GREEN)==> Install Traefik with its Gateway$(RESET)"
+	@# The Kubernetes Ingress provider serves the Ingress resources of the traefik
+	@# routing scenario, and creates the IngressClass traefik.
 	@helm upgrade --install traefik traefik --repo https://traefik.github.io/charts --version $(TRAEFIK_CHART_VERSION) \
 		--namespace traefik --create-namespace --wait \
 		--set service.spec.type=ClusterIP \
 		--set providers.kubernetesGateway.enabled=true \
+		--set providers.kubernetesIngress.enabled=true \
 		--set gateway.listeners.web.namespacePolicy.from=All
 	@kubectl wait --for=create gateway/traefik-gateway --namespace traefik --timeout=120s
 	@kubectl wait --for=condition=Programmed gateway/traefik-gateway --namespace traefik --timeout=120s

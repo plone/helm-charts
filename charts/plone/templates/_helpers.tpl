@@ -63,7 +63,7 @@ Validate the combination of values.
 {{- if not (has .Values.storage.type $storageTypes) -}}
 {{- fail (printf "storage.type must be one of %s, got %q" (join ", " $storageTypes) .Values.storage.type) -}}
 {{- end -}}
-{{- $routingTypes := list "gateway" "ingress-nginx" "none" -}}
+{{- $routingTypes := list "gateway" "ingress-nginx" "traefik" "none" -}}
 {{- if not (has .Values.routing.type $routingTypes) -}}
 {{- fail (printf "routing.type must be one of %s, got %q" (join ", " $routingTypes) .Values.routing.type) -}}
 {{- end -}}

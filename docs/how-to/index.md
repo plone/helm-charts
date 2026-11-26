@@ -99,6 +99,13 @@ Connect the backend to a ZEO server that the chart doesn't deploy.
 Create Ingress resources, for clusters that still run ingress-nginx.
 :::
 
+:::{grid-item-card} 🧭 Route the site with Traefik
+:link: use-traefik-ingress
+:link-type: doc
+
+Create Ingress resources and Middleware for Traefik, as on k3s.
+:::
+
 :::{grid-item-card} 🧪 Run Plone with ephemeral storage
 :link: use-ephemeral-storage
 :link-type: doc
@@ -221,6 +228,7 @@ install-classic-zeo
 use-external-postgresql
 use-external-zeo
 use-ingress-nginx
+use-traefik-ingress
 use-ephemeral-storage
 run-without-routing
 use-custom-images

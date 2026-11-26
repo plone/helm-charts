@@ -443,6 +443,8 @@ varnish:
 routing:
   # gateway: a Gateway API HTTPRoute attached to an existing Gateway
   # ingress-nginx: Ingress resources with ingress-nginx annotations
+  # traefik: Ingress resources for the Ingress provider of Traefik, with Traefik
+  #   Middleware resources for the rewrites of the backend paths
   # none: no routing resources, bring your own
   type: gateway
   # Public hostname of the site.
@@ -476,6 +478,17 @@ routing:
   # security fixes. Prefer the gateway type for new installations.
   ingressNginx:
     className: nginx
+    annotations: {}
+      # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    tls: []
+    #  - secretName: plone-tls
+    #    hosts:
+    #      - plone.example.com
+
+  # Ingress resources of the Ingress provider of Traefik, such as on k3s, with
+  # Traefik Middleware resources for the rewrites of the backend paths.
+  traefik:
+    className: traefik
     annotations: {}
       # cert-manager.io/cluster-issuer: "letsencrypt-prod"
     tls: []

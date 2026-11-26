@@ -72,6 +72,11 @@ With `routing.type: ingress-nginx`, the chart creates Ingress resources for the 
 The ingress-nginx project was retired in March 2026, so this routing type is meant for clusters that still run it.
 See [How to route the site with ingress-nginx](docs/how-to/use-ingress-nginx.md).
 
+## Traefik
+
+With `routing.type: traefik`, the chart creates Ingress resources for the Ingress provider of Traefik, as on k3s, and the Traefik Middleware of the rewrites.
+See [How to route the site with Traefik](docs/how-to/use-traefik-ingress.md).
+
 ## Scenarios
 
 The [how-to guides](docs/how-to/index.md#choose-an-installation) describe each combination of values that the chart supports, such as the Classic UI with ZEO, or an external PostgreSQL server.

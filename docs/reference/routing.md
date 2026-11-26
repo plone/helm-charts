@@ -7,13 +7,14 @@ The routing sends the requests of the public hostname to the frontend and the ba
 |---|---|---|
 | `gateway` (default) | an HTTPRoute, attached to an existing Gateway | Gateway API |
 | `ingress-nginx` | Ingress resources for the ingress-nginx controller | ingress-nginx |
+| `traefik` | Ingress resources for the Ingress provider of Traefik, and Traefik Middleware | Traefik |
 | `none` | no routing resources | your own routing |
 
 ## Shared options
 
 ```yaml
 routing:
-  # gateway, ingress-nginx, or none
+  # gateway, ingress-nginx, traefik, or none
   type: gateway
   # Public hostname of the site.
   hostname: localhost
@@ -90,3 +91,29 @@ When an Ingress with the `use-regex` annotation exists for a host, ingress-nginx
 The paths created by this chart work either way.
 
 For a step-by-step installation, see [How to route the site with ingress-nginx](../how-to/use-ingress-nginx.md).
+
+## Traefik resources
+
+With `routing.type: traefik`, the chart creates Ingress resources for the Ingress provider of Traefik, for the `routing.traefik.className` class (default `traefik`), and Traefik `Middleware` resources for the rewrites:
+
+| Resource | Scenario | Path | Backend | Middleware |
+|---|---|---|---|---|
+| Ingress `<release>-api` | Volto only | `/++api++`, prefix | backend or Varnish | `<release>-api-rewrite` |
+| Ingress `<release>` | Volto | `/`, prefix | frontend or Varnish | none |
+| Ingress `<release>` | Classic UI | `/`, prefix | backend or Varnish | `<release>-rewrite` |
+
+The Middleware resources are `traefik.io/v1alpha1` `Middleware` objects with a `replacePathRegex` rule.
+Their expressions match the paths of the ingress-nginx resources, and replace them with the same virtual host paths:
+
+* `<release>-api-rewrite`: `^/\+\+api\+\+($\|/.*)`, replaced with the virtual host path followed by `$1`
+* `<release>-rewrite`: `^/(.*)`, replaced with the virtual host path followed by `/$1`
+
+The Ingress resources refer to their Middleware with the annotation `traefik.ingress.kubernetes.io/router.middlewares`.
+The ingress-nginx annotations, such as `rewrite-target`, have no effect with Traefik.
+
+The annotations in `routing.traefik.annotations` are added to the Ingress resources, for example for cert-manager.
+`routing.traefik.tls` sets the `tls` section of the Ingress resources.
+The Traefik Kubernetes Ingress provider must be enabled, which is its default, and the IngressClass of the chart must exist.
+The Traefik chart creates an IngressClass named `traefik`.
+
+For a step-by-step installation, see [How to route the site with Traefik](../how-to/use-traefik-ingress.md).

@@ -12,6 +12,10 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
   All the content is lost on every restart and redeploy.
   See [How to run Plone with ephemeral storage](https://plone.github.io/helm-charts/how-to/use-ephemeral-storage.html).
   [#81](https://github.com/plone/helm-charts/issues/81)
+- `routing.type: traefik` creates Ingress resources for the Ingress provider of Traefik, as on k3s, with Traefik Middleware for the rewrites of the backend paths.
+  `routing.traefik.className`, `routing.traefik.annotations`, and `routing.traefik.tls` work as the ingress-nginx values do, so that cert-manager can issue the certificate.
+  See [How to route the site with Traefik](https://plone.github.io/helm-charts/how-to/use-traefik-ingress.html).
+  [#82](https://github.com/plone/helm-charts/issues/82)
 
 ## 0.4.2 (2026-11-26)
 

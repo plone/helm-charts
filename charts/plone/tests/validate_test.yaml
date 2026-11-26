@@ -24,10 +24,10 @@ tests:
 
   - it: refuses an unknown routing type
     set:
-      routing.type: traefik
+      routing.type: kong
     asserts:
       - failedTemplate:
-          errorPattern: "/routing/type': value must be one of 'gateway', 'ingress-nginx', 'none'"
+          errorPattern: "/routing/type': value must be one of 'gateway', 'ingress-nginx', 'traefik', 'none'"
 
   - it: refuses a key that the chart doesn't have, such as a typo
     set:

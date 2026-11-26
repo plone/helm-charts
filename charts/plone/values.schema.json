@@ -530,6 +530,7 @@
           "enum": [
             "gateway",
             "ingress-nginx",
+            "traefik",
             "none"
           ]
         },
@@ -567,6 +568,21 @@
           "additionalProperties": false
         },
         "ingressNginx": {
+          "type": "object",
+          "properties": {
+            "className": {
+              "type": "string"
+            },
+            "annotations": {
+              "type": "object"
+            },
+            "tls": {
+              "type": "array"
+            }
+          },
+          "additionalProperties": false
+        },
+        "traefik": {
           "type": "object",
           "properties": {
             "className": {
