@@ -31,10 +31,9 @@ KUBECONFORM_IMAGE ?= ghcr.io/yannh/kubeconform:v0.8.0
 # Schemas of the custom resources that the chart creates, such as the Gateway
 # API HTTPRoute.
 KUBECONFORM_CRD_SCHEMAS := https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json
-# Kinds not to validate. The cnpg cluster chart renders an empty
-# spec.postgresql in the Cluster, which the API server prunes, but which the
-# schema refuses.
-KUBECONFORM_SKIP ?= Cluster
+# Kinds not to validate, comma-separated. None: the CloudNativePG Cluster is
+# validated too, since values.yaml keeps its spec.postgresql from being null.
+KUBECONFORM_SKIP ?=
 
 # What make cluster-deps installs in the cluster of make test-install, as in CI.
 CNPG_REPO := https://cloudnative-pg.github.io/charts

@@ -3,7 +3,16 @@
 The changes of the `plone` chart, by chart version.
 Until 1.0, a minor version can have changes that need action when you upgrade: they are listed under **Breaking changes**, with what to do.
 
-## 0.4.3 (unreleased)
+## 0.4.4 (unreleased)
+
+### Fixed
+
+- The CloudNativePG `Cluster` passes a strict validation against its schema, such as `kubeconform -strict`: its `spec.postgresql` was `null` with the default values, because the cluster chart renders an empty block as `null`.
+  `postgresql.cluster.postgresql.parameters.max_connections` is set to `"100"`, the default of PostgreSQL, so the database behaves as before.
+  Other `postgresql.cluster.postgresql.parameters` that you set are merged with it.
+  The validation of the chart's manifests in CI checks the `Cluster` too, instead of skipping it.
+
+## 0.4.3 (2026-11-26)
 
 ### Added
 
