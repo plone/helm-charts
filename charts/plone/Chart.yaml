@@ -26,7 +26,7 @@ dependencies:
   # Varnish Cache community chart, maintained by Varnish Software.
   - name: "varnish-cache"
     alias: "varnish"
-    version: "1.1.1"
+    version: 1.10.0
     repository: "oci://registry-1.docker.io/varnish"
     condition: varnish.enabled
 
