@@ -2,7 +2,7 @@ apiVersion: v2
 name: plone
 description: Beta. Plone 6 with the Volto or Classic UI, on PostgreSQL (RelStorage) or ZEO, with optional Varnish, routed with Gateway API or ingress-nginx
 type: application
-version: 0.4.0
+version: 0.4.1
 appVersion: "6.2.3"
 kubeVersion: ">=1.29.0-0"
 
@@ -20,7 +20,7 @@ dependencies:
   - name: "cluster"
     alias: "postgresql"
     version: "0.9.0"
-    repository: "https://cloudnative-pg.github.io/charts"
+    repository: "oci://ghcr.io/cloudnative-pg/charts"
     condition: postgresql.enabled
 
   # Varnish Cache community chart, maintained by Varnish Software.

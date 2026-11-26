@@ -1,9 +1,9 @@
 dependencies:
 - name: cluster
-  repository: https://cloudnative-pg.github.io/charts
+  repository: oci://ghcr.io/cloudnative-pg/charts
   version: 0.9.0
 - name: varnish-cache
   repository: oci://registry-1.docker.io/varnish
   version: 1.1.1
-digest: sha256:e291e2474125b30c11b350154ff168caaf6c7003e28c758de6fb71082f001a4b
-generated: "2026-11-04T11:46:28.146922194-03:00"
+digest: sha256:7657553f00c9769dcc7e7d42956318ed63780a91081c13f864724b0ce6dfe7b7
+generated: "2026-11-26T12:52:33.084348-03:00"

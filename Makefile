@@ -62,7 +62,6 @@ help: ## Show this help
 .PHONY: chart-deps
 chart-deps: ## Fetch the dependencies of the chart
 	@echo -e "$(GREEN)==> Fetch the chart dependencies$(RESET)"
-	@helm repo add cnpg https://cloudnative-pg.github.io/charts --force-update > /dev/null
 	@helm dependency build $(CHART_DIR) > /dev/null
 
 .PHONY: test
@@ -98,7 +97,7 @@ test-manifests: chart-deps ## Validate the manifests of each CI scenario against
 .PHONY: lint
 lint: ## Lint the chart once per CI scenario, as CI does (needs ct, from chart-testing)
 	@echo -e "$(GREEN)==> Lint the chart$(RESET)"
-	@ct lint --all --chart-dirs charts --chart-repos cnpg=$(CNPG_REPO)
+	@ct lint --all --chart-dirs charts
 
 .PHONY: cluster-deps
 cluster-deps: ## Install what the CI scenarios need in the current kubectl cluster: CloudNativePG, Gateway API, Traefik, ingress-nginx, external servers

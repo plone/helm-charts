@@ -88,11 +88,10 @@ See [How to migrate from the previous charts](docs/how-to/migrate-from-previous-
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute, and what a change includes.
 The chart is in [`charts/plone`](charts/plone).
-To install it from a checkout of this repository, add the repository of the CloudNativePG `cluster` chart, and fetch the dependencies:
+To install it from a checkout of this repository, fetch the dependencies, which come from OCI registries:
 
 ```shell
-helm repo add cnpg https://cloudnative-pg.github.io/charts
-helm dependency update ./charts/plone
+helm dependency build ./charts/plone
 helm install plone ./charts/plone --values ./charts/plone/ci/default-values.yaml
 ```
 

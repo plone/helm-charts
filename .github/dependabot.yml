@@ -1,16 +1,18 @@
 version: 2
 
 # Dependabot reaches only the hosts declared here, even public ones: without
-# them, its proxy refused the CloudNativePG index with 403, and the Docker Hub
-# registry of the varnish-cache chart, and of the images in values.yaml.
+# them, its proxy refused the Docker Hub registry of the varnish-cache chart,
+# and of the images in values.yaml. GitHub validates a docker-registry only
+# with credentials: DOCKERHUB_USERNAME and DOCKERHUB_TOKEN are Dependabot
+# secrets of the repository, with a read-only Docker Hub token.
+# The cluster chart of CloudNativePG comes from ghcr.io, where Dependabot
+# authenticates by itself.
 registries:
-  cloudnative-pg:
-    type: helm-registry
-    url: https://cloudnative-pg.github.io/charts
-  # OCI Helm charts and container images: helm-registry doesn't support OCI.
   docker-hub:
     type: docker-registry
     url: https://registry-1.docker.io
+    username: ${{secrets.DOCKERHUB_USERNAME}}
+    password: ${{secrets.DOCKERHUB_TOKEN}}
 
 updates:
 
@@ -23,11 +25,11 @@ updates:
         patterns:
           - "*"
 
-  # Helm chart dependencies (cluster from cnpg, varnish-cache from OCI) in Chart.yaml
+  # Helm chart dependencies in Chart.yaml, both from OCI registries: cluster
+  # from ghcr.io, varnish-cache from Docker Hub.
   - package-ecosystem: "helm"
     directory: "/charts/plone"
     registries:
-      - cloudnative-pg
       - docker-hub
     schedule:
       interval: "weekly"
