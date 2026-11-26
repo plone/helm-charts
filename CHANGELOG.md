@@ -16,6 +16,9 @@ Until 1.0, a minor version can have changes that need action when you upgrade: t
   `routing.traefik.className`, `routing.traefik.annotations`, and `routing.traefik.tls` work as the ingress-nginx values do, so that cert-manager can issue the certificate.
   See [How to route the site with Traefik](https://plone.github.io/helm-charts/how-to/use-traefik-ingress.html).
   [#82](https://github.com/plone/helm-charts/issues/82)
+- `postgresql.cluster.affinity`, `postgresql.cluster.priorityClassName`, `postgresql.cluster.resources`, and `postgresql.cluster.storage.storageClass` set the scheduling and the storage of the database pods, for example on a dedicated node pool.
+  See [How to configure the PostgreSQL cluster](https://plone.github.io/helm-charts/how-to/configure-postgresql.html#run-the-database-on-dedicated-nodes).
+  [#83](https://github.com/plone/helm-charts/issues/83)
 
 ## 0.4.2 (2026-11-26)
 

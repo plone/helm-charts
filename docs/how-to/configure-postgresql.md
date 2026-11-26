@@ -21,6 +21,36 @@ For what the instances mean for availability, see [How to scale and make the sit
 The cluster gets an 8Gi volume by default.
 Change it with `postgresql.cluster.storage.size`, see [Values](../reference/values.md#postgresql).
 
+## Run the database on dedicated nodes
+
+To keep the database pods on a node pool of their own, set the scheduling options of the cluster.
+The affinity takes the `nodeSelector`, `tolerations`, and affinity rules of the cluster chart:
+
+```yaml
+postgresql:
+  cluster:
+    affinity:
+      nodeSelector:
+        node-role: database
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: database
+          effect: NoSchedule
+    priorityClassName: database-critical
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+    storage:
+      storageClass: fast-ssd
+```
+
+The chart passes these values to the cluster as they are.
+The affinity keeps the default `topologyKey` of the cluster chart.
+The priority class must exist in the cluster, and the storage class must provision volumes on the nodes of the pool.
+For the values, see [Values](../reference/values.md#postgresql).
+
 ## Connect through a connection pooler
 
 To connect Plone through a connection pooler, set `storage.relstorage.host` to the service of the pooler.

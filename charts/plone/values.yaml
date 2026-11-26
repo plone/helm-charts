@@ -344,10 +344,19 @@ postgresql:
     # enablePDB to true.
     instances: 1
     enablePDB: false
+    # Scheduling of the database pods, passed to the cluster chart: affinity
+    # with nodeSelector, tolerations and affinity rules, for a dedicated node
+    # pool, a priority class, and resources. The affinity keeps the default
+    # topologyKey of the cluster chart.
+    affinity: {}
+    priorityClassName: ""
+    resources: {}
     # Plone only needs the database owner created by initdb.
     enableSuperuserAccess: false
     storage:
       size: 8Gi
+      # Storage class of the data volume. Empty uses the default storage class.
+      storageClass: ""
     initdb:
       database: plone
       owner: plone

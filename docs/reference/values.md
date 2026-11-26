@@ -174,6 +174,10 @@ The chart accepts all the other values of that chart under `postgresql` too, see
 | `postgresql.cluster.enablePDB` | `false` | Creates a PodDisruptionBudget for the cluster. |
 | `postgresql.cluster.enableSuperuserAccess` | `false` | Enables the superuser access of the cluster. Plone only needs the database owner created by `initdb`. |
 | `postgresql.cluster.storage.size` | `"8Gi"` | Size of the volume of each instance. |
+| `postgresql.cluster.storage.storageClass` | `""` | Storage class of the volume of each instance. Empty uses the default storage class. |
+| `postgresql.cluster.affinity` | `{}` | Affinity of the database pods, as the cluster chart's `affinity`: `nodeSelector`, `tolerations`, and affinity rules. Empty keeps the default `topologyKey` of the cluster chart. See [Configure the PostgreSQL cluster](../how-to/configure-postgresql.md#run-the-database-on-dedicated-nodes). |
+| `postgresql.cluster.priorityClassName` | `""` | Priority class of the database pods. |
+| `postgresql.cluster.resources` | `{}` | Resource requests and limits of the database pods. |
 | `postgresql.cluster.initdb.database` | `"plone"` | Name of the database. |
 | `postgresql.cluster.initdb.owner` | `"plone"` | Owner of the database. |
 
