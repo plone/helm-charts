@@ -1,0 +1,31 @@
+{{- if eq .Values.routing.type "traefik" }}
+{{- $name := include "plone.fullname" . }}
+{{- if .Values.frontend.enabled }}
+# Volto: rewrites the API requests to the Zope virtual host path, as the
+# rewrite-target annotation of ingress-nginx does. The regular expression
+# matches the same paths as the ingress-nginx path of the API.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ $name }}-api-rewrite
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+spec:
+  replacePathRegex:
+    regex: '^/\+\+api\+\+($|/.*)'
+    replacement: {{ printf "%s$1" (include "plone.routing.backendPath" .) | quote }}
+{{- else }}
+# Classic UI: rewrites every request to the Zope virtual host path, as the
+# rewrite-target annotation of ingress-nginx does.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ $name }}-rewrite
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+spec:
+  replacePathRegex:
+    regex: '^/(.*)'
+    replacement: {{ printf "%s/$1" (include "plone.routing.backendPath" .) | quote }}
+{{- end }}
+{{- end }}

@@ -36,7 +36,8 @@ Under `postgresql` and `varnish`, only the keys of this page are checked: the ot
 
 | Key | Default | Description |
 |---|---|---|
-| `storage.type` | `"relstorage"` | `relstorage` for RelStorage on PostgreSQL, or `zeo` for a ZEO server. |
+| `storage.type` | `"relstorage"` | `relstorage` for RelStorage on PostgreSQL, `zeo` for a ZEO server, or `ephemeral` for a FileStorage in the backend pod, with no database. See [Storage](../reference/storage.md#ephemeral). |
+| `storage.ephemeral.emptyDir.enabled` | `false` | With `storage.type: ephemeral`, mounts an `emptyDir` over `/data`. It hides the content that the image has under `/data`, so it is off by default. |
 
 ### `storage.relstorage`
 
@@ -173,6 +174,10 @@ The chart accepts all the other values of that chart under `postgresql` too, see
 | `postgresql.cluster.enablePDB` | `false` | Creates a PodDisruptionBudget for the cluster. |
 | `postgresql.cluster.enableSuperuserAccess` | `false` | Enables the superuser access of the cluster. Plone only needs the database owner created by `initdb`. |
 | `postgresql.cluster.storage.size` | `"8Gi"` | Size of the volume of each instance. |
+| `postgresql.cluster.storage.storageClass` | `""` | Storage class of the volume of each instance. Empty uses the default storage class. |
+| `postgresql.cluster.affinity` | `{}` | Affinity of the database pods, as the cluster chart's `affinity`: `nodeSelector`, `tolerations`, and affinity rules. Empty keeps the default `topologyKey` of the cluster chart. See [Configure the PostgreSQL cluster](../how-to/configure-postgresql.md#run-the-database-on-dedicated-nodes). |
+| `postgresql.cluster.priorityClassName` | `""` | Priority class of the database pods. |
+| `postgresql.cluster.resources` | `{}` | Resource requests and limits of the database pods. |
 | `postgresql.cluster.initdb.database` | `"plone"` | Name of the database. |
 | `postgresql.cluster.initdb.owner` | `"plone"` | Owner of the database. |
 
@@ -203,7 +208,7 @@ The chart accepts all the other values of that chart under `varnish` too, see it
 
 | Key | Default | Description |
 |---|---|---|
-| `routing.type` | `"gateway"` | `gateway` for a Gateway API HTTPRoute, `ingress-nginx` for Ingress resources, or `none` for no routing resources. |
+| `routing.type` | `"gateway"` | `gateway` for a Gateway API HTTPRoute, `ingress-nginx` for Ingress resources, `traefik` for Ingress resources and Middleware of Traefik, or `none` for no routing resources. |
 | `routing.hostname` | `"localhost"` | Public hostname of the site. |
 | `routing.https` | `false` | Whether clients reach the site over HTTPS. Used to build the URLs, and doesn't configure TLS. |
 | `routing.port` | `""` | Public port of the site. Empty uses 443 with HTTPS, and 80 without. |
@@ -226,12 +231,21 @@ The chart accepts all the other values of that chart under `varnish` too, see it
 | `routing.ingressNginx.annotations` | `{}` | Annotations added to all the Ingress resources, for example for cert-manager. |
 | `routing.ingressNginx.tls` | `[]` | TLS section of the Ingress resources, with `secretName` and `hosts`. |
 
+### `routing.traefik`
+
+| Key | Default | Description |
+|---|---|---|
+| `routing.traefik.className` | `"traefik"` | IngressClass of the Ingress resources. |
+| `routing.traefik.annotations` | `{}` | Annotations added to the Ingress resources, for example for cert-manager. |
+| `routing.traefik.tls` | `[]` | TLS section of the Ingress resources, with `secretName` and `hosts`. |
+
 ## Validation
 
 The chart fails to install with an explanation when the values don't make sense together:
 
-* `storage.type` must be `relstorage` or `zeo`.
-* `routing.type` must be `gateway`, `ingress-nginx`, or `none`.
+* `storage.type` must be `relstorage`, `zeo`, or `ephemeral`.
+* `routing.type` must be `gateway`, `ingress-nginx`, `traefik`, or `none`.
+* With `storage.type: ephemeral`, `postgresql.enabled` must be `false`, and `backend.replicas` must be `1`.
 * With `varnish.enabled`, the VCL is set in `varnish.vcl`: `varnish.server.vclConfig` must be empty, and `varnish.server.vclConfigs` must not set the file of `varnish.server.vclConfigPath`.
 * With `routing.type: gateway`, `routing.gateway.name` or `routing.gateway.parentRefs` must be set.
 * With `postgresql.enabled` set to `false` and `storage.type: relstorage`, `storage.relstorage.host` and `storage.relstorage.secret.name` must be set.

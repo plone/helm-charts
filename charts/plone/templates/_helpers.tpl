@@ -59,11 +59,11 @@ Call with (dict "context" . "name" "postgresql" "values" .Values.postgresql).
 Validate the combination of values.
 */}}
 {{- define "plone.validate" -}}
-{{- $storageTypes := list "relstorage" "zeo" -}}
+{{- $storageTypes := list "relstorage" "zeo" "ephemeral" -}}
 {{- if not (has .Values.storage.type $storageTypes) -}}
 {{- fail (printf "storage.type must be one of %s, got %q" (join ", " $storageTypes) .Values.storage.type) -}}
 {{- end -}}
-{{- $routingTypes := list "gateway" "ingress-nginx" "none" -}}
+{{- $routingTypes := list "gateway" "ingress-nginx" "traefik" "none" -}}
 {{- if not (has .Values.routing.type $routingTypes) -}}
 {{- fail (printf "routing.type must be one of %s, got %q" (join ", " $routingTypes) .Values.routing.type) -}}
 {{- end -}}
@@ -80,8 +80,16 @@ Validate the combination of values.
 {{- if and (not .Values.postgresql.enabled) (or (not .Values.storage.relstorage.host) (not .Values.storage.relstorage.secret.name)) -}}
 {{- fail "storage.relstorage.host and storage.relstorage.secret.name are required with postgresql.enabled false" -}}
 {{- end -}}
-{{- else if .Values.postgresql.enabled -}}
+{{- else if and (eq .Values.storage.type "zeo") .Values.postgresql.enabled -}}
 {{- fail "storage.type zeo doesn't use PostgreSQL: set postgresql.enabled to false" -}}
+{{- end -}}
+{{- if eq .Values.storage.type "ephemeral" -}}
+{{- if .Values.postgresql.enabled -}}
+{{- fail "storage.type ephemeral doesn't use PostgreSQL: set postgresql.enabled to false" -}}
+{{- end -}}
+{{- if ne (int .Values.backend.replicas) 1 -}}
+{{- fail "backend.replicas must be 1 with storage.type ephemeral: each pod has its own FileStorage, which the other pods can't see. Use storage.type relstorage or zeo to run more replicas" -}}
+{{- end -}}
 {{- end -}}
 {{- range $name := list "backend" "frontend" -}}
 {{- $c := index $.Values $name -}}
@@ -262,11 +270,23 @@ the connection string. */ -}}
   value: {{ $r.keepHistory | quote }}
 - name: RELSTORAGE_BLOB_CACHE_SIZE
   value: {{ $r.blobCacheSize | quote }}
-{{- else -}}
+{{- else if eq .Values.storage.type "zeo" -}}
 - name: ZEO_ADDRESS
   value: {{ .Values.storage.zeo.address | default (printf "%s-zeo:8100" (include "plone.fullname" .)) | quote }}
 - name: ZEO_CLIENT_CACHE_SIZE
   value: {{ .Values.storage.zeo.clientCacheSize | quote }}
+{{- end -}}
+{{- end }}
+
+{{/*
+Whether the backend mounts an emptyDir at /data. The other storage types always
+do: the client home and the blob cache go there. The ephemeral storage mounts
+it only with storage.ephemeral.emptyDir.enabled, because an empty volume would
+hide the content that the image has under /data.
+*/}}
+{{- define "plone.dataVolume" -}}
+{{- if or (ne .Values.storage.type "ephemeral") .Values.storage.ephemeral.emptyDir.enabled -}}
+true
 {{- end -}}
 {{- end }}
 

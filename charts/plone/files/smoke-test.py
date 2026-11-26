@@ -13,7 +13,8 @@ The chart sets these environment variables:
     Public URL of the site, which the API must return as the ``@id`` of the
     site.
 ``ADMIN_PASSWORD``
-    Password of the ``admin`` user.
+    Password of the ``admin`` user. Empty when the chart doesn't set it, which
+    skips the checks of the admin password.
 ``UI``
     ``volto``, or ``classic`` for the Classic UI, which has no REST API.
 ``VARNISH``
@@ -38,7 +39,7 @@ HOST = ENV["HOST"]
 PAGE_URL = ENV["PAGE_URL"]
 API_URL = ENV["API_URL"].rstrip("/")
 SITE_URL = ENV["SITE_URL"]
-ADMIN_PASSWORD = ENV["ADMIN_PASSWORD"]
+ADMIN_PASSWORD = ENV.get("ADMIN_PASSWORD", "")
 VARNISH = ENV.get("VARNISH") == "true"
 VOLTO = ENV.get("UI", "volto") == "volto"
 TIMEOUT = int(ENV.get("TIMEOUT", "120"))
@@ -155,14 +156,16 @@ def login(password: str) -> tuple[int, dict]:
 
 
 def check_admin_login() -> str:
+    if not ADMIN_PASSWORD:
+        return "skipped: the chart doesn't set the password"
     status = login(ADMIN_PASSWORD)[0]
     assert status == 200, f"status {status}"
     return "with the password of the Secret"
 
 
 def check_default_password() -> str:
-    if ADMIN_PASSWORD == "admin":
-        return "skipped: the password of the Secret is admin"
+    if not ADMIN_PASSWORD or ADMIN_PASSWORD == "admin":
+        return "skipped: the password of the Secret is admin, or not set"
     status, headers = login("admin")
     if not VOLTO and status == 302:
         # The Classic UI redirects to its login form, and only there.

@@ -1,4 +1,4 @@
-{{- if .Values.pack.enabled }}
+{{- if and .Values.pack.enabled (ne .Values.storage.type "ephemeral") }}
 {{- $b := .Values.backend }}
 apiVersion: batch/v1
 kind: CronJob

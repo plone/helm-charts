@@ -1,0 +1,8 @@
+# Traefik routing: Ingress resources for the Ingress provider of Traefik, as on
+# k3s, with Middleware resources for the rewrites of the backend paths.
+routing:
+  type: traefik
+# helm test sends its requests through the Traefik of make cluster-deps, which
+# serves the Ingress resources.
+tests:
+  url: http://traefik.traefik.svc.cluster.local

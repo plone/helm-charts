@@ -1,0 +1,48 @@
+{{- if eq .Values.routing.type "traefik" }}
+{{- $r := .Values.routing }}
+{{- $t := $r.traefik }}
+{{- if .Values.frontend.enabled }}
+# Volto: everything but the API (see traefik-ingress-api.yaml) goes to the frontend.
+{{- else }}
+# Classic UI: everything goes to the backend, rewritten by the Middleware of
+# traefik-middleware.yaml.
+{{- end }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "plone.fullname" . }}
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+  {{- if or $t.annotations (not .Values.frontend.enabled) }}
+  annotations:
+    {{- with $t.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if not .Values.frontend.enabled }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ printf "%s-%s-rewrite@kubernetescrd" .Release.Namespace (include "plone.fullname" .) | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  ingressClassName: {{ $t.className }}
+  {{- with $t.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    - host: {{ $r.hostname | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                {{- if .Values.frontend.enabled }}
+                name: {{ include "plone.routing.frontendService" . }}
+                port:
+                  number: {{ include "plone.routing.frontendPort" . }}
+                {{- else }}
+                name: {{ include "plone.routing.backendService" . }}
+                port:
+                  number: {{ include "plone.routing.backendPort" . }}
+                {{- end }}
+{{- end }}

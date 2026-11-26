@@ -1,0 +1,34 @@
+{{- if and (eq .Values.routing.type "traefik") .Values.frontend.enabled }}
+{{- $r := .Values.routing }}
+{{- $t := $r.traefik }}
+# Volto: API requests go to the backend, rewritten by the Middleware of
+# traefik-middleware.yaml to the Zope virtual host path.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "plone.fullname" . }}-api
+  labels:
+    {{- include "plone.labels" . | nindent 4 }}
+  annotations:
+    {{- with $t.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ printf "%s-%s-api-rewrite@kubernetescrd" .Release.Namespace (include "plone.fullname" .) | quote }}
+spec:
+  ingressClassName: {{ $t.className }}
+  {{- with $t.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    - host: {{ $r.hostname | quote }}
+      http:
+        paths:
+          - path: /++api++
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "plone.routing.backendService" . }}
+                port:
+                  number: {{ include "plone.routing.backendPort" . }}
+{{- end }}

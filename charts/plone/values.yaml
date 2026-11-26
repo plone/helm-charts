@@ -51,6 +51,9 @@ storage:
   #   cluster of this chart (postgresql.enabled), or an external server.
   # zeo: a ZEO server. It's deployed by this chart, unless storage.zeo.address
   #   points to an external one. Set postgresql.enabled to false.
+  # ephemeral: the backend runs its own FileStorage, in the image or in an
+  #   emptyDir, with no ZEO server and no PostgreSQL. Set postgresql.enabled to
+  #   false. All content is lost on each restart and upgrade, see storage.ephemeral.
   type: relstorage
 
   relstorage:
@@ -79,6 +82,16 @@ storage:
     keepHistory: true
     # Size of the blob cache of each backend pod.
     blobCacheSize: 100mb
+
+  # Settings of the ephemeral storage. The backend uses the FileStorage of the
+  # image, under /data, which the image can fill when it is built, with
+  # create-site.
+  ephemeral:
+    # Mount an emptyDir over /data, for an image without data of its own. The
+    # emptyDir hides the content of the image under /data, so it is off by
+    # default.
+    emptyDir:
+      enabled: false
 
   zeo:
     # host:port of an external ZEO server. Leave empty to deploy a ZEO server
@@ -331,10 +344,19 @@ postgresql:
     # enablePDB to true.
     instances: 1
     enablePDB: false
+    # Scheduling of the database pods, passed to the cluster chart: affinity
+    # with nodeSelector, tolerations and affinity rules, for a dedicated node
+    # pool, a priority class, and resources. The affinity keeps the default
+    # topologyKey of the cluster chart.
+    affinity: {}
+    priorityClassName: ""
+    resources: {}
     # Plone only needs the database owner created by initdb.
     enableSuperuserAccess: false
     storage:
       size: 8Gi
+      # Storage class of the data volume. Empty uses the default storage class.
+      storageClass: ""
     initdb:
       database: plone
       owner: plone
@@ -430,6 +452,8 @@ varnish:
 routing:
   # gateway: a Gateway API HTTPRoute attached to an existing Gateway
   # ingress-nginx: Ingress resources with ingress-nginx annotations
+  # traefik: Ingress resources for the Ingress provider of Traefik, with Traefik
+  #   Middleware resources for the rewrites of the backend paths
   # none: no routing resources, bring your own
   type: gateway
   # Public hostname of the site.
@@ -463,6 +487,17 @@ routing:
   # security fixes. Prefer the gateway type for new installations.
   ingressNginx:
     className: nginx
+    annotations: {}
+      # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    tls: []
+    #  - secretName: plone-tls
+    #    hosts:
+    #      - plone.example.com
+
+  # Ingress resources of the Ingress provider of Traefik, such as on k3s, with
+  # Traefik Middleware resources for the rewrites of the backend paths.
+  traefik:
+    className: traefik
     annotations: {}
       # cert-manager.io/cluster-issuer: "letsencrypt-prod"
     tls: []
