@@ -3,6 +3,46 @@ entries:
   plone:
   - apiVersion: v2
     appVersion: 6.2.3
+    created: "2026-11-26T20:23:28.877346077Z"
+    dependencies:
+    - alias: postgresql
+      condition: postgresql.enabled
+      name: cluster
+      repository: oci://ghcr.io/cloudnative-pg/charts
+      version: 0.9.0
+    - alias: varnish
+      condition: varnish.enabled
+      name: varnish-cache
+      repository: oci://registry-1.docker.io/varnish
+      version: 1.10.0
+    description: Beta. Plone 6 with the Volto or Classic UI, on PostgreSQL (RelStorage),
+      ZEO, or ephemeral storage, with optional Varnish, routed with Gateway API, Traefik,
+      or ingress-nginx
+    digest: c77f8b88d2556b027054faa9694e61ccb5f94cb293985bd1f9d6141ac736368e
+    home: https://plone.org
+    keywords:
+    - plone
+    - zope
+    - volto
+    - cms
+    - relstorage
+    - zeo
+    kubeVersion: '>=1.29.0-0'
+    maintainers:
+    - name: fabiorauber
+      url: https://github.com/fabiorauber
+    - email: ericof@plone.org
+      name: ericof
+      url: https://github.com/ericof
+    name: plone
+    sources:
+    - https://github.com/plone/helm-charts/
+    type: application
+    urls:
+    - https://github.com/plone/helm-charts/releases/download/plone-0.4.4/plone-0.4.4.tgz
+    version: 0.4.4
+  - apiVersion: v2
+    appVersion: 6.2.3
     created: "2026-11-26T19:48:39.664943089Z"
     dependencies:
     - alias: postgresql
@@ -222,4 +262,4 @@ entries:
     urls:
     - https://github.com/plone/charts/releases/download/zeoserver-0.1.0/zeoserver-0.1.0.tgz
     version: 0.1.0
-generated: "2026-11-26T19:48:39.66495685Z"
+generated: "2026-11-26T20:23:28.877373707Z"
