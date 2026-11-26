@@ -3,6 +3,16 @@
 The changes of the `plone` chart, by chart version.
 Until 1.0, a minor version can have changes that need action when you upgrade: they are listed under **Breaking changes**, with what to do.
 
+## 0.4.1 (unreleased)
+
+### Changed
+
+- The `cluster` chart of CloudNativePG, a dependency of the chart, comes from its OCI registry, `oci://ghcr.io/cloudnative-pg/charts`, instead of `https://cloudnative-pg.github.io/charts`, with the same version, 0.9.0.
+  Nothing changes for an install from the Helm repository.
+  To install from a checkout of this repository, `helm dependency build ./charts/plone` no longer needs `helm repo add cnpg` first.
+  Dependabot can now watch both dependencies of the chart.
+  [#26](https://github.com/plone/helm-charts/issues/26)
+
 ## 0.4.0 (unreleased)
 
 ### Breaking changes

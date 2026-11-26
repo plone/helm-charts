@@ -22,11 +22,6 @@ jobs:
         with:
           version: v4.3.1
 
-      # Repository of the CloudNativePG cluster chart, a dependency of charts/plone.
-      # The varnish-cache dependency is pulled from an OCI registry.
-      - name: Add chart repositories
-        run: helm repo add cnpg https://cloudnative-pg.github.io/charts
-
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.9.0
         env:
