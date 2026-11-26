@@ -180,6 +180,7 @@ The chart accepts all the other values of that chart under `postgresql` too, see
 | `postgresql.cluster.resources` | `{}` | Resource requests and limits of the database pods. |
 | `postgresql.cluster.initdb.database` | `"plone"` | Name of the database. |
 | `postgresql.cluster.initdb.owner` | `"plone"` | Owner of the database. |
+| `postgresql.cluster.postgresql.parameters.max_connections` | `"100"` | Maximum number of connections to PostgreSQL, the default of PostgreSQL. Raise it with the number of backend pods. Other settings of `postgresql.conf` go in `postgresql.cluster.postgresql.parameters` too, as strings. |
 
 ## `varnish`
 

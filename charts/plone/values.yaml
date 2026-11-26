@@ -360,6 +360,13 @@ postgresql:
     initdb:
       database: plone
       owner: plone
+    # PostgreSQL settings (postgresql.conf), as strings. max_connections is the
+    # default of PostgreSQL, set so that spec.postgresql of the Cluster is never
+    # empty: the cluster chart renders an empty one as null, which the
+    # CloudNativePG schema refuses. Raise it with the number of backend pods.
+    postgresql:
+      parameters:
+        max_connections: "100"
 
 # Varnish cache in front of the backend (varnish-cache chart by Varnish Software).
 # See https://github.com/varnish/helm-varnish-cache for all options.
