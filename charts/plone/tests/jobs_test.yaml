@@ -1,0 +1,184 @@
+# The Job that creates the site, and the CronJob that packs the database.
+suite: jobs
+templates:
+  - templates/site-job.yaml
+  - templates/pack.yaml
+release:
+  name: plone
+  namespace: plone
+set:
+  routing.gateway.name: gw
+tests:
+  - it: creates a Volto site after each install and upgrade
+    template: templates/site-job.yaml
+    asserts:
+      - isKind:
+          of: Job
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-install,post-upgrade
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - create-site
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SITE_ID
+            value: Plone
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TYPE
+            value: volto
+
+  - it: creates a Classic UI site without the frontend
+    template: templates/site-job.yaml
+    set:
+      frontend.enabled: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TYPE
+            value: classic
+
+  - it: passes the profiles and the language only when they are set
+    template: templates/site-job.yaml
+    set:
+      site.profiles: my.addon:default
+      site.defaultLanguage: pt-br
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PROFILES
+            value: my.addon:default
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SITE_DEFAULT_LANGUAGE
+            value: pt-br
+
+  - it: has no site Job when site.create is false
+    template: templates/site-job.yaml
+    set:
+      site.create: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: packs the database every day, keeping 7 days
+    template: templates/pack.yaml
+    asserts:
+      - isKind:
+          of: CronJob
+      - equal:
+          path: spec.schedule
+          value: 15 3 * * *
+      - equal:
+          path: spec.concurrencyPolicy
+          value: Forbid
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].args
+          value:
+            - pack
+            - -d
+            - "7"
+
+  - it: has no pack CronJob when pack.enabled is false
+    template: templates/pack.yaml
+    set:
+      pack.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: packs with the env and the placement of the backend
+    template: templates/pack.yaml
+    set:
+      backend.env:
+        - name: FROM_BACKEND
+          value: "1"
+      pack.env:
+        - name: FROM_PACK
+          value: "1"
+      backend.nodeSelector:
+        pool: plone
+      backend.tolerations:
+        - key: plone
+          operator: Exists
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: FROM_BACKEND
+            value: "1"
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: FROM_PACK
+            value: "1"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.nodeSelector
+          value:
+            pool: plone
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.tolerations[0].key
+          value: plone
+
+  - it: replaces the placement of the backend with the one of pack
+    template: templates/pack.yaml
+    set:
+      backend.nodeSelector:
+        pool: plone
+      pack.nodeSelector:
+        pool: batch
+      pack.timeZone: Europe/Berlin
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.nodeSelector
+          value:
+            pool: batch
+      - equal:
+          path: spec.timeZone
+          value: Europe/Berlin
+
+  - it: leaves the time zone to the cluster by default
+    template: templates/pack.yaml
+    asserts:
+      - notExists:
+          path: spec.timeZone
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.nodeSelector
+
+  - it: gives the site Job the storage, then backend.env
+    template: templates/site-job.yaml
+    set:
+      backend.env:
+        - name: EXTRA
+          value: "1"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[2].name
+          value: PGDATABASE
+      - equal:
+          path: spec.template.spec.containers[0].env[7].name
+          value: RELSTORAGE_BLOB_CACHE_SIZE
+      - equal:
+          path: spec.template.spec.containers[0].env[8]
+          value:
+            name: EXTRA
+            value: "1"
+
+  - it: gives the site Job the address of the ZEO server
+    template: templates/site-job.yaml
+    set:
+      storage.type: zeo
+      postgresql.enabled: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ZEO_ADDRESS
+            value: plone-zeo:8100

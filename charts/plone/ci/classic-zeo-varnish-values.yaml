@@ -1,0 +1,17 @@
+# Classic UI, ZEO server of the chart, Varnish, Gateway API.
+frontend:
+  enabled: false
+storage:
+  type: zeo
+postgresql:
+  enabled: false
+varnish:
+  enabled: true
+routing:
+  gateway:
+    # The Gateway of Traefik, installed by make cluster-deps.
+    name: traefik-gateway
+    namespace: traefik
+# helm test sends its requests through Traefik.
+tests:
+  url: http://traefik.traefik.svc.cluster.local

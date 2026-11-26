@@ -8,19 +8,12 @@ Expand the name of the chart.
 {{/*
 Prefix of the resource names: the release name, unless overridden.
 The components are named <fullname>-backend, <fullname>-frontend, and so on.
-Truncated so that <fullname>-backend fits the 52 characters of a StatefulSet
-name, whose pods have a label with the name and a hash.
+Truncated at 44 characters, so that the component names fit the 52 characters
+of a StatefulSet name, such as the one of the ZEO server, whose pods have a
+label with the name and a hash.
 */}}
 {{- define "plone.fullname" -}}
 {{- default .Release.Name .Values.fullnameOverride | trunc 44 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
-plone.fullname for the VCL of Varnish, which is rendered by the varnish-cache
-chart, with its values: of the values of this chart, it only has the global ones.
-*/}}
-{{- define "plone.vcl.fullname" -}}
-{{- default .Release.Name .Values.global.plone.fullnameOverride | trunc 44 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
@@ -74,23 +67,14 @@ Validate the combination of values.
 {{- if not (has .Values.routing.type $routingTypes) -}}
 {{- fail (printf "routing.type must be one of %s, got %q" (join ", " $routingTypes) .Values.routing.type) -}}
 {{- end -}}
-{{- if and .Values.varnish.enabled (ne (.Values.frontend.enabled | toString) (.Values.varnish.ploneFrontend | toString)) -}}
-{{- fail (printf "varnish.ploneFrontend must match frontend.enabled, so that the VCL of Varnish uses the frontend only when it exists: set varnish.ploneFrontend to %v" .Values.frontend.enabled) -}}
-{{- end -}}
 {{- if .Values.varnish.enabled -}}
-{{- $g := .Values.global.plone -}}
-{{- if ne (include "plone.fullname" .) (include "plone.vcl.fullname" .) -}}
-{{- fail (printf "global.plone.fullnameOverride must match fullnameOverride, so that the VCL of Varnish finds the Services: set global.plone.fullnameOverride to %q" .Values.fullnameOverride) -}}
-{{- end -}}
-{{- if ne (.Values.backend.service.port | toString) ($g.backendPort | toString) -}}
-{{- fail (printf "global.plone.backendPort must match backend.service.port, so that the VCL of Varnish finds the Service: set global.plone.backendPort to %v" .Values.backend.service.port) -}}
-{{- end -}}
-{{- if and .Values.frontend.enabled (ne (.Values.frontend.service.port | toString) ($g.frontendPort | toString)) -}}
-{{- fail (printf "global.plone.frontendPort must match frontend.service.port, so that the VCL of Varnish finds the Service: set global.plone.frontendPort to %v" .Values.frontend.service.port) -}}
+{{- $s := .Values.varnish.server -}}
+{{- if or $s.vclConfig (hasKey ($s.vclConfigs | default dict) (base $s.vclConfigPath)) -}}
+{{- fail "Set the VCL of Varnish with varnish.vcl, which is rendered with the values of this chart, instead of varnish.server.vclConfig or varnish.server.vclConfigs" -}}
 {{- end -}}
 {{- end -}}
 {{- if and (eq .Values.routing.type "gateway") (not .Values.routing.gateway.name) (empty .Values.routing.gateway.parentRefs) -}}
-{{- fail "routing.gateway.name is required with routing.type gateway: set it to the Gateway that serves the site (see https://github.com/plone/helm-charts#gateway-api), or set routing.type to none" -}}
+{{- fail "routing.gateway.name is required with routing.type gateway: set it to the Gateway that serves the site (see https://plone.github.io/helm-charts/how-to/attach-to-gateway.html), or set routing.type to none" -}}
 {{- end -}}
 {{- if eq .Values.storage.type "relstorage" -}}
 {{- if and (not .Values.postgresql.enabled) (or (not .Values.storage.relstorage.host) (not .Values.storage.relstorage.secret.name)) -}}
@@ -99,6 +83,132 @@ Validate the combination of values.
 {{- else if .Values.postgresql.enabled -}}
 {{- fail "storage.type zeo doesn't use PostgreSQL: set postgresql.enabled to false" -}}
 {{- end -}}
+{{- range $name := list "backend" "frontend" -}}
+{{- $c := index $.Values $name -}}
+{{- if and $c.preStopSleepSeconds (le (int $c.terminationGracePeriodSeconds) (int $c.preStopSleepSeconds)) -}}
+{{- fail (printf "%s.terminationGracePeriodSeconds must be longer than %s.preStopSleepSeconds, which it includes" $name $name) -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Grace period and preStop sleep of a pod, see preStopSleepSeconds in values.yaml.
+The sleep keeps the pod serving while it leaves the endpoints of its Service.
+Takes the values of the component: backend or frontend.
+*/}}
+{{- define "plone.terminationGracePeriod" -}}
+terminationGracePeriodSeconds: {{ .terminationGracePeriodSeconds }}
+{{- end }}
+
+{{- define "plone.preStop" -}}
+{{- with .preStopSleepSeconds }}
+lifecycle:
+  preStop:
+    exec:
+      command: ["sleep", "{{ . }}"]
+{{- end }}
+{{- end }}
+
+{{/*
+Secret and key of the password of the admin user of the Zope root:
+site.admin.existingSecret, or the Secret that the chart generates.
+*/}}
+{{- define "plone.admin.secretName" -}}
+{{- .Values.site.admin.existingSecret | default (printf "%s-admin" (include "plone.fullname" .)) -}}
+{{- end }}
+
+{{- define "plone.admin.secretKey" -}}
+{{- ternary .Values.site.admin.passwordKey "password" (not (empty .Values.site.admin.existingSecret)) -}}
+{{- end }}
+
+{{/*
+Init container that writes the inituser file of Zope, with the admin password
+of the Secret. At each start, while the Zope root has its own user folder,
+Zope replaces the admin user with the one of /app/inituser: without this, a new
+database would get the password "admin" of the inituser file of the image.
+Creating a Plone site replaces that user folder with a PluggableAuthService,
+which ignores inituser: from then on, the Job <release>-admin sets the
+password. Zope splits the line on colons and strips spaces, so the password
+can't have a colon, or start or end with a space.
+*/}}
+{{- define "plone.admin.initContainer" -}}
+{{- $b := .Values.backend -}}
+- name: admin-password
+  image: "{{ $b.image.repository }}:{{ $b.image.tag | default .Chart.AppVersion }}"
+  imagePullPolicy: {{ $b.image.pullPolicy }}
+  {{- with $b.securityContext }}
+  securityContext:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  command:
+    - /bin/sh
+    - -c
+    - |
+      case "$ADMIN_PASSWORD" in
+        "" | *:* | " "* | *" ")
+          echo "The admin password in the Secret {{ include "plone.admin.secretName" . }} must not be empty, have a colon (:), or start or end with a space." >&2
+          exit 1 ;;
+      esac
+      printf 'admin:%s\n' "$ADMIN_PASSWORD" > /admin/inituser
+  # Small, fixed resources: the container only runs the shell above. Without
+  # them, a namespace whose ResourceQuota requires requests or limits would
+  # reject the pod. They don't add to the requests of the pod, which are the
+  # larger of its init containers and the sum of its containers.
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 100m
+      memory: 32Mi
+  env:
+    - name: ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "plone.admin.secretName" . }}
+          key: {{ include "plone.admin.secretKey" . }}
+  volumeMounts:
+    - name: admin
+      mountPath: /admin
+{{- end }}
+
+{{/*
+Volume and mount of the inituser file written by plone.admin.initContainer. The
+volume is in memory, so that the password isn't written to the node's disk.
+*/}}
+{{- define "plone.admin.volume" -}}
+- name: admin
+  emptyDir:
+    medium: Memory
+    sizeLimit: 1Mi
+{{- end }}
+
+{{- define "plone.admin.volumeMount" -}}
+- name: admin
+  mountPath: /app/inituser
+  subPath: inituser
+  readOnly: true
+{{- end }}
+
+{{/*
+Name of the ServiceAccount of the pods: serviceAccount.name, or the fullname
+when the chart creates it, or the default ServiceAccount of the namespace.
+*/}}
+{{- define "plone.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+{{- .Values.serviceAccount.name | default (include "plone.fullname" .) -}}
+{{- else -}}
+{{- .Values.serviceAccount.name | default "default" -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+ServiceAccount fields of the pod specs. Plone doesn't use the Kubernetes API,
+so the token isn't mounted by default.
+*/}}
+{{- define "plone.serviceAccount" -}}
+serviceAccountName: {{ include "plone.serviceAccountName" . }}
+automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
 {{- end }}
 
 {{/*
@@ -114,7 +224,9 @@ true
 Environment variables that configure the storage of the plone-backend image.
 */}}
 {{- define "plone.storageEnv" -}}
-{{- /* The password can't have ' or \, see docs/how-to/use-external-postgresql.md. */ -}}
+{{- /* The database name, user, and password go to libpq in PGDATABASE, PGUSER,
+and PGPASSWORD, instead of the DSN, where a quote or a backslash would break
+the connection string. */ -}}
 {{- if eq .Values.storage.type "relstorage" -}}
 {{- $r := .Values.storage.relstorage -}}
 {{- $cluster := include "plone.dependencyFullname" (dict "context" . "name" "postgresql" "values" .Values.postgresql) -}}
@@ -125,27 +237,27 @@ Environment variables that configure the storage of the plone-backend image.
 {{- $defaultKeys = dict "database" "dbname" "user" "username" "password" "password" -}}
 {{- end -}}
 {{- $keys := merge (deepCopy ($r.secret.keys | default dict)) $defaultKeys -}}
-- name: DBHOST
-  value: {{ $host | quote }}
-- name: DBPORT
-  value: {{ $r.port | quote }}
-- name: DBNAME
+- name: PGDATABASE
   valueFrom:
     secretKeyRef:
       name: {{ $secret }}
       key: {{ $keys.database }}
-- name: DBUSER
+- name: PGUSER
   valueFrom:
     secretKeyRef:
       name: {{ $secret }}
       key: {{ $keys.user }}
-- name: DBPASSWORD
+- name: PGPASSWORD
   valueFrom:
     secretKeyRef:
       name: {{ $secret }}
       key: {{ $keys.password }}
+{{- with $r.sslmode }}
+- name: PGSSLMODE
+  value: {{ . | quote }}
+{{- end }}
 - name: RELSTORAGE_DSN
-  value: "host='$(DBHOST)' port='$(DBPORT)' dbname='$(DBNAME)' user='$(DBUSER)' password='$(DBPASSWORD)'"
+  value: {{ printf "host='%s' port='%v'" $host $r.port | quote }}
 - name: RELSTORAGE_KEEP_HISTORY
   value: {{ $r.keepHistory | quote }}
 - name: RELSTORAGE_BLOB_CACHE_SIZE
@@ -156,6 +268,47 @@ Environment variables that configure the storage of the plone-backend image.
 - name: ZEO_CLIENT_CACHE_SIZE
   value: {{ .Values.storage.zeo.clientCacheSize | quote }}
 {{- end -}}
+{{- end }}
+
+{{/*
+Default VCL of Varnish. It sends the requests to the backend and frontend
+Services, which balance the connections of Varnish between their pods.
+*/}}
+{{- define "plone.varnish.defaultVcl" -}}
+vcl 4.1;
+
+# The Plone backend: the API requests with Volto, all requests with the
+# Classic UI.
+backend plone {
+    .host = "{{ include "plone.fullname" . }}-backend";
+    .port = "{{ .Values.backend.service.port }}";
+}
+{{- if .Values.frontend.enabled }}
+
+# The Volto frontend: the pages and static assets of the site.
+backend volto {
+    .host = "{{ include "plone.fullname" . }}-frontend";
+    .port = "{{ .Values.frontend.service.port }}";
+}
+{{- end }}
+
+sub vcl_recv {
+    {{- if .Values.frontend.enabled }}
+    # The routing rewrites the API requests to Zope virtual host paths.
+    if (req.url ~ "^/VirtualHostBase/") {
+        set req.backend_hint = plone;
+    } else {
+        set req.backend_hint = volto;
+        # The static assets of Volto don't depend on cookies, which
+        # would prevent caching them.
+        if (req.url ~ "^/static/") {
+            unset req.http.Cookie;
+        }
+    }
+    {{- else }}
+    set req.backend_hint = plone;
+    {{- end }}
+}
 {{- end }}
 
 {{/*

@@ -7,48 +7,99 @@ It serves the REST API for the Volto frontend, or the whole site with the Classi
 
 | Resource | Name | Created when |
 |---|---|---|
-| StatefulSet | `<release>-backend` | always |
+| Deployment | `<release>-backend` | always |
 | Service | `<release>-backend`, port 8080, port name `http` | always |
-| Headless service | `<release>-backend-director`, port 8080 | always |
 | PodDisruptionBudget | `<release>-backend` | `backend.replicas` is more than 1, and `backend.podDisruptionBudget.enabled` is `true` |
+| Secret | `<release>-admin`, key `password` | `site.admin.existingSecret` is empty |
 
-The headless service is the governing service that StatefulSets require.
-It gives each pod a stable DNS name, `<release>-backend-<n>.<release>-backend-director`.
+A rollout starts a new pod, and waits for it to be ready, before it stops an old one: `backend.updateStrategy` is a `RollingUpdate` with `maxSurge: 1` and `maxUnavailable: 0`.
+See [Why the backend is a Deployment](../explanation/architecture.md#why-the-backend-is-a-deployment), and [What a rolling update costs](../explanation/architecture.md#what-a-rolling-update-costs) for when to use `Recreate` instead.
+
+A stopping pod sleeps for `backend.preStopSleepSeconds`, 5 seconds, before it gets `SIGTERM`, with a `preStop` hook that runs `sleep`.
+`backend.terminationGracePeriodSeconds`, 30 seconds, must be longer, or the chart fails.
+See [Stopping a pod without failing requests](../explanation/architecture.md#stopping-a-pod-without-failing-requests).
 
 ## Image
 
 | Value | Default |
 |---|---|
 | `backend.image.repository` | `docker.io/plone/plone-backend` |
-| `backend.image.tag` | the `appVersion` of the chart, `6.2.2` |
+| `backend.image.tag` | the `appVersion` of the chart, `6.2.3` |
 | `backend.image.pullPolicy` | `IfNotPresent` |
+
+### Image versions
+
+A release of the chart sets its `appVersion` to the latest release of Plone at the time, and the backend uses the image with that tag, unless `backend.image.tag` is set.
+So upgrading the chart upgrades Plone, and you can stay on a version of Plone by setting `backend.image.tag`.
+The frontend and ZEO images have their own tags, in `frontend.image.tag` and `storage.zeo.server.image.tag`.
+The three tags accept a string or a number, but quote a tag that looks like a number: YAML reads `6.10` as `6.1`, see [Quote tags that look like numbers](../how-to/use-custom-images.md#quote-tags-that-look-like-numbers).
+
+The Plone images are rebuilt with the same tag, for example to update their base image.
+With `pullPolicy: IfNotPresent`, a node keeps the image it pulled first, so two nodes can run different builds of the same tag.
+To run exactly one build, add its digest to the tag, which Kubernetes then uses instead of the tag:
+
+```yaml
+backend:
+  image:
+    tag: "6.2.3@sha256:a930828ea46b3ff134e3df1fb17d11a0ac61bf4fddef8df4f486a806acbe8b34"
+```
+
+To get the digest of a tag, run `docker buildx imagetools inspect docker.io/plone/plone-backend:6.2.3`.
 
 ## Environment variables
 
 The chart sets these variables on the backend container:
 
+| Variable | Value |
+|---|---|
+| `ZODB_CACHE_SIZE` | `backend.zodbCacheSize` |
+
+It sets these ones on the site Job, see [Site creation](#site-creation):
+
 | Variable | Value | Set when |
 |---|---|---|
-| `SITE` | `site.id` | `site.create` is `true` |
-| `TYPE` | `volto` with the frontend, `classic` without it | `site.create` is `true` |
-| `PROFILES` | `site.profiles` | `site.create` is `true`, and `site.profiles` isn't empty |
-| `SITE_DEFAULT_LANGUAGE` | `site.defaultLanguage` | `site.create` is `true`, and `site.defaultLanguage` isn't empty |
-| `ZODB_CACHE_SIZE` | `backend.zodbCacheSize` | always |
+| `SITE_ID` | `site.id` | always |
+| `TYPE` | `volto` with the frontend, `classic` without it | always |
+| `PROFILES` | `site.profiles` | `site.profiles` isn't empty |
+| `SITE_DEFAULT_LANGUAGE` | `site.defaultLanguage` | `site.defaultLanguage` isn't empty |
 
-The storage variables depend on `storage.type`.
-With RelStorage, the chart sets `DBHOST`, `DBPORT`, `DBNAME`, `DBUSER`, `DBPASSWORD`, `RELSTORAGE_DSN`, `RELSTORAGE_KEEP_HISTORY`, and `RELSTORAGE_BLOB_CACHE_SIZE`.
+The backend container and the site Job both get the storage variables, which depend on `storage.type`.
+With RelStorage, the chart sets `RELSTORAGE_DSN` with the host and the port, `PGDATABASE`, `PGUSER`, and `PGPASSWORD` from the secret, which libpq reads for the values that the DSN doesn't have, `PGSSLMODE` when `storage.relstorage.sslmode` is set, `RELSTORAGE_KEEP_HISTORY`, and `RELSTORAGE_BLOB_CACHE_SIZE`.
 With ZEO, it sets `ZEO_ADDRESS` and `ZEO_CLIENT_CACHE_SIZE`.
 See [Storage](storage.md).
 
-The `backend.env` list adds more variables, after the ones above.
+The `backend.env` list adds more variables to both, after the ones above.
 
 ## Probes
 
 | Probe | Request | Period | Timeout | Failure threshold |
 |---|---|---|---|---|
-| Startup | `GET /` on `http` | 10 seconds | 15 seconds | 60, so up to 10 minutes for the first start |
-| Readiness | `GET /` on `http` | 10 seconds | 15 seconds | 3 |
-| Liveness | `GET /` on `http` | 10 seconds | 15 seconds | 3 |
+| Startup | `GET /ok` on `http` | 10 seconds | 5 seconds | 60, so up to 10 minutes for the first start |
+| Readiness | `GET /ok` on `http` | 10 seconds | 5 seconds | 3 |
+| Liveness | TCP connection to `http` | 10 seconds | 5 seconds | 6 |
+
+`/ok` is the health check of the `plone-backend` image: a view of the Zope root that returns `OK` without rendering a page, so it stays cheap on a busy site.
+The liveness probe restarts a pod only when Zope no longer accepts connections, as a busy pod, or one waiting for a slow database, can be slow to answer HTTP requests.
+While the database is stopped or doesn't answer, `/ok` fails or times out, but the pod recovers by itself within seconds once the database is back: restarting it would only add a cold cache to the wait.
+
+What the TCP probe doesn't catch is a pod whose worker threads are all stuck for a reason inside the pod, such as a deadlock, or an add-on that calls an external service without a timeout.
+Zope still accepts connections, so the pod stays up and keeps failing its readiness probe, until someone restarts it.
+To restart such a pod, probe `/ok` instead:
+
+```yaml
+backend:
+  livenessProbe:
+    tcpSocket: null  # removes the default TCP check: a probe has one handler
+    httpGet:
+      path: /ok
+      port: http
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 10  # about 5 minutes without a free worker
+```
+
+The cost: during a database outage longer than about 5 minutes, this restarts the backend pods, and the site comes back more slowly once the database does, as the new pods wait for it and then start with a cold cache.
+The `plone-backend` image runs 2 worker threads, so two slow requests also keep `/ok` waiting.
 
 ## Site creation
 
@@ -64,6 +115,23 @@ With `site.create` set to `true` (default), the chart creates the Job `<release>
 
 The backend pods only serve the site, and don't go through the site creation of the `plone-backend` image, which isn't meant for production.
 `site.profiles` and `site.defaultLanguage` only apply when the site is created.
+
+## Admin password
+
+The chart sets the password of the `admin` user of the Zope root, from the Secret `site.admin.existingSecret`, or the Secret `<release>-admin` that the chart generates.
+
+| Setting | Value |
+|---|---|
+| Job | `<release>-admin`, a Helm hook after each install and upgrade, after the site Job, runs `files/set-admin-password.py` from the ConfigMap `<release>-admin` |
+| Init container | `admin-password`, with the backend image, writes `admin:<password>` to the `admin` volume, in the backend pods and the site Job |
+| `admin` volume | `emptyDir` in memory, mounted at `/app/inituser`, the `inituser` file of Zope |
+| Generated password | 32 random letters and digits, kept on upgrades |
+| Password rules | not empty, no colon, no space at the start or the end; the init container fails otherwise |
+
+At each start, while the Zope root has its own user folder, Zope replaces the `admin` user with the one of `inituser`, so that a new database never accepts the password `admin`.
+Creating a Plone site replaces that user folder with a PluggableAuthService, which ignores `inituser`.
+From then on, the Job sets the password, in the `users` plugin of the Zope root: it creates the `admin` user if it doesn't exist, and doesn't change the other users.
+See [How to change the admin password](../how-to/change-admin-password.md).
 
 ## Volume
 

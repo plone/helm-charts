@@ -25,6 +25,21 @@ frontend:
     tag: "1.0.0"
 ```
 
+## Quote tags that look like numbers
+
+In a values file, quote every image tag that looks like a number, such as `"6.10"` or `"18"`.
+YAML reads an unquoted `tag: 6.10` as the number 6.1, so the chart pulls the image `6.1` instead of `6.10`, without an error.
+This holds for `backend.image.tag`, `frontend.image.tag`, and `storage.zeo.server.image.tag`.
+
+```yaml
+backend:
+  image:
+    tag: "6.10"
+```
+
+On the command line, `--set backend.image.tag=6.10` keeps the tag as written.
+Use `--set-string` to be sure that Helm never reads a tag as a number.
+
 ## Set environment variables
 
 The `env` lists of the backend and the frontend add environment variables to their containers:

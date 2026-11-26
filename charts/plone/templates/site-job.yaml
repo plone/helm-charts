@@ -21,6 +21,7 @@ spec:
       labels:
         {{- include "plone.selectorLabels" (dict "context" . "component" "site") | nindent 8 }}
     spec:
+      {{- include "plone.serviceAccount" . | nindent 6 }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -30,6 +31,10 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       restartPolicy: Never
+      # The Job starts Zope too, which would restore the default admin password
+      # without the inituser file.
+      initContainers:
+        {{- include "plone.admin.initContainer" . | nindent 8 }}
       containers:
         - name: site
           image: "{{ $b.image.repository }}:{{ $b.image.tag | default .Chart.AppVersion }}"
@@ -62,9 +67,11 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            {{- include "plone.admin.volumeMount" . | nindent 12 }}
       volumes:
         - name: data
           emptyDir: {}
+        {{- include "plone.admin.volume" . | nindent 8 }}
       {{- with $b.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

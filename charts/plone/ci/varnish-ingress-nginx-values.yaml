@@ -6,3 +6,7 @@ varnish:
   enabled: true
 routing:
   type: ingress-nginx
+# helm test sends its requests through the ingress-nginx controller, installed by
+# make cluster-deps.
+tests:
+  url: http://ingress-nginx-controller.ingress-nginx.svc.cluster.local

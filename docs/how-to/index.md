@@ -131,7 +131,7 @@ Set the site id, the add-on profiles, and the default language.
 :link: change-admin-password
 :link-type: doc
 
-Replace the default password of the `admin` user.
+Read, set, or change the password of the `admin` user.
 :::
 
 :::{grid-item-card} 🐘 Configure the PostgreSQL cluster
@@ -146,6 +146,13 @@ Size, replicate, and back up the CloudNativePG cluster.
 :link-type: doc
 
 Schedule the pack job, and keep the history you need for undo.
+:::
+
+:::{grid-item-card} ✅ Check an installation
+:link: check-the-installation
+:link-type: doc
+
+Run the checks of the chart with `helm test`, through the routing if you want.
 :::
 
 ::::
@@ -213,6 +220,7 @@ configure-the-site
 change-admin-password
 configure-postgresql
 pack-the-database
+check-the-installation
 scale-and-high-availability
 cache-with-varnish
 customize-varnish-vcl

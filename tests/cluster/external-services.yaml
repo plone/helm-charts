@@ -1,0 +1,76 @@
+# External servers of the external-postgresql and external-zeo scenarios in
+# charts/plone/ci, applied by make cluster-deps in the namespace of
+# make test-install. The chart doesn't manage them.
+
+# A PostgreSQL cluster of the CloudNativePG operator, outside the chart: its
+# Service is external-postgresql-rw, and its Secret external-postgresql-app.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: external-postgresql
+spec:
+  instances: 1
+  storage:
+    size: 1Gi
+  bootstrap:
+    initdb:
+      database: plone
+      owner: plone
+---
+# A ZEO server, without persistence.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-zeo
+  labels:
+    app.kubernetes.io/name: external-zeo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: external-zeo
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: external-zeo
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 500
+        runAsGroup: 500
+        fsGroup: 500
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: zeo
+          image: docker.io/plone/plone-zeo:6.0.0
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: zeo
+              containerPort: 8100
+          readinessProbe:
+            tcpSocket:
+              port: zeo
+            periodSeconds: 5
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-zeo
+spec:
+  selector:
+    app.kubernetes.io/name: external-zeo
+  ports:
+    - name: zeo
+      port: 8100
+      targetPort: zeo

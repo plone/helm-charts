@@ -9,6 +9,9 @@ A single chart covers the common ways to run Plone, selected with a few values:
 * **Cache:** an optional Varnish cache in front of the site
 * **Routing:** a Gateway API HTTPRoute (default), Ingress resources for ingress-nginx, or none
 
+The chart is in **beta**: its defaults install a minimal site without backups, and some operations, such as backups and upgrades, aren't covered yet.
+See [what isn't covered yet](https://plone.github.io/helm-charts/#beta).
+
 ## Quick start
 
 The default scenario needs the [CloudNativePG operator](https://plone.github.io/helm-charts/how-to/install-cloudnativepg.html).
@@ -25,7 +28,11 @@ kubectl port-forward --namespace plone service/plone-frontend 3000:3000
 ```
 
 A Job creates the Plone site after the install, which takes a few minutes, and `helm install` waits for it.
-Then open http://localhost:3000.
+Then open http://localhost:3000, and log in as `admin`, with the password that the chart generated:
+
+```shell
+kubectl get secret --namespace plone plone-admin -o jsonpath='{.data.password}' | base64 -d
+```
 
 ## Documentation
 

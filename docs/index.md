@@ -15,6 +15,20 @@ Version {{ chart_version }} of the chart installs Plone {{ plone_version }} by d
 These pages follow the [Diátaxis](https://diataxis.fr) framework, so that each page does one job.
 If you install Plone on Kubernetes for the first time, start with the tutorial.
 
+(beta)=
+
+:::{warning}
+The chart is in beta.
+Its defaults install a minimal site, with one PostgreSQL instance, one backend, and one frontend, and no backups.
+These aren't covered yet:
+
+* backups and their restore, for [PostgreSQL](https://github.com/plone/helm-charts/issues/48) and [ZEO](https://github.com/plone/helm-charts/issues/49)
+* [upgrades](https://github.com/plone/helm-charts/issues/55) of the chart and of Plone
+* a [guide for production](https://github.com/plone/helm-charts/issues/54)
+
+Until 1.0, a minor version of the chart can bring changes that need action when you upgrade.
+:::
+
 ::::{grid} 1 1 2 2
 :gutter: 3
 

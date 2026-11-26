@@ -6,12 +6,13 @@ It uses `zodbpack` with RelStorage, and `zeopack` with ZEO.
 
 ## Change the schedule
 
-The job runs every day at 09:45 by default.
-To change it, set `pack.schedule` to a cron expression:
+The job runs every night at 03:15 by default.
+To change it, set `pack.schedule` to a cron expression, and `pack.timeZone` to its time zone, which is the one of the Kubernetes controller manager by default, usually UTC:
 
 ```yaml
 pack:
-  schedule: "45 9 * * *"
+  schedule: "15 3 * * *"
+  timeZone: Europe/Berlin
 ```
 
 ## Keep the history of the last days
@@ -34,10 +35,24 @@ Keep `pack.activeDeadlineSeconds` below the interval of `pack.schedule`, so that
 
 ```yaml
 pack:
-  schedule: "45 9 * * *"
+  schedule: "15 3 * * *"
   activeDeadlineSeconds: 82800
   backoffLimit: 1
 ```
+
+## Run the job on other nodes
+
+The job runs on the same nodes as the backend: it uses `backend.nodeSelector`, `backend.tolerations`, and `backend.affinity`, so that it reaches the database as the backend does.
+To run it elsewhere, set `pack.nodeSelector`, `pack.tolerations`, or `pack.affinity`, which replace the ones of the backend:
+
+```yaml
+pack:
+  nodeSelector:
+    node-role.example.org/batch: "true"
+```
+
+The job also gets the environment variables of `backend.env`.
+Add more with `pack.env`.
 
 ## Turn packing off
 

@@ -23,42 +23,19 @@ For what Varnish caches by default, see [Varnish](../reference/varnish.md).
 
 ## Use Varnish with the Classic UI
 
-With the Classic UI, also set `varnish.ploneFrontend` to `false`.
-The default VCL can't read the values of this chart, such as `frontend.enabled`, so it needs this value to know that the frontend doesn't exist:
+With the Classic UI, enable Varnish the same way.
+The default VCL follows `frontend.enabled`, and sends all the requests to the backend when there is no frontend:
 
 ```shell
 helm install plone plone/plone --namespace plone --create-namespace \
     --set frontend.enabled=false \
     --set varnish.enabled=true \
-    --set varnish.ploneFrontend=false \
     --set routing.hostname=plone.example.com \
     --set routing.gateway.name=<gateway> \
     --set routing.gateway.namespace=<gateway-namespace>
 ```
 
-The chart fails with an explanation when `varnish.ploneFrontend` doesn't match `frontend.enabled`.
-
-## Change the Service names or ports
-
-For the same reason, the VCL gets the Services from the global values, the only ones that the two charts share.
-If you change `fullnameOverride`, `backend.service.port`, or `frontend.service.port`, set the same value in `global.plone`:
-
-```yaml
-fullnameOverride: web
-backend:
-  service:
-    port: 80
-frontend:
-  service:
-    port: 81
-global:
-  plone:
-    fullnameOverride: web
-    backendPort: 80
-    frontendPort: 81
-```
-
-The chart fails with an explanation when they don't match.
+The VCL also follows `fullnameOverride`, `backend.service.port`, and `frontend.service.port`, so there is nothing else to set when you change them.
 
 ## Run more Varnish pods
 

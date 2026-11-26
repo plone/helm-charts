@@ -31,9 +31,28 @@ jobs:
         with:
           version: 3.15.0
 
+      # The steps run the make targets that run the same checks locally, see
+      # the Tests section of the README.
+
+      # Merging to main publishes the version of Chart.yaml, unless it is
+      # published already: a pull request to main that changes the chart must
+      # increase it. The pull requests stacked on another branch don't.
+      - name: Check the version of the chart
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        run: make check-version BASE=origin/main
+
       # Lints the chart once per scenario in charts/plone/ci.
       - name: Run chart-testing (lint)
-        run: ct lint --all --chart-dirs charts --chart-repos cnpg=https://cloudnative-pg.github.io/charts
+        run: make lint
+
+      # The unit tests of the templates, in charts/plone/tests.
+      - name: Run the unit tests
+        run: make test-unit
+
+      # The manifests of each scenario, against the schemas of the oldest
+      # supported and the newest Kubernetes versions.
+      - name: Validate the manifests
+        run: make test-manifests
 
       - name: Create kind cluster
         uses: helm/kind-action@v1.15.2
@@ -42,17 +61,22 @@ jobs:
           node_image: kindest/node:v1.37.0
           kubectl_version: v1.37.2
 
-      # The PostgreSQL clusters of the relstorage scenarios are managed by the CloudNativePG operator.
-      - name: Install CloudNativePG operator
-        run: |
-          helm repo add cnpg https://cloudnative-pg.github.io/charts
-          helm upgrade --install cnpg cnpg/cloudnative-pg --version 0.29.1 --namespace cnpg-system --create-namespace --wait
+      # The CloudNativePG operator, the Gateway API CRDs, Traefik with a
+      # Gateway, and the ingress-nginx controller.
+      - name: Install the cluster dependencies
+        run: make cluster-deps
 
-      # The gateway routing creates an HTTPRoute.
-      - name: Install Gateway API CRDs
-        run: kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.7.0/standard-install.yaml
+      # Installs the chart once per scenario in charts/plone/ci, with
+      # tests/install.sh, in a namespace that enforces the restricted Pod
+      # Security profile. Helm waits for the Job that creates the Plone site
+      # after the install, which takes a few minutes. Then helm test runs the
+      # checks of templates/test-smoke.yaml through the routing: the home page,
+      # the public URL in the API, the admin password, and the Varnish cache.
+      # Last, it runs the pack CronJob once.
+      - name: Install each scenario and run helm test
+        run: make test-install
 
-      # Installs the chart once per scenario in charts/plone/ci. The backend creates
-      # the Plone site on its first start, which takes a few minutes.
-      - name: Run chart-testing (install)
-        run: ct install --all --chart-dirs charts --chart-repos cnpg=https://cloudnative-pg.github.io/charts --helm-extra-args "--timeout 15m"
+      # Installs the last published release, creates a page and a file,
+      # upgrades to the chart of the pull request, and checks them.
+      - name: Test the upgrade from the last release
+        run: make test-upgrade

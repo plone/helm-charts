@@ -3,6 +3,11 @@
 This page describes the values of the chart.
 The defaults are the ones of [`charts/plone/values.yaml`](../../charts/plone/values.yaml), written as YAML.
 Values that aren't set by default are marked as not set.
+The documentation CI checks that this page has a row for every value, with its default.
+
+The chart has a [JSON schema of its values](../../charts/plone/values.schema.json), which Helm checks before it renders the chart.
+It refuses keys that the chart doesn't have, such as `backend.replica` instead of `backend.replicas`, and values of the wrong type.
+Under `postgresql` and `varnish`, only the keys of this page are checked: the other ones belong to the `cluster` and `varnish-cache` charts.
 
 ## Top-level values
 
@@ -11,17 +16,10 @@ Values that aren't set by default are marked as not set.
 | `nameOverride` | `""` | Overrides the chart name in the labels of the resources. |
 | `fullnameOverride` | `""` | Overrides the prefix of the resource names, which is the release name by default. |
 | `imagePullSecrets` | `[]` | Pull secrets of all the pods. |
-
-## `global`
-
-The VCL of Varnish only reads the global values, see [Varnish](varnish.md#the-services-in-global-values).
-With `varnish.enabled`, the chart fails if they don't match the values they mirror.
-
-| Key | Default | Description |
-|---|---|---|
-| `global.plone.fullnameOverride` | `""` | Must match `fullnameOverride`. |
-| `global.plone.backendPort` | `8080` | Must match `backend.service.port`. |
-| `global.plone.frontendPort` | `3000` | Must match `frontend.service.port`. |
+| `serviceAccount.create` | `true` | Creates the ServiceAccount `<release>` for the pods of the chart. |
+| `serviceAccount.name` | `""` | Name of the ServiceAccount. Defaults to `<release>` when the chart creates it, and to the `default` ServiceAccount of the namespace otherwise. |
+| `serviceAccount.annotations` | `{}` | Annotations of the ServiceAccount. |
+| `serviceAccount.automountServiceAccountToken` | `false` | Mounts the token of the ServiceAccount in the pods. Plone doesn't use the Kubernetes API. |
 
 ## `site`
 
@@ -31,6 +29,8 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `site.create` | `true` | Creates the site, if it doesn't exist yet, with a Job that runs after each install and upgrade. Its type follows `frontend.enabled`. |
 | `site.profiles` | `""` | Add-on profiles to apply when creating the site, comma separated. |
 | `site.defaultLanguage` | `""` | Default language of the site, such as `en` or `pt-br`. |
+| `site.admin.existingSecret` | `""` | Secret with the password of the `admin` user of the Zope root. Empty generates a random password into the Secret `<release>-admin`, kept on upgrades. See [How to change the admin password](../how-to/change-admin-password.md). |
+| `site.admin.passwordKey` | `"password"` | Key of the password in `site.admin.existingSecret`. |
 
 ## `storage`
 
@@ -46,6 +46,7 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `storage.relstorage.port` | `5432` | PostgreSQL port. |
 | `storage.relstorage.secret.name` | `""` | Secret with the database name, user name, and password. Defaults to `<release>-postgresql-app` with `postgresql.enabled`, and is required without it. |
 | `storage.relstorage.secret.keys` | `{}` | Keys of the database name (`database`), user name (`user`), and password (`password`) in the secret. Not set by default, see [Storage](storage.md#relstorage). |
+| `storage.relstorage.sslmode` | `""` | SSL mode of the connection, such as `require` or `verify-full`, see the [libpq documentation](https://www.postgresql.org/docs/current/libpq-ssl.html). Empty uses the default of libpq, `prefer`. |
 | `storage.relstorage.keepHistory` | `true` | Keeps the history of the objects, needed for undo. |
 | `storage.relstorage.blobCacheSize` | `"100mb"` | Size of the blob cache of each backend pod. |
 
@@ -81,11 +82,27 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | Key | Default | Description |
 |---|---|---|
 | `pack.enabled` | `true` | Creates the CronJob that packs the database. |
-| `pack.schedule` | `"45 9 * * *"` | Cron schedule of the pack job. |
+| `pack.schedule` | `"15 3 * * *"` | Cron schedule of the pack job, every night at 03:15. |
+| `pack.timeZone` | `""` | Time zone of the schedule, such as `Europe/Berlin`. Empty uses the time zone of the Kubernetes controller manager, usually UTC. |
 | `pack.days` | `7` | Keeps the history of the last days, so that undo works for them. `0` removes all of the history. |
 | `pack.backoffLimit` | `1` | Retries of a failed pack, until the next schedule. |
 | `pack.activeDeadlineSeconds` | `82800` | Stops a pack that runs for longer, 23 hours by default. Keep it below the schedule interval. |
 | `pack.resources` | `{}` | Resources of the pack job. |
+| `pack.env` | `[]` | Extra environment variables of the pack job, after the ones of `backend.env`. |
+| `pack.nodeSelector` | `{}` | Node selector of the pack pods. Empty uses `backend.nodeSelector`. |
+| `pack.tolerations` | `[]` | Tolerations of the pack pods. Empty uses `backend.tolerations`. |
+| `pack.affinity` | `{}` | Affinity of the pack pods. Empty uses `backend.affinity`. |
+
+## `tests`
+
+The checks run by `helm test`, see [How to check an installation with `helm test`](../how-to/check-the-installation.md).
+
+| Key | Default | Description |
+|---|---|---|
+| `tests.enabled` | `true` | Creates the test pod and its ConfigMap, run by `helm test`. |
+| `tests.url` | `""` | URL to send the requests to, such as the address of the Gateway or the ingress controller inside the cluster, to check the routing too. Empty sends them to the Services of the chart. |
+| `tests.timeout` | `120` | Seconds to wait for the home page to answer before the checks. |
+| `tests.resources` | `{}` | Resources of the test pod. |
 
 ## `backend`
 
@@ -95,20 +112,23 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `backend.image.tag` | `""` | Tag of the backend image. Empty uses the `appVersion` of the chart. |
 | `backend.image.pullPolicy` | `"IfNotPresent"` | Pull policy of the backend image. |
 | `backend.replicas` | `1` | Number of backend pods. |
+| `backend.updateStrategy` | `{type: RollingUpdate, rollingUpdate: {maxSurge: 1, maxUnavailable: 0}}` | Strategy of the backend Deployment. The default starts a new pod before it stops an old one. |
 | `backend.podDisruptionBudget.enabled` | `true` | Creates a PodDisruptionBudget, when there is more than one replica. |
 | `backend.podDisruptionBudget.minAvailable` | `"50%"` | Minimum number of available pods. |
 | `backend.podDisruptionBudget.maxUnavailable` | not set | Maximum number of unavailable pods, as an alternative to `minAvailable`. |
+| `backend.preStopSleepSeconds` | `5` | Seconds that a stopping pod sleeps before it gets `SIGTERM`, while it leaves the endpoints of its Service. `0` disables it. |
+| `backend.terminationGracePeriodSeconds` | `30` | Seconds for the sleep and the shutdown. Must be longer than `backend.preStopSleepSeconds`. |
 | `backend.zodbCacheSize` | `50000` | Size of the ZODB object cache, in objects. |
 | `backend.env` | `[]` | Extra environment variables of the backend, see the [`plone-backend` image documentation](https://6.docs.plone.org/install/containers/images/backend.html). |
 | `backend.service.type` | `"ClusterIP"` | Type of the backend service. |
 | `backend.service.port` | `8080` | Port of the backend service. |
 | `backend.resources` | `{requests: {cpu: "100m", memory: "300Mi"}}` | Resources of the backend pods. |
-| `backend.startupProbe` | `{httpGet: {path: "/", port: "http"}, periodSeconds: 10, timeoutSeconds: 15, failureThreshold: 60}` | Startup probe. It allows up to 10 minutes for the first start, during which the database is initialized. |
-| `backend.readinessProbe` | `{httpGet: {path: "/", port: "http"}, periodSeconds: 10, timeoutSeconds: 15, failureThreshold: 3}` | Readiness probe. |
-| `backend.livenessProbe` | `{httpGet: {path: "/", port: "http"}, periodSeconds: 10, timeoutSeconds: 15, failureThreshold: 3}` | Liveness probe. |
+| `backend.startupProbe` | `{httpGet: {path: "/ok", port: "http"}, periodSeconds: 10, timeoutSeconds: 5, failureThreshold: 60}` | Startup probe. It allows up to 10 minutes for the first start, during which the database is initialized. |
+| `backend.readinessProbe` | `{httpGet: {path: "/ok", port: "http"}, periodSeconds: 10, timeoutSeconds: 5, failureThreshold: 3}` | Readiness probe. `/ok` returns `OK` without rendering a page. |
+| `backend.livenessProbe` | `{tcpSocket: {port: "http"}, periodSeconds: 10, timeoutSeconds: 5, failureThreshold: 6}` | Liveness probe: a TCP connection, so that a busy pod isn't restarted. |
 | `backend.podAnnotations` | `{}` | Annotations of the backend pods. |
-| `backend.podSecurityContext` | `{}` | Pod security context of the backend pods. |
-| `backend.securityContext` | `{}` | Security context of the backend container. |
+| `backend.podSecurityContext` | `{runAsNonRoot: true, runAsUser: 500, runAsGroup: 500, fsGroup: 500, fsGroupChangePolicy: OnRootMismatch, seccompProfile: {type: RuntimeDefault}}` | Pod security context of the backend pods, the site Job, the pack CronJob, and the `helm test` pod. The defaults comply with the Pod Security `restricted` profile. |
+| `backend.securityContext` | `{allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}` | Security context of their containers. |
 | `backend.nodeSelector` | `{}` | Node selector of the backend pods. |
 | `backend.tolerations` | `[]` | Tolerations of the backend pods. |
 | `backend.affinity` | `{}` | Affinity of the backend pods. |
@@ -125,15 +145,18 @@ With `varnish.enabled`, the chart fails if they don't match the values they mirr
 | `frontend.podDisruptionBudget.enabled` | `true` | Creates a PodDisruptionBudget, when there is more than one replica. |
 | `frontend.podDisruptionBudget.minAvailable` | `"50%"` | Minimum number of available pods. |
 | `frontend.podDisruptionBudget.maxUnavailable` | not set | Maximum number of unavailable pods, as an alternative to `minAvailable`. |
+| `frontend.preStopSleepSeconds` | `5` | Seconds that a stopping pod sleeps before it gets `SIGTERM`, while it leaves the endpoints of its Service. `0` disables it. |
+| `frontend.terminationGracePeriodSeconds` | `30` | Seconds for the sleep and the shutdown. Must be longer than `frontend.preStopSleepSeconds`. |
 | `frontend.env` | `[]` | Extra environment variables of the frontend, see the [`plone-frontend` image documentation](https://6.docs.plone.org/install/containers/images/frontend.html). |
 | `frontend.service.type` | `"ClusterIP"` | Type of the frontend service. |
 | `frontend.service.port` | `3000` | Port of the frontend service. |
 | `frontend.resources` | `{requests: {cpu: "50m", memory: "200Mi"}}` | Resources of the frontend pods. |
+| `frontend.startupProbe` | `{httpGet: {path: "/ok", port: "http"}, periodSeconds: 5, failureThreshold: 60}` | Startup probe. It allows up to 5 minutes for the first start. |
 | `frontend.readinessProbe` | `{httpGet: {path: "/ok", port: "http"}, periodSeconds: 10}` | Readiness probe. |
 | `frontend.livenessProbe` | `{httpGet: {path: "/ok", port: "http"}, periodSeconds: 10}` | Liveness probe. |
 | `frontend.podAnnotations` | `{}` | Annotations of the frontend pods. |
-| `frontend.podSecurityContext` | `{}` | Pod security context of the frontend pods. |
-| `frontend.securityContext` | `{}` | Security context of the frontend container. |
+| `frontend.podSecurityContext` | `{runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, seccompProfile: {type: RuntimeDefault}}` | Pod security context of the frontend pods. The defaults comply with the Pod Security `restricted` profile. |
+| `frontend.securityContext` | `{allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}` | Security context of the frontend container. |
 | `frontend.nodeSelector` | `{}` | Node selector of the frontend pods. |
 | `frontend.tolerations` | `[]` | Tolerations of the frontend pods. |
 | `frontend.affinity` | `{}` | Affinity of the frontend pods. |
@@ -161,14 +184,19 @@ The chart accepts all the other values of that chart under `varnish` too, see it
 | Key | Default | Description |
 |---|---|---|
 | `varnish.enabled` | `false` | Installs Varnish in front of the site. |
-| `varnish.ploneFrontend` | `true` | Whether the default VCL sends requests to the Volto frontend. It must match `frontend.enabled`. Set it to `false` for the Classic UI. |
+| `varnish.vcl` | `""` | VCL of Varnish, rendered as a template with the values of this chart. Empty uses the default VCL. A change restarts Varnish. See [Varnish](varnish.md#the-vcl). |
 | `varnish.server.replicas` | `1` | Number of Varnish pods. |
 | `varnish.server.pdb.enabled` | `false` | Creates a PodDisruptionBudget for Varnish. |
 | `varnish.server.pdb.minAvailable` | `"50%"` | Minimum number of available Varnish pods. |
 | `varnish.server.service.type` | `"ClusterIP"` | Type of the Varnish service. |
 | `varnish.server.service.http.port` | `6081` | Port of the Varnish service. |
 | `varnish.server.affinity` | a preference for pod anti-affinity by node | Affinity of the Varnish pods. See [Varnish](varnish.md#affinity). |
-| `varnish.server.vclConfig` | the default VCL | VCL of Varnish, rendered as a template. See [Varnish](varnish.md#default-vcl). |
+| `varnish.server.vclConfigPath` | `"/etc/varnish/plone/default.vcl"` | The VCL file that Varnish reads, from the ConfigMap `<release>-varnish-vcl`. |
+| `varnish.server.extraVolumes` | the `plone-vcl` volume | Mounts the ConfigMap `<release>-varnish-vcl`. Keep it when you add volumes. |
+| `varnish.server.extraVolumeMounts` | the `plone-vcl` mount, at `/etc/varnish/plone` | Keep it when you add mounts. |
+| `varnish.server.securityContext` | `{runAsNonRoot: true, runAsUser: 999, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}, seccompProfile: {type: RuntimeDefault}}` | Security context of the Varnish container. The defaults comply with the Pod Security `restricted` profile. |
+| `varnish.server.varnishncsa.securityContext` | `{runAsNonRoot: true, runAsUser: 999, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}, seccompProfile: {type: RuntimeDefault}}` | Security context of the `varnishncsa` sidecar, which logs the requests. |
+| `varnish.server.podAnnotations` | the `checksum/plone-vcl` annotation, as a string | Restarts Varnish when `varnish.vcl` changes. Keep it when you add annotations. See [Varnish](varnish.md#restart-after-a-change). |
 
 ## `routing`
 
@@ -203,7 +231,7 @@ The chart fails to install with an explanation when the values don't make sense 
 
 * `storage.type` must be `relstorage` or `zeo`.
 * `routing.type` must be `gateway`, `ingress-nginx`, or `none`.
-* With `varnish.enabled`, `varnish.ploneFrontend` must match `frontend.enabled`.
+* With `varnish.enabled`, the VCL is set in `varnish.vcl`: `varnish.server.vclConfig` must be empty, and `varnish.server.vclConfigs` must not set the file of `varnish.server.vclConfigPath`.
 * With `routing.type: gateway`, `routing.gateway.name` or `routing.gateway.parentRefs` must be set.
 * With `postgresql.enabled` set to `false` and `storage.type: relstorage`, `storage.relstorage.host` and `storage.relstorage.secret.name` must be set.
 * With `storage.type: zeo`, `postgresql.enabled` must be `false`.

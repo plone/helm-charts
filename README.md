@@ -7,6 +7,10 @@ A single chart covers the common ways to run Plone: with the [Volto](https://6.d
 
 The default installs Plone 6 with Volto, PostgreSQL, and Gateway API.
 
+The chart is in **beta**: its defaults install a minimal site without backups, and some operations, such as backups and upgrades, aren't covered yet.
+See [what isn't covered yet](https://plone.github.io/helm-charts/#beta).
+The [changelog](CHANGELOG.md) lists the changes of each version, and what to do when you upgrade.
+
 ## Documentation
 
 The documentation is published at [plone.github.io/helm-charts](https://plone.github.io/helm-charts/), from the sources in [`docs`](docs/index.md).
@@ -47,7 +51,13 @@ It is organized by the [Diátaxis](https://diataxis.fr) framework:
    A Job creates the Plone site after the install, which takes a few minutes, and `helm install` waits for it.
    Then open http://localhost:3000.
 
-Then [change the password of the `admin` user](docs/how-to/change-admin-password.md).
+Log in as `admin`, with the password that the chart generated:
+
+```shell
+kubectl get secret --namespace plone plone-admin -o jsonpath='{.data.password}' | base64 -d
+```
+
+To set a password of your own, see [How to change the admin password](docs/how-to/change-admin-password.md).
 To serve the site through a route instead, see [Gateway API](#gateway-api), or follow the [tutorial](docs/tutorials/install-plone-on-rancher-desktop.md).
 
 ## Gateway API
@@ -76,6 +86,7 @@ See [How to migrate from the previous charts](docs/how-to/migrate-from-previous-
 
 ## Development
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute, and what a change includes.
 The chart is in [`charts/plone`](charts/plone).
 To install it from a checkout of this repository, add the repository of the CloudNativePG `cluster` chart, and fetch the dependencies:
 
@@ -86,7 +97,31 @@ helm install plone ./charts/plone --values ./charts/plone/ci/default-values.yaml
 ```
 
 The [`charts/plone/ci`](charts/plone/ci) directory has a values file per tested scenario.
-The GitHub Actions workflow lints and installs the chart with each of them, and [`test.sh`](test.sh) does the same in a local cluster.
+The GitHub Actions workflow lints and installs the chart with each of them, and `make test-install` does the same in a local cluster.
+
+### Tests
+
+The unit tests of the templates are in [`charts/plone/tests`](charts/plone/tests), written for [helm-unittest](https://github.com/helm-unittest/helm-unittest).
+The tools run in containers, so they need [Helm](https://helm.sh) and Docker, and nothing else:
+
+```shell
+make test-unit       # run the unit tests
+make test-manifests  # validate the manifests of each scenario with kubeconform
+make test            # both
+```
+
+`make test-manifests` validates the manifests against the Kubernetes versions of `KUBE_VERSIONS`, 1.29.0, 1.33.0, and 1.37.0 by default.
+
+`make lint` needs [chart-testing](https://github.com/helm/chart-testing) (`ct`), and the install targets a cluster, such as one created with [kind](https://kind.sigs.k8s.io), as the current `kubectl` context:
+
+```shell
+make lint           # lint the chart once per scenario
+make cluster-deps   # install CloudNativePG, the Gateway API CRDs, Traefik with a Gateway, and ingress-nginx
+make test-install   # install the chart once per scenario, in a restricted namespace, and run helm test
+make test-upgrade   # upgrade from the last published release, and check the content
+```
+
+The GitHub Actions workflow runs the same targets, in this order, on a kind cluster, with `make test-unit` and `make test-manifests` before it creates the cluster.
 
 ### Documentation
 
@@ -97,6 +132,7 @@ The tools are installed with [uv](https://docs.astral.sh/uv/):
 make docs           # build the HTML in docs/_build/html, warnings are errors
 make docs-livehtml  # rebuild on changes, at http://localhost:8050
 make docs-vale      # check the style and spelling
+make docs-values    # check that the values reference documents every value, with its default
 make docs-linkcheck # check the external links
 ```
 

@@ -1,0 +1,17 @@
+# Volto, an external ZEO server, Gateway API.
+# The server is the external-zeo Deployment of
+# tests/cluster/external-services.yaml, outside the chart.
+storage:
+  type: zeo
+  zeo:
+    address: external-zeo:8100
+postgresql:
+  enabled: false
+routing:
+  gateway:
+    # The Gateway of Traefik, installed by make cluster-deps.
+    name: traefik-gateway
+    namespace: traefik
+# helm test sends its requests through Traefik.
+tests:
+  url: http://traefik.traefik.svc.cluster.local
