@@ -367,6 +367,10 @@ varnish:
       type: ClusterIP
       http:
         port: 6081
+      # varnish-cache sets externalTrafficPolicy: Cluster by default, which
+      # Kubernetes refuses on a ClusterIP Service. Set it when you change the
+      # type to NodePort or LoadBalancer.
+      externalTrafficPolicy: ""
     # Prefer, rather than require as varnish-cache does by default, to run each
     # Varnish pod on a different node. Requiring it blocks the rolling updates
     # of Varnish, such as after a change of the VCL, on clusters with no spare

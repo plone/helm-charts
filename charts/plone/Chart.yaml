@@ -2,7 +2,7 @@ apiVersion: v2
 name: plone
 description: Beta. Plone 6 with the Volto or Classic UI, on PostgreSQL (RelStorage) or ZEO, with optional Varnish, routed with Gateway API or ingress-nginx
 type: application
-version: 0.4.1
+version: 0.4.2
 appVersion: "6.2.3"
 kubeVersion: ">=1.29.0-0"
 
@@ -26,7 +26,7 @@ dependencies:
   # Varnish Cache community chart, maintained by Varnish Software.
   - name: "varnish-cache"
     alias: "varnish"
-    version: "1.1.1"
+    version: 1.10.0
     repository: "oci://registry-1.docker.io/varnish"
     condition: varnish.enabled
 

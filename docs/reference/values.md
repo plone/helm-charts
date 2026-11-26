@@ -190,6 +190,7 @@ The chart accepts all the other values of that chart under `varnish` too, see it
 | `varnish.server.pdb.minAvailable` | `"50%"` | Minimum number of available Varnish pods. |
 | `varnish.server.service.type` | `"ClusterIP"` | Type of the Varnish service. |
 | `varnish.server.service.http.port` | `6081` | Port of the Varnish service. |
+| `varnish.server.service.externalTrafficPolicy` | `""` | External traffic policy of the Varnish service. Leave it empty for a `ClusterIP` service, which can't have one, and set it for `NodePort` or `LoadBalancer`. |
 | `varnish.server.affinity` | a preference for pod anti-affinity by node | Affinity of the Varnish pods. See [Varnish](varnish.md#affinity). |
 | `varnish.server.vclConfigPath` | `"/etc/varnish/plone/default.vcl"` | The VCL file that Varnish reads, from the ConfigMap `<release>-varnish-vcl`. |
 | `varnish.server.extraVolumes` | the `plone-vcl` volume | Mounts the ConfigMap `<release>-varnish-vcl`. Keep it when you add volumes. |
