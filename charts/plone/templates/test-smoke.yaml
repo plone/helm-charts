@@ -79,11 +79,15 @@ spec:
           value: {{ .Values.varnish.enabled | quote }}
         - name: TIMEOUT
           value: {{ .Values.tests.timeout | quote }}
+        {{- /* The ephemeral storage doesn't apply the password of the Secret, see
+        storage.type in values.yaml: the checks of the admin password are skipped. */}}
+        {{- if ne .Values.storage.type "ephemeral" }}
         - name: ADMIN_PASSWORD
           valueFrom:
             secretKeyRef:
               name: {{ include "plone.admin.secretName" . }}
               key: {{ include "plone.admin.secretKey" . }}
+        {{- end }}
       {{- with .Values.tests.resources }}
       resources:
         {{- toYaml . | nindent 8 }}

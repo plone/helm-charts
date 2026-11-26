@@ -1,14 +1,37 @@
 # Storage
 
 `storage.type` selects how Plone stores its database.
-It accepts two values:
+It accepts three values:
 
 * `relstorage` (default): RelStorage on PostgreSQL.
   Objects and blobs are stored in the database, and each backend pod only keeps a cache.
 * `zeo`: a ZEO server.
   The backend pods are its clients.
+* `ephemeral`: a FileStorage in each backend pod, with no database.
+  The content is lost on each restart. See [Ephemeral](#ephemeral).
 
 For the reasons behind the choice, see [Storage choices](../explanation/storage-choices.md).
+
+## Ephemeral
+
+With `storage.type` set to `ephemeral`, the backend runs its own FileStorage, with no ZEO server and no PostgreSQL cluster.
+The image of the backend, `plone/plone-backend`, chooses its storage from its environment variables: without `RELSTORAGE_DSN` and `ZEO_ADDRESS`, it uses the FileStorage in `/data/filestorage/Data.fs`, with the blobs in `/data/blobstorage`.
+The chart doesn't set these variables for this type.
+
+* `postgresql.enabled` must be `false`, and `backend.replicas` must be `1`: each pod has its own FileStorage, which the other pods can't see.
+* The backend Deployment uses the `Recreate` strategy, so the old pod stops before the new one starts.
+  The `backend.updateStrategy` value doesn't apply to this type.
+* The chart creates no site Job, no admin Job, and no pack CronJob, since they reach a database that this type doesn't have.
+  The password of the `admin` user is the one of the image: the Secret `<release>-admin` isn't applied, and the checks of helm test skip it.
+* Without `storage.ephemeral.emptyDir.enabled`, the chart mounts no volume over `/data`, so the content that the image has there is used.
+  With it, an `emptyDir` hides that content.
+
+The content is lost when the backend restarts.
+Without an `emptyDir`, it is in the writable layer of the container, and a restart of the container loses it.
+With an `emptyDir`, it survives a restart of the container, but not the deletion of the pod or its move to another node.
+A new version of the chart or of the image loses it too.
+
+For a step-by-step installation, see [How to run Plone with ephemeral storage](../how-to/use-ephemeral-storage.md).
 
 ## RelStorage
 

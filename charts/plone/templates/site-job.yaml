@@ -1,4 +1,4 @@
-{{- if .Values.site.create }}
+{{- if and .Values.site.create (ne .Values.storage.type "ephemeral") }}
 {{- $b := .Values.backend }}
 # Creates the Plone site, if it doesn't exist yet. The image can also do it when
 # the backend starts, but that isn't meant for production: every pod would go

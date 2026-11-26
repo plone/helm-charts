@@ -72,7 +72,8 @@
           "type": "string",
           "enum": [
             "relstorage",
-            "zeo"
+            "zeo",
+            "ephemeral"
           ]
         },
         "relstorage": {
@@ -128,6 +129,21 @@
             },
             "blobCacheSize": {
               "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "ephemeral": {
+          "type": "object",
+          "properties": {
+            "emptyDir": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false

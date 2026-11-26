@@ -10,9 +10,16 @@ metadata:
     app.kubernetes.io/component: backend
 spec:
   replicas: {{ $b.replicas }}
+  {{- if eq .Values.storage.type "ephemeral" }}
+  # Each pod has its own FileStorage, so a new pod can't take over the content of
+  # the old one: the old pod stops before the new one starts.
+  strategy:
+    type: Recreate
+  {{- else }}
   {{- with $b.updateStrategy }}
   strategy:
     {{- toYaml . | nindent 4 }}
+  {{- end }}
   {{- end }}
   selector:
     matchLabels:
@@ -73,14 +80,18 @@ spec:
           resources:
             {{- toYaml $b.resources | nindent 12 }}
           volumeMounts:
+            {{- if include "plone.dataVolume" . }}
             # Client home, blob cache, and ZEO client cache.
             - name: data
               mountPath: /data
+            {{- end }}
             # Admin password, see plone.admin.initContainer.
             {{- include "plone.admin.volumeMount" . | nindent 12 }}
       volumes:
+        {{- if include "plone.dataVolume" . }}
         - name: data
           emptyDir: {}
+        {{- end }}
         {{- include "plone.admin.volume" . | nindent 8 }}
       {{- with $b.nodeSelector }}
       nodeSelector:

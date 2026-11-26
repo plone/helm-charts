@@ -36,7 +36,8 @@ Under `postgresql` and `varnish`, only the keys of this page are checked: the ot
 
 | Key | Default | Description |
 |---|---|---|
-| `storage.type` | `"relstorage"` | `relstorage` for RelStorage on PostgreSQL, or `zeo` for a ZEO server. |
+| `storage.type` | `"relstorage"` | `relstorage` for RelStorage on PostgreSQL, `zeo` for a ZEO server, or `ephemeral` for a FileStorage in the backend pod, with no database. See [Storage](../reference/storage.md#ephemeral). |
+| `storage.ephemeral.emptyDir.enabled` | `false` | With `storage.type: ephemeral`, mounts an `emptyDir` over `/data`. It hides the content that the image has under `/data`, so it is off by default. |
 
 ### `storage.relstorage`
 
@@ -230,8 +231,9 @@ The chart accepts all the other values of that chart under `varnish` too, see it
 
 The chart fails to install with an explanation when the values don't make sense together:
 
-* `storage.type` must be `relstorage` or `zeo`.
+* `storage.type` must be `relstorage`, `zeo`, or `ephemeral`.
 * `routing.type` must be `gateway`, `ingress-nginx`, or `none`.
+* With `storage.type: ephemeral`, `postgresql.enabled` must be `false`, and `backend.replicas` must be `1`.
 * With `varnish.enabled`, the VCL is set in `varnish.vcl`: `varnish.server.vclConfig` must be empty, and `varnish.server.vclConfigs` must not set the file of `varnish.server.vclConfigPath`.
 * With `routing.type: gateway`, `routing.gateway.name` or `routing.gateway.parentRefs` must be set.
 * With `postgresql.enabled` set to `false` and `storage.type: relstorage`, `storage.relstorage.host` and `storage.relstorage.secret.name` must be set.

@@ -3,6 +3,16 @@
 The changes of the `plone` chart, by chart version.
 Until 1.0, a minor version can have changes that need action when you upgrade: they are listed under **Breaking changes**, with what to do.
 
+## 0.4.3 (unreleased)
+
+### Added
+
+- `storage.type: ephemeral` runs the backend on its own FileStorage, from the image, with no ZEO server and no PostgreSQL cluster, for previews and demos.
+  The backend has one replica and is replaced rather than rolled, and the chart creates no site Job, admin Job, or pack CronJob.
+  All the content is lost on every restart and redeploy.
+  See [How to run Plone with ephemeral storage](https://plone.github.io/helm-charts/how-to/use-ephemeral-storage.html).
+  [#81](https://github.com/plone/helm-charts/issues/81)
+
 ## 0.4.2 (2026-11-26)
 
 ### Changed

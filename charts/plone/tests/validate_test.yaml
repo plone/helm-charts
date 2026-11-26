@@ -20,7 +20,7 @@ tests:
     asserts:
       - failedTemplate:
           # values.schema.json refuses it before plone.validate.
-          errorPattern: "/storage/type': value must be one of 'relstorage', 'zeo'"
+          errorPattern: "/storage/type': value must be one of 'relstorage', 'zeo', 'ephemeral'"
 
   - it: refuses an unknown routing type
     set:

@@ -51,6 +51,9 @@ storage:
   #   cluster of this chart (postgresql.enabled), or an external server.
   # zeo: a ZEO server. It's deployed by this chart, unless storage.zeo.address
   #   points to an external one. Set postgresql.enabled to false.
+  # ephemeral: the backend runs its own FileStorage, in the image or in an
+  #   emptyDir, with no ZEO server and no PostgreSQL. Set postgresql.enabled to
+  #   false. All content is lost on each restart and upgrade, see storage.ephemeral.
   type: relstorage
 
   relstorage:
@@ -79,6 +82,16 @@ storage:
     keepHistory: true
     # Size of the blob cache of each backend pod.
     blobCacheSize: 100mb
+
+  # Settings of the ephemeral storage. The backend uses the FileStorage of the
+  # image, under /data, which the image can fill when it is built, with
+  # create-site.
+  ephemeral:
+    # Mount an emptyDir over /data, for an image without data of its own. The
+    # emptyDir hides the content of the image under /data, so it is off by
+    # default.
+    emptyDir:
+      enabled: false
 
   zeo:
     # host:port of an external ZEO server. Leave empty to deploy a ZEO server

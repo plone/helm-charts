@@ -1,5 +1,8 @@
+{{- if ne .Values.storage.type "ephemeral" }}
 {{- $fullname := include "plone.fullname" . }}
 {{- $b := .Values.backend }}
+{{- /* The ephemeral storage has no database that the Job could reach, so it
+has no Job. */}}
 # The script of the Job below, see files/set-admin-password.py.
 apiVersion: v1
 kind: ConfigMap
@@ -93,3 +96,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}

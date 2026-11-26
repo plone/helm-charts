@@ -1,0 +1,126 @@
+# The ephemeral storage: the backend runs its own FileStorage, with no ZEO server
+# and no PostgreSQL, so the Jobs that reach the database are skipped.
+suite: ephemeral storage
+templates:
+  - templates/backend-deployment.yaml
+  - templates/site-job.yaml
+  - templates/admin-job.yaml
+  - templates/pack.yaml
+  - templates/zeo-statefulset.yaml
+release:
+  name: plone
+  namespace: plone
+set:
+  storage.type: ephemeral
+  postgresql.enabled: false
+  routing.gateway.name: gw
+tests:
+  - it: skips the site Job, the admin Job and the pack CronJob
+    asserts:
+      - template: templates/site-job.yaml
+        hasDocuments:
+          count: 0
+      - template: templates/admin-job.yaml
+        hasDocuments:
+          count: 0
+      - template: templates/pack.yaml
+        hasDocuments:
+          count: 0
+
+  - it: creates no ZEO server
+    asserts:
+      - template: templates/zeo-statefulset.yaml
+        hasDocuments:
+          count: 0
+
+  - it: gives the backend no database address, so that it runs FileStorage
+    template: templates/backend-deployment.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RELSTORAGE_DSN
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ZEO_ADDRESS
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PGPASSWORD
+          any: true
+
+  - it: mounts no volume over /data by default, so the content of the image shows
+    template: templates/backend-deployment.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: data
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: data
+          any: true
+
+  - it: mounts an emptyDir over /data with storage.ephemeral.emptyDir.enabled
+    template: templates/backend-deployment.yaml
+    set:
+      storage.ephemeral.emptyDir.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: data
+            emptyDir: {}
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: data
+            mountPath: /data
+
+  - it: replaces the pod instead of rolling it, as each pod has its own FileStorage
+    template: templates/backend-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
+
+  - it: keeps the rolling update and the data volume of the other storage types
+    template: templates/backend-deployment.yaml
+    set:
+      storage.type: relstorage
+      postgresql.enabled: true
+    asserts:
+      - equal:
+          path: spec.strategy.type
+          value: RollingUpdate
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: data
+            emptyDir: {}
+
+  - it: refuses more than one backend replica
+    template: templates/backend-deployment.yaml
+    set:
+      backend.replicas: 2
+    asserts:
+      - failedTemplate:
+          errorPattern: "backend.replicas must be 1 with storage.type ephemeral"
+
+  - it: refuses PostgreSQL with the ephemeral storage
+    template: templates/backend-deployment.yaml
+    set:
+      postgresql.enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "storage.type ephemeral doesn't use PostgreSQL"
+
+  - it: accepts the ephemeral storage without PostgreSQL
+    template: templates/backend-deployment.yaml
+    asserts:
+      - notFailedTemplate: {}

@@ -4,7 +4,7 @@ This chart installs [Plone 6](https://6.docs.plone.org/) on Kubernetes.
 A single chart covers the common ways to run Plone, selected with a few values:
 
 * **User interface:** the Volto frontend (default), or the Classic UI rendered by the backend
-* **Storage:** RelStorage on PostgreSQL (default), or a ZEO server
+* **Storage:** RelStorage on PostgreSQL (default), a ZEO server, or an ephemeral FileStorage that is lost on each restart
 * **Database:** a PostgreSQL cluster managed by CloudNativePG (default), or an external PostgreSQL server
 * **Cache:** an optional Varnish cache in front of the site
 * **Routing:** a Gateway API HTTPRoute (default), Ingress resources for ingress-nginx, or none
