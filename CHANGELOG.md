@@ -3,6 +3,14 @@
 The changes of the `plone` chart, by chart version.
 Until 1.0, a minor version can have changes that need action when you upgrade: they are listed under **Breaking changes**, with what to do.
 
+## 0.4.2 (unreleased)
+
+### Changed
+
+- The Varnish cache uses version 1.10.0 of the `varnish-cache` chart, instead of 1.1.1, with Varnish 9.1.0 instead of 7.5.0.
+  The values of `varnish` that this chart sets, and the VCL it renders, don't change.
+  [#80](https://github.com/plone/helm-charts/pull/80)
+
 ## 0.4.1 (unreleased)
 
 ### Changed
